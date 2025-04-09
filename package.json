@@ -1,0 +1,28 @@
+{
+  "name": "websocket-showcase",
+  "version": "1.0.0",
+  "description": "A chat app showcasing the use of websockets",
+  "main": "index.js",
+  "scripts": {
+    "start": "node app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GlennCoding/websocket-showcase.git"
+  },
+  "keywords": [
+    "websockets",
+    "express.js",
+    "node.js"
+  ],
+  "author": "Glenn Gregor",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/GlennCoding/websocket-showcase/issues"
+  },
+  "homepage": "https://github.com/GlennCoding/websocket-showcase#readme",
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
