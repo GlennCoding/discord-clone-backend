@@ -7,13 +7,18 @@ import mongoose from "mongoose";
 
 const PORT = process.env.PORT || 3000;
 const app = express();
+const bcryptSaltRounds = 10;
 
 connectDB();
 
 app.use(cors());
 app.use(express.json());
 
-const userSchema = new mongoose.Schema({ user_name: String, password: String });
+const userSchema = new mongoose.Schema({
+  user_name: { type: String, required: true },
+  password: { type: String, required: true },
+  status: { type: String },
+});
 const User = mongoose.model("User", userSchema);
 
 app.get("/", (_, res: Response) => {
@@ -38,7 +43,7 @@ app.post("/register", async (req: Request, res: Response) => {
     }
 
     // Create and save new user
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, bcryptSaltRounds);
     const newUser = new User({ user_name, password: hashedPassword });
     await newUser.save();
 
@@ -47,6 +52,42 @@ app.post("/register", async (req: Request, res: Response) => {
     console.error(err);
     res.status(500).json({ message: "Server error." });
   }
+});
+
+app.post("/login", async (req: Request, res: Response) => {
+  const { user_name, password } = req.body;
+
+  if (!user_name || !password) {
+    res.status(400).json({ message: "Username and password are required." });
+    return;
+  }
+
+  try {
+    const existingUser = await User.findOne({ user_name });
+
+    if (!existingUser) {
+      res
+        .status(400)
+        .json({ message: `A user with the username ${user_name} doesn't exist` });
+      return;
+    }
+
+    const isSamePassword = await bcrypt.compare(password, existingUser.password);
+
+    if (isSamePassword === true) {
+      res.status(200).json({ message: "Login successful" });
+      return;
+    }
+
+    res.status(400).json({ message: "Username or password are incorrect" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error." });
+  }
+});
+
+app.get("/user/status", async (_, res: Response) => {
+  res.status(200).json({ message: "User has access to this route" });
 });
 
 // Global error handling
