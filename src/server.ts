@@ -1,8 +1,18 @@
 import "./config/loadEnvironment";
-import express, { Request, Response, Errback, NextFunction } from "express";
+import express, {
+  Request,
+  Response,
+  Errback,
+  NextFunction,
+  RequestHandler,
+} from "express";
 import cors from "cors";
 import { connectDB } from "./config/dbConn";
-import routes from "./routes";
+import rootRouter from "./routes/root";
+import authRouter from "./routes/auth";
+import registerRouter from "./routes/register";
+import verifyJWT from "./middleware/verifyJWT";
+import userRouter from "./routes/api/users";
 
 const PORT = process.env.PORT || 3000;
 const app = express();
@@ -11,7 +21,13 @@ connectDB();
 
 app.use(cors());
 app.use(express.json());
-app.use(routes);
+
+app.use("/", rootRouter);
+app.use("/register", registerRouter);
+app.use("/login", authRouter);
+
+app.use(verifyJWT as RequestHandler);
+app.use("/user", userRouter);
 
 // Global error handling
 app.use((err: Errback, _req: Request, res: Response, next: NextFunction) => {
