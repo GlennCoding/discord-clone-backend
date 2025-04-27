@@ -10,40 +10,58 @@ router.post("/", async (req: Request, res: Response) => {
   const { user_name, password } = req.body;
 
   if (!user_name || !password) {
-    res.status(400).json({ message: "Username and password are required." });
+    res.status(401).json({ message: "Username and password are required." });
     return;
   }
 
   try {
-    const existingUser = await User.findOne({ user_name });
+    const foundUser = await User.findOne({ user_name });
 
-    if (!existingUser) {
+    if (!foundUser) {
       res
         .status(400)
         .json({ message: `A user with the username ${user_name} doesn't exist` });
       return;
     }
 
-    const isSamePassword = await bcrypt.compare(password, existingUser.password);
+    const isSamePassword = await bcrypt.compare(password, foundUser.password);
 
-    const jwtSecret = getEnvVar("JWT_SECRET");
-
-    const token = jwt.sign(
-      {
-        UserInfo: {
-          userId: existingUser._id,
-        },
-      },
-      jwtSecret,
-      { expiresIn: "1sec" }
-    );
-
-    if (isSamePassword === true) {
-      res.status(200).json({ message: "Login successful", token: token });
+    if (isSamePassword !== true) {
+      res.status(401).json({ message: "Username or password are incorrect" });
       return;
     }
 
-    res.status(400).json({ message: "Username or password are incorrect" });
+    const accessToken = jwt.sign(
+      {
+        UserInfo: {
+          userId: foundUser._id,
+        },
+      },
+      getEnvVar("ACCESS_TOKEN_SECRET"),
+      { expiresIn: "10min" }
+    );
+
+    const refreshToken = jwt.sign(
+      {
+        userId: foundUser._id,
+      },
+      getEnvVar("REFRESH_TOKEN_SECRET"),
+      { expiresIn: "1day" }
+    );
+
+    foundUser.refreshTokens = [...foundUser.refreshTokens, refreshToken];
+
+    const result = await foundUser.save();
+    console.log(result);
+
+    res.cookie("jwt", refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+
+    res.status(200).json({ message: "Login successful", token: accessToken });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error." });

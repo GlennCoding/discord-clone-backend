@@ -12,8 +12,6 @@ interface AccessTokenBody extends JwtPayload {
   };
 }
 
-const jwtSecret = getEnvVar("JWT_SECRET");
-
 const verifyJWT = (req: UserRequest, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith("Bearer ")) return res.sendStatus(401);
@@ -21,7 +19,7 @@ const verifyJWT = (req: UserRequest, res: Response, next: NextFunction) => {
   const token = authHeader.split(" ")[1];
   console.log(token);
 
-  jwt.verify(token, jwtSecret, (err, decoded) => {
+  jwt.verify(token, getEnvVar("ACCESS_TOKEN_SECRET"), (err, decoded) => {
     if (err || decoded === undefined) return res.sendStatus(403);
     const payload = decoded as AccessTokenBody;
     console.log(payload);

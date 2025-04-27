@@ -1,8 +1,6 @@
 import { Router, Request, Response } from "express";
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
 import User from "../models/User";
-import { getEnvVar } from "../utils/getEnvVar";
 
 const router = Router();
 
@@ -16,31 +14,20 @@ router.post("/", async (req: Request, res: Response) => {
 
   try {
     // Check if user already exists
-    const existingUser = await User.findOne({ user_name });
+    const duplicate = await User.findOne({ user_name }).exec();
 
-    if (existingUser) {
+    if (duplicate) {
       res.status(409).json({ message: "Username already taken." });
       return;
     }
 
     // Create and save new user
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const newUser = new User({ user_name, password: hashedPassword });
-    await newUser.save();
+    const hashedPwd = await bcrypt.hash(password, 10);
+    const newUser = await User.create({ user_name, password: hashedPwd });
 
-    const jwtSecret = getEnvVar("JWT_SECRET");
+    console.log(newUser);
 
-    const token = jwt.sign(
-      {
-        UserInfo: {
-          userId: newUser._id,
-        },
-      },
-      jwtSecret,
-      { expiresIn: "10min" }
-    );
-
-    res.status(201).json({ message: "User registered successfully.", token: token });
+    res.status(201).json({ message: "User registered successfully." });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error." });

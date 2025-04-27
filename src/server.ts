@@ -13,6 +13,8 @@ import authRouter from "./routes/auth";
 import registerRouter from "./routes/register";
 import verifyJWT from "./middleware/verifyJWT";
 import userRouter from "./routes/api/users";
+import refreshRouter from "./routes/refresh";
+import cookieParser from "cookie-parser";
 
 const PORT = process.env.PORT || 3000;
 const app = express();
@@ -21,10 +23,12 @@ connectDB();
 
 app.use(cors());
 app.use(express.json());
+app.use(cookieParser());
 
 app.use("/", rootRouter);
 app.use("/register", registerRouter);
 app.use("/login", authRouter);
+app.use("/refresh", refreshRouter);
 
 app.use(verifyJWT as RequestHandler);
 app.use("/user", userRouter);
