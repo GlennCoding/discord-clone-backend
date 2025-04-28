@@ -2,7 +2,7 @@ import { Router, Request, Response } from "express";
 import bcrypt from "bcrypt";
 import User from "../models/User";
 import jwt from "jsonwebtoken";
-import { getEnvVar } from "../utils/getEnvVar";
+import getEnvVar from "../utils/getEnvVar";
 
 const router = Router();
 
@@ -49,10 +49,9 @@ router.post("/", async (req: Request, res: Response) => {
       { expiresIn: "1day" }
     );
 
-    foundUser.refreshTokens = [...foundUser.refreshTokens, refreshToken];
+    foundUser.refreshTokens = [refreshToken];
 
-    const result = await foundUser.save();
-    console.log(result);
+    await foundUser.save();
 
     res.cookie("jwt", refreshToken, {
       httpOnly: true,

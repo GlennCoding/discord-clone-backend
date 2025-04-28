@@ -15,13 +15,18 @@ import verifyJWT from "./middleware/verifyJWT";
 import userRouter from "./routes/api/users";
 import refreshRouter from "./routes/refresh";
 import cookieParser from "cookie-parser";
+import credentials from "./middleware/credentials";
+import corsOptions from "./config/corsOptions";
+import getEnvVar from "./utils/getEnvVar";
 
-const PORT = process.env.PORT || 3000;
+const PORT = getEnvVar("PORT") || 3000;
 const app = express();
 
 connectDB();
 
-app.use(cors());
+app.use(credentials);
+app.use(cors(corsOptions));
+
 app.use(express.json());
 app.use(cookieParser());
 
@@ -30,7 +35,7 @@ app.use("/register", registerRouter);
 app.use("/login", authRouter);
 app.use("/refresh", refreshRouter);
 
-app.use(verifyJWT as RequestHandler);
+// app.use(verifyJWT as RequestHandler);
 app.use("/user", userRouter);
 
 // Global error handling

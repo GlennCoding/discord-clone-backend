@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import User from "../models/User";
 import jwt from "jsonwebtoken";
-import { getEnvVar } from "../utils/getEnvVar";
+import getEnvVar from "../utils/getEnvVar";
 
 const router = Router();
 
@@ -12,7 +12,6 @@ router.get("/", async (req: Request, res: Response) => {
     return;
   }
   const refreshToken = cookies.jwt;
-  console.log(refreshToken);
 
   // check if refresh token in DB
   const foundUser = await User.findOne({ refreshTokens: refreshToken }).exec();
@@ -20,7 +19,6 @@ router.get("/", async (req: Request, res: Response) => {
     res.sendStatus(401);
     return;
   }
-  console.log(foundUser);
 
   // jwt.verify refresh token
   // generate new access token
