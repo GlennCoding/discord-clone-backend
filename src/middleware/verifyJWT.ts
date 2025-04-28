@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
-import { getEnvVar } from "../utils/getEnvVar";
+import getEnvVar from "../utils/getEnvVar";
 
 export interface UserRequest extends Request {
   userId?: string;
