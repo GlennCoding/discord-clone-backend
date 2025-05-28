@@ -5,16 +5,16 @@ import User from "../models/User";
 const router = Router();
 
 router.post("/", async (req: Request, res: Response) => {
-  const { user_name, password } = req.body;
+  const { userName, password } = req.body;
 
-  if (!user_name || !password) {
+  if (!userName || !password) {
     res.status(400).json({ message: "username and password are required." });
     return;
   }
 
   try {
     // Check if user already exists
-    const duplicate = await User.findOne({ user_name }).exec();
+    const duplicate = await User.findOne({ userName }).exec();
 
     if (duplicate) {
       res.status(409).json({ message: "Username already taken." });
@@ -23,7 +23,7 @@ router.post("/", async (req: Request, res: Response) => {
 
     // Create and save new user
     const hashedPwd = await bcrypt.hash(password, 10);
-    const newUser = await User.create({ user_name, password: hashedPwd });
+    const newUser = await User.create({ userName, password: hashedPwd });
 
     console.log(newUser);
 

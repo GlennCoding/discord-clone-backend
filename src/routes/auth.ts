@@ -7,20 +7,20 @@ import getEnvVar from "../utils/getEnvVar";
 const router = Router();
 
 router.post("/", async (req: Request, res: Response) => {
-  const { user_name, password } = req.body;
+  const { userName, password } = req.body;
 
-  if (!user_name || !password) {
+  if (!userName || !password) {
     res.status(401).json({ message: "Username and password are required." });
     return;
   }
 
   try {
-    const foundUser = await User.findOne({ user_name });
+    const foundUser = await User.findOne({ userName });
 
     if (!foundUser) {
       res
         .status(400)
-        .json({ message: `A user with the username ${user_name} doesn't exist` });
+        .json({ message: `A user with the username ${userName} doesn't exist` });
       return;
     }
 
