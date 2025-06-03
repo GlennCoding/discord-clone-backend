@@ -25,7 +25,7 @@ router.post("/", async (req: UserRequest, res: Response) => {
     const userId = new mongoose.Types.ObjectId(req.userId);
 
     if (!foundChat.participants.includes(userId)) {
-      res.status(403).json({ message: "Access denied" });
+      res.status(403).json({ message: "You're not part of this chat" });
       return;
     }
 

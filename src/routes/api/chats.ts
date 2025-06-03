@@ -30,20 +30,26 @@ router.post("/create", async (req: UserRequest, res: Response) => {
       return;
     }
 
+    // see if a chat doesn't exist already
+    const chatExists = await Chat.findOne({
+      participants: [req.userId, foundUser._id],
+    });
+
+    if (chatExists) {
+      res.status(200).json({ chatId: chatExists.id });
+      return;
+    }
+
     // create a chat document with this user and other user
     const newChat = await Chat.create({ participants: [req.userId, foundUser._id] });
 
     console.log(newChat);
 
-    res.status(201).json({ message: "New chat created successfully." });
+    res.status(201).json({ chatId: newChat.id });
   } catch (e) {
     console.error(e);
     res.status(500).json({ message: "Server error." });
   }
-
-  res.send({
-    message: `Hello wonderful world! This is your user id: ${req.userId}`,
-  });
 });
 
 router.get("/:chatId", (req: UserRequest, res: Response) => {

@@ -17,12 +17,10 @@ const verifyJWT = (req: UserRequest, res: Response, next: NextFunction) => {
   if (!authHeader?.startsWith("Bearer ")) return res.sendStatus(401);
 
   const token = authHeader.split(" ")[1];
-  console.log(token);
 
   jwt.verify(token, getEnvVar("ACCESS_TOKEN_SECRET"), (err, decoded) => {
     if (err || decoded === undefined) return res.sendStatus(403);
     const payload = decoded as AccessTokenBody;
-    console.log(payload);
 
     if (payload.UserInfo === undefined || payload.UserInfo.userId === undefined)
       return res.status(403).json({ message: "Missing user info in token" });
