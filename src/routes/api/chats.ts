@@ -1,11 +1,41 @@
 import { Router, Response, Request } from "express";
 import { UserRequest } from "../../middleware/verifyJWT";
-import User from "../../models/User";
+import User, { IUser } from "../../models/User";
 import Chat from "../../models/Chat";
+import mongoose from "mongoose";
 
 const router = Router();
 
-router.post("/create", async (req: UserRequest, res: Response) => {
+router.get("/", async (req: UserRequest, res: Response) => {
+  console.log("test");
+  try {
+    const userId = req.userId;
+
+    const chats = await Chat.find({ participants: userId })
+      .populate<{ participants: IUser[] }>("participants", "userName")
+      .exec();
+
+    const result = chats.map((chat) => {
+      const other = chat.participants.find((p) => p._id.toString() !== userId);
+
+      if (!other) {
+        return res.status(404).json({ message: "Chat not found" });
+      }
+
+      return {
+        chatId: chat.id,
+        participant: other.userName,
+      };
+    });
+
+    res.status(200).json(result);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ message: "Server error." });
+  }
+});
+
+router.post("/", async (req: UserRequest, res: Response) => {
   // get userName from body
   const { participant } = req.body || {};
 
@@ -43,8 +73,6 @@ router.post("/create", async (req: UserRequest, res: Response) => {
     // create a chat document with this user and other user
     const newChat = await Chat.create({ participants: [req.userId, foundUser._id] });
 
-    console.log(newChat);
-
     res.status(201).json({ chatId: newChat.id });
   } catch (e) {
     console.error(e);
@@ -52,15 +80,36 @@ router.post("/create", async (req: UserRequest, res: Response) => {
   }
 });
 
-router.get("/:chatId", (req: UserRequest, res: Response) => {
-  const chatId = req.params;
+router.delete("/", async (req: UserRequest, res: Response) => {
+  const { chatId } = req.body || {};
 
-  res.send(chatId);
-  // check if chatId exists & user is a participant
+  if (!chatId) {
+    res.status(404).json({ message: "Chat ID is required" });
+    return;
+  }
 
-  // respond with chat messages: newest to oldest
+  try {
+    const foundChat = await Chat.findOne({ _id: chatId });
 
-  // res.send({ message: "Hello wonderful world!" });
+    if (!foundChat) {
+      res.status(404).json({ message: "Chat not found" });
+      return;
+    }
+
+    const userId = new mongoose.Types.ObjectId(req.userId);
+
+    if (!foundChat.participants.includes(userId)) {
+      res.status(403).json({ message: "You're not part of this chat" });
+      return;
+    }
+
+    await foundChat.deleteOne();
+
+    res.sendStatus(204);
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ message: "Server error." });
+  }
 });
 
 export default router;

@@ -1,4 +1,10 @@
-import { model, Schema } from "mongoose";
+import { model, Schema, Document, Types } from "mongoose";
+import { IUser } from "./User";
+
+export interface IChat extends Document {
+  _id: Types.ObjectId;
+  participants: (Types.ObjectId | IUser)[];
+}
 
 const arrayLimit = (val: String[]) => {
   return val.length === 2;
