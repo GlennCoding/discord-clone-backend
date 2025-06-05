@@ -35,13 +35,13 @@ const handleIncomingNewMessage = async (
       text,
     });
 
-    socket.to(chatId).emit("chat:newMessage", {
+    socket.emit("chat:newMessage", {
       message: {
         text: newMessage.text,
         chatId: newMessage.chat.toString(),
-        senderUserId: newMessage.sender.id.toString(),
+        senderUserId: newMessage.sender.toString(),
         createdAt: newMessage.createdAt.toISOString(),
-        id: newMessage.id,
+        id: newMessage.id.toString(),
       } as IMessageAPI,
     });
   } catch (error) {
@@ -74,9 +74,9 @@ const handleJoinChat = async (socket: Socket, chatId: string) => {
       return {
         text: message.text,
         chatId: message.chat.toString(),
-        senderUserId: message.sender.id.toString(),
+        senderUserId: message.sender.toString(),
         createdAt: message.createdAt.toISOString(),
-        id: message.id,
+        id: message.id.toString(),
       } as IMessageAPI;
     });
 

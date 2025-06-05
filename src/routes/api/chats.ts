@@ -2,6 +2,7 @@ import { Router, Response, Request } from "express";
 import { UserRequest } from "../../middleware/verifyJWT";
 import User, { IUser } from "../../models/User";
 import Chat from "../../models/Chat";
+import Message from "../../models/Message";
 import mongoose from "mongoose";
 
 const router = Router();
@@ -103,6 +104,8 @@ router.delete("/:chatId", async (req: UserRequest, res: Response) => {
       return;
     }
 
+    // Delete the chat and all related messages
+    await Message.deleteMany({ chat: foundChat._id });
     await foundChat.deleteOne();
 
     res.sendStatus(204);
