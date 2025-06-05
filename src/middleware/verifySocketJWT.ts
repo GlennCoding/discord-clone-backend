@@ -22,7 +22,7 @@ const verifySocketJWT = (socket: Socket, next: (err?: ExtendedError) => void) =>
 
       if (!payload.UserInfo?.userId) return next(new Error("USER_INFO_MISSING"));
 
-      socket.data.user = payload.UserInfo.userId;
+      socket.data.userId = payload.UserInfo.userId;
       next();
     }
   );

@@ -80,8 +80,8 @@ router.post("/", async (req: UserRequest, res: Response) => {
   }
 });
 
-router.delete("/", async (req: UserRequest, res: Response) => {
-  const { chatId } = req.body || {};
+router.delete("/:chatId", async (req: UserRequest, res: Response) => {
+  const { chatId } = req.params || {};
 
   if (!chatId) {
     res.status(404).json({ message: "Chat ID is required" });
