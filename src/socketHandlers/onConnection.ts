@@ -3,6 +3,53 @@ import Message from "../models/Message";
 import Chat from "../models/Chat";
 import { IUser } from "../models/User";
 
+type IMessageAPI = {
+  text: string;
+  chatId: string;
+  senderUserId: string;
+  createdAt: string;
+  id: string;
+};
+
+const handleIncomingNewMessage = async (
+  socket: Socket,
+  chatId: string,
+  text: string
+) => {
+  try {
+    const chat = await Chat.findOne({ _id: chatId }).populate<{
+      participants: IUser[];
+    }>("participants", "userName");
+    const participant = chat?.participants.find(
+      (p) => p.id.toString() !== socket.data.userId
+    );
+
+    if (!participant) {
+      socket.emit("chat:error", "You're not part of this chat");
+      return;
+    }
+
+    const newMessage = await Message.create({
+      chat: chatId,
+      sender: socket.data.userId,
+      text,
+    });
+
+    socket.to(chatId).emit("chat:newMessage", {
+      message: {
+        text: newMessage.text,
+        chatId: newMessage.chat.toString(),
+        senderUserId: newMessage.sender.id.toString(),
+        createdAt: newMessage.createdAt.toISOString(),
+        id: newMessage.id,
+      } as IMessageAPI,
+    });
+  } catch (error) {
+    console.error("Error fetching messages:", error);
+    socket.emit("chat:error", "Failed to fetch chat messages");
+  }
+};
+
 const handleJoinChat = async (socket: Socket, chatId: string) => {
   socket.join(chatId);
 
@@ -23,9 +70,19 @@ const handleJoinChat = async (socket: Socket, chatId: string) => {
       .populate<{ sender: IUser }>("sender", "userName")
       .sort({ createdAt: 1 });
 
+    const result = messages.map((message) => {
+      return {
+        text: message.text,
+        chatId: message.chat.toString(),
+        senderUserId: message.sender.id.toString(),
+        createdAt: message.createdAt.toISOString(),
+        id: message.id,
+      } as IMessageAPI;
+    });
+
     socket.emit("chat:messages", {
       participant: participant.userName,
-      messages,
+      messages: result,
     });
   } catch (error) {
     console.error("Error fetching messages:", error);
@@ -39,7 +96,7 @@ const handleLeaveChat = (socket: Socket, chatId: string) => {
   console.log(`Socket left chat: ${chatId}`);
 };
 
-const onConnnection = (socket: Socket) => {
+const onConnection = (socket: Socket) => {
   console.log("Socket connected!");
 
   socket.on("disconnect", () => {
@@ -49,6 +106,12 @@ const onConnnection = (socket: Socket) => {
   socket.on("chat:join", (chatId: string) => handleJoinChat(socket, chatId));
 
   socket.on("chat:leave", (chatId: string) => handleLeaveChat(socket, chatId));
+
+  socket.on(
+    "chat:newMessage",
+    ({ chatId, text }: { chatId: string; text: string }) =>
+      handleIncomingNewMessage(socket, chatId, text)
+  );
 };
 
-export default onConnnection;
+export default onConnection;

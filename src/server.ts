@@ -23,7 +23,7 @@ import credentials from "./middleware/credentials";
 import corsOptions from "./config/corsOptions";
 import getEnvVar from "./utils/getEnvVar";
 import verifySocketJWT from "./middleware/verifySocketJWT";
-import onConnnection from "./socketHandlers/onConnection";
+import onConnection from "./socketHandlers/onConnection";
 
 const PORT = getEnvVar("PORT") || 8000;
 const app = express();
@@ -42,7 +42,7 @@ app.use(cookieParser());
 
 io.use(verifySocketJWT);
 
-io.on("connection", onConnnection);
+io.on("connection", onConnection);
 
 app.use("/", rootRouter);
 app.use("/register", registerRouter);
