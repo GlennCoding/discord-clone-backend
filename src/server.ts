@@ -42,7 +42,7 @@ app.use(cookieParser());
 
 io.use(verifySocketJWT);
 
-io.on("connection", onConnection);
+io.on("connection", (socket) => onConnection(io, socket));
 
 app.use("/", rootRouter);
 app.use("/register", registerRouter);

@@ -1,4 +1,4 @@
-import { Socket } from "socket.io";
+import { Server, Socket } from "socket.io";
 import Message from "../models/Message";
 import Chat from "../models/Chat";
 import { IUser } from "../models/User";
@@ -12,6 +12,7 @@ type IMessageAPI = {
 };
 
 const handleIncomingNewMessage = async (
+  io: Server,
   socket: Socket,
   chatId: string,
   text: string
@@ -35,7 +36,7 @@ const handleIncomingNewMessage = async (
       text,
     });
 
-    socket.emit("chat:newMessage", {
+    io.to(chatId).emit("chat:newMessage", {
       message: {
         text: newMessage.text,
         chatId: newMessage.chat.toString(),
@@ -80,7 +81,7 @@ const handleJoinChat = async (socket: Socket, chatId: string) => {
       } as IMessageAPI;
     });
 
-    socket.emit("chat:messages", {
+    socket.to(chatId).emit("chat:messages", {
       participant: participant.userName,
       messages: result,
     });
@@ -92,11 +93,9 @@ const handleJoinChat = async (socket: Socket, chatId: string) => {
 
 const handleLeaveChat = (socket: Socket, chatId: string) => {
   socket.leave(chatId);
-
-  console.log(`Socket left chat: ${chatId}`);
 };
 
-const onConnection = (socket: Socket) => {
+const onConnection = (io: Server, socket: Socket) => {
   console.log("Socket connected!");
 
   socket.on("disconnect", () => {
@@ -110,7 +109,7 @@ const onConnection = (socket: Socket) => {
   socket.on(
     "chat:newMessage",
     ({ chatId, text }: { chatId: string; text: string }) =>
-      handleIncomingNewMessage(socket, chatId, text)
+      handleIncomingNewMessage(io, socket, chatId, text)
   );
 };
 
