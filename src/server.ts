@@ -7,6 +7,7 @@ import express, {
   RequestHandler,
 } from "express";
 import cors from "cors";
+import http from "http";
 import { Server, Socket } from "socket.io";
 import { connectDB } from "./config/dbConn";
 
@@ -25,24 +26,34 @@ import getEnvVar from "./utils/getEnvVar";
 import verifySocketJWT from "./middleware/verifySocketJWT";
 import onConnection from "./socketHandlers/onConnection";
 
+// Load PORT from environment
 const PORT = getEnvVar("PORT") || 8000;
+
+// Initialize Express app
 const app = express();
 
-const io = new Server({
-  cors: corsOptions,
-});
+// Set trust proxy if behind reverse proxy (e.g. NGINX, Heroku)
+app.set("trust proxy", true);
 
+// Connect to database
 connectDB();
 
+// Middleware
 app.use(credentials);
 app.use(cors(corsOptions));
-
 app.use(express.json());
 app.use(cookieParser());
 
-io.use(verifySocketJWT);
+// Create HTTP server and attach Socket.IO to it
+const server = http.createServer(app);
 
-io.on("connection", (socket) => onConnection(io, socket));
+const io = new Server(server, {
+  cors: corsOptions,
+});
+
+// Attach Socket.IO middleware and handlers
+io.use(verifySocketJWT);
+io.on("connection", (socket: Socket) => onConnection(io, socket));
 
 app.use("/", rootRouter);
 app.use("/register", registerRouter);
@@ -54,15 +65,13 @@ app.use("/user", userRouter);
 app.use("/chat", chatRouter);
 app.use("/message", messageRouter);
 
-// Global error handling
-app.use((err: Errback, _req: Request, res: Response, next: NextFunction) => {
+// Global error handler
+app.use((err: Errback, _req: Request, res: Response, _next: NextFunction) => {
   console.error(err);
-  res.status(500).send(err);
+  res.status(500).send("Internal Server Error");
 });
 
-// start the Express server
-app.listen(PORT, () => {
-  console.log(`Server is running on port: ${PORT}`);
+// Start server
+server.listen(PORT, () => {
+  console.log(`🚀 Server (HTTP + Socket.IO) is running on port ${PORT}`);
 });
-
-io.listen(8001);
