@@ -80,7 +80,7 @@ const handleJoinChat = async (socket: Socket, chatId: string) => {
       return {
         text: message.text,
         chatId: message.chat.toString(),
-        sender: message.sender.toString() === socket.data.userId ? "self" : "other",
+        sender: message.sender.id === socket.data.userId ? "self" : "other",
         createdAt: message.createdAt.toISOString(),
         id: message.id.toString(),
       } as IMessageAPI;
