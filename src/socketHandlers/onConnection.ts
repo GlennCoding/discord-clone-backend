@@ -6,7 +6,7 @@ import { IUser } from "../models/User";
 type IMessageAPI = {
   text: string;
   chatId: string;
-  senderUserId: string;
+  sender: "self" | "other";
   createdAt: string;
   id: string;
 };
@@ -36,14 +36,19 @@ const handleIncomingNewMessage = async (
       text,
     });
 
-    io.to(chatId).emit("chat:newMessage", {
-      message: {
-        text: newMessage.text,
-        chatId: newMessage.chat.toString(),
-        senderUserId: newMessage.sender.toString(),
-        createdAt: newMessage.createdAt.toISOString(),
-        id: newMessage.id.toString(),
-      } as IMessageAPI,
+    const resMessage = (sender: "self" | "other"): IMessageAPI => ({
+      text: newMessage.text,
+      chatId: newMessage.chat.toString(),
+      sender,
+      createdAt: newMessage.createdAt.toISOString(),
+      id: newMessage.id.toString(),
+    });
+
+    socket.emit("chat:newMessage", {
+      message: resMessage("self"),
+    });
+    socket.to(chatId).emit("chat:newMessage", {
+      message: resMessage("other"),
     });
   } catch (error) {
     console.error("Error fetching messages:", error);
@@ -75,13 +80,13 @@ const handleJoinChat = async (socket: Socket, chatId: string) => {
       return {
         text: message.text,
         chatId: message.chat.toString(),
-        senderUserId: message.sender.toString(),
+        sender: message.sender.toString() === socket.data.userId ? "self" : "other",
         createdAt: message.createdAt.toISOString(),
         id: message.id.toString(),
       } as IMessageAPI;
     });
 
-    socket.to(chatId).emit("chat:messages", {
+    socket.emit("chat:messages", {
       participant: participant.userName,
       messages: result,
     });
