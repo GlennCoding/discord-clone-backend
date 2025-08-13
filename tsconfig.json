@@ -8,6 +8,6 @@
     "esModuleInterop": true,
     "skipLibCheck": true
   },
-  "include": ["src"],
+  "include": ["src", "tests/getEnvVar.test.ts"],
   "exclude": ["node_modules"]
 }
