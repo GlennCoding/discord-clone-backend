@@ -7,7 +7,7 @@ const router = Router();
 router.post("/", async (req: Request, res: Response) => {
   const { userName, password } = req.body;
 
-  if (!userName || !password) {
+  if (userName === undefined || password === undefined) {
     res.status(400).json({ message: "username and password are required." });
     return;
   }
@@ -24,8 +24,6 @@ router.post("/", async (req: Request, res: Response) => {
     // Create and save new user
     const hashedPwd = await bcrypt.hash(password, 10);
     const newUser = await User.create({ userName, password: hashedPwd });
-
-    console.log(newUser);
 
     res.status(201).json({ message: "User registered successfully." });
   } catch (err) {

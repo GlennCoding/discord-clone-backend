@@ -25,8 +25,8 @@ import verifySocketJWT from "./middleware/verifySocketJWT";
 import onConnection from "./socketHandlers/onConnection";
 
 // Initialize Express app
-const app = express();
-export const server = http.createServer(app);
+export const app = express();
+const server = http.createServer(app);
 const io = new Server(server, {
   cors: corsOptions,
 });

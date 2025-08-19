@@ -1,12 +1,13 @@
 import mongoose from "mongoose";
 import request from "supertest";
 import { MongoMemoryServer } from "mongodb-memory-server";
-import { server } from "../../app";
+import { app } from "../../app";
+import User from "../../models/User";
 
 let mongoServer;
 
 describe("/register", () => {
-  beforeEach(async () => {
+  beforeAll(async () => {
     mongoServer = await MongoMemoryServer.create();
     const mongoUri = mongoServer.getUri();
     await mongoose.connect(mongoUri);
@@ -17,33 +18,40 @@ describe("/register", () => {
     await mongoServer!.stop();
   });
 
-  it("should response with string", async () => {
-    const res = await request(server).get("/").expect(200);
-    expect(res.body.message).toBe("Hello wonderful world!");
-    // send a request to /register api route
-    // return 200 as response
-    // test if DB contains new User
+  beforeEach(async () => {
+    await User.deleteMany({});
   });
 
-  // it("should successfully register a new user", () => {
-  //   // request(app).get
-  //   // send a request to /register api route
-  //   // return 200 as response
-  //   // test if DB contains new User
-  // });
+  it("should respond with string", async () => {
+    const res = await request(app).get("/").expect(200);
+    expect(res.body.message).toBe("Hello wonderful world!");
+  });
 
-  // it("should throw an error for a duplicate username", () => {
-  //   // input same as existing user
-  //   // return error message
-  // });
+  it("should successfully register a new user", async () => {
+    const payload = { userName: "John", password: "Cena" };
+    await request(app).post("/register").send(payload).expect(201);
 
-  // it("should throw an error for a missing input", () => {
-  //   // invalid input
-  //   // return error message
-  // });
+    const userInDb = await User.findOne({ userName: payload.userName });
 
-  // it("should throw an error for a invalid password", () => {
-  //   // invalid password input
-  //   // return error message
-  // });
+    expect(userInDb).not.toBeNull();
+    expect(userInDb!.userName).toBe(payload.userName);
+    expect(userInDb!.password).not.toBe(payload.password);
+  });
+
+  it("should throw an error for a duplicate username", async () => {
+    await User.create({ userName: "Test", password: "password123" });
+
+    const payload = { userName: "Test", password: "password123" };
+    await request(app).post("/register").send(payload).expect(409);
+  });
+
+  it("should throw an error for a missing input", async () => {
+    const payload = { userName: "John2" };
+    const payload2 = { password: "John2" };
+    const payload3 = {};
+
+    await request(app).post("/register").send(payload).expect(400);
+    await request(app).post("/register").send(payload2).expect(400);
+    await request(app).post("/register").send(payload3).expect(400);
+  });
 });
