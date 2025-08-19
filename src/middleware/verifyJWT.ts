@@ -14,6 +14,7 @@ interface AccessTokenBody extends JwtPayload {
 
 const verifyJWT = (req: UserRequest, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
+
   if (!authHeader?.startsWith("Bearer ")) return res.sendStatus(401);
 
   const token = authHeader.split(" ")[1];

@@ -15,6 +15,7 @@ router.post("/", async (req: Request, res: Response) => {
   }
 
   try {
+    // Check if user is in DB
     const foundUser = await User.findOne({ userName });
 
     if (!foundUser) {
@@ -24,6 +25,7 @@ router.post("/", async (req: Request, res: Response) => {
       return;
     }
 
+    // Check pwd validity
     const isSamePassword = await bcrypt.compare(password, foundUser.password);
 
     if (isSamePassword !== true) {
@@ -31,6 +33,7 @@ router.post("/", async (req: Request, res: Response) => {
       return;
     }
 
+    // Generate new accessToken
     const accessToken = jwt.sign(
       {
         UserInfo: {
@@ -41,6 +44,7 @@ router.post("/", async (req: Request, res: Response) => {
       { expiresIn: "20min" }
     );
 
+    // Generate new resfreshToken
     const refreshToken = jwt.sign(
       {
         userId: foundUser._id,
@@ -49,10 +53,11 @@ router.post("/", async (req: Request, res: Response) => {
       { expiresIn: "1day" }
     );
 
+    // Update refreshToken in DB
     foundUser.refreshTokens = [refreshToken];
-
     await foundUser.save();
 
+    // Add refreshToken to cookies
     res.cookie("jwt", refreshToken, {
       httpOnly: true,
       secure: true,
@@ -60,6 +65,7 @@ router.post("/", async (req: Request, res: Response) => {
       maxAge: 24 * 60 * 60 * 1000,
     });
 
+    // Send 200 status & send accessToken back
     res.status(200).json({ message: "Login successful", token: accessToken });
   } catch (err) {
     console.error(err);
