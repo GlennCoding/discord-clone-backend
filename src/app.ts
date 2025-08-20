@@ -23,6 +23,7 @@ import credentials from "./middleware/credentials";
 import corsOptions from "./config/corsOptions";
 import verifySocketJWT from "./middleware/verifySocketJWT";
 import onConnection from "./socketHandlers/onConnection";
+import { errorMiddleware } from "./middleware/errorMiddleware";
 
 // Initialize Express app
 export const app = express();
@@ -51,11 +52,7 @@ app.use("/user", userRouter);
 app.use("/chat", chatRouter);
 app.use("/message", messageRouter);
 
-// Global error handler
-app.use((err: Errback, _req: Request, res: Response, _next: NextFunction) => {
-  console.error(err);
-  res.status(500).send("Internal Server Error");
-});
+app.use(errorMiddleware);
 
 // Socket.IO middleware and handlers
 io.use(verifySocketJWT);

@@ -1,0 +1,24 @@
+import bcrypt from "bcrypt";
+import User, { IUser } from "../models/User";
+import { InvalidCredentialsError, UserNotFoundError } from "../utils/errors";
+
+const SALT_ROUNDS = 10;
+
+export const createUser = async (userName: string, password: string) => {
+  const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+  const user = new User({ userName, password: hashedPassword });
+  return await user.save();
+};
+
+export const verifyUser = async (
+  userName: string,
+  password: string
+): Promise<IUser> => {
+  const user: IUser | null = await User.findOne({ userName });
+  if (!user) throw new UserNotFoundError(userName);
+
+  const isMatch = await bcrypt.compare(password, user.password);
+
+  if (!isMatch) throw new InvalidCredentialsError();
+  return user;
+};

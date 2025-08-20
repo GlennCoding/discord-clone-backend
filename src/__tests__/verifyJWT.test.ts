@@ -1,4 +1,4 @@
-import verifyJWT, { UserRequest } from "../src/middleware/verifyJWT";
+import verifyJWT, { UserRequest } from "../middleware/verifyJWT";
 import jwt from "jsonwebtoken";
 
 vi.mock("jsonwebtoken");

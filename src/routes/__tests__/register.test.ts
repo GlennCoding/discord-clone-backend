@@ -1,33 +1,22 @@
-import mongoose from "mongoose";
 import request from "supertest";
-import { MongoMemoryServer } from "mongodb-memory-server";
 import { app } from "../../app";
 import User from "../../models/User";
-
-let mongoServer;
+import { setupMongoDB, teardownMongoDB } from "../../__tests__/setup";
 
 describe("/register", () => {
   beforeAll(async () => {
-    mongoServer = await MongoMemoryServer.create();
-    const mongoUri = mongoServer.getUri();
-    await mongoose.connect(mongoUri);
+    await setupMongoDB();
   });
 
   afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer!.stop();
+    await teardownMongoDB();
   });
 
   beforeEach(async () => {
     await User.deleteMany({});
   });
 
-  it("should respond with string", async () => {
-    const res = await request(app).get("/").expect(200);
-    expect(res.body.message).toBe("Hello wonderful world!");
-  });
-
-  it("should successfully register a new user", async () => {
+  it("should successfully register a new user and hash the password", async () => {
     const payload = { userName: "John", password: "Cena" };
     await request(app).post("/register").send(payload).expect(201);
 

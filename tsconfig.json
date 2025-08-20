@@ -9,6 +9,6 @@
     "skipLibCheck": true,
     "types": ["node", "vitest/globals"]
   },
-  "include": ["src/**/*", "**/*.test.ts"],
+  "include": ["src/**/*", "src/env.d.ts"],
   "exclude": ["node_modules", "dist"]
 }

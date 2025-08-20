@@ -1,4 +1,4 @@
-import getEnvVar from "../src/utils/getEnvVar";
+import getEnvVar from "../utils/getEnvVar";
 
 describe("getEnvVar", () => {
   const OLD_ENV = process.env;
