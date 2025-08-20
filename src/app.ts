@@ -1,11 +1,5 @@
 import "./config/loadEnvironment";
-import express, {
-  Request,
-  Response,
-  Errback,
-  NextFunction,
-  RequestHandler,
-} from "express";
+import express, { RequestHandler } from "express";
 import cors from "cors";
 import http from "http";
 import { Server, Socket } from "socket.io";
@@ -27,7 +21,7 @@ import { errorMiddleware } from "./middleware/errorMiddleware";
 
 // Initialize Express app
 export const app = express();
-const server = http.createServer(app);
+export const server = http.createServer(app);
 const io = new Server(server, {
   cors: corsOptions,
 });
