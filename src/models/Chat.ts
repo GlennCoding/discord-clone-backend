@@ -10,7 +10,7 @@ const arrayLimit = (val: String[]) => {
   return val.length === 2;
 };
 
-const chatSchema = new Schema({
+const chatSchema = new Schema<IChat>({
   participants: {
     type: [Schema.Types.ObjectId],
     ref: "User",

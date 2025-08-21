@@ -14,6 +14,7 @@
  */
 
 /**
+ * TODOs:
  * Connect actual io server
  *
  * Test sending a message and getting 401
