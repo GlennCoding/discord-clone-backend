@@ -8,7 +8,6 @@ import mongoose from "mongoose";
 const router = Router();
 
 router.get("/", async (req: UserRequest, res: Response) => {
-  console.log("test");
   try {
     const userId = req.userId;
 

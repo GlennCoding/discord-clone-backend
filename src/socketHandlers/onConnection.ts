@@ -101,8 +101,6 @@ const handleLeaveChat = (socket: Socket, chatId: string) => {
 };
 
 const onConnection = (io: Server, socket: Socket) => {
-  console.log("Socket connected!");
-
   socket.on("disconnect", () => {
     console.log("Socket disconnected!");
   });

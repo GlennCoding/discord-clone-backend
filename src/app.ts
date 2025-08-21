@@ -22,7 +22,7 @@ import { errorMiddleware } from "./middleware/errorMiddleware";
 // Initialize Express app
 export const app = express();
 export const server = http.createServer(app);
-const io = new Server(server, {
+export const io = new Server(server, {
   cors: corsOptions,
 });
 
