@@ -1,23 +1,17 @@
 /**
- * Before all:
- * 1) Create server socket
- * 2) Create client socket
- * - Wait for connection confirmation (Promise)
+ * First: Connect server & client socket (beforeAll)
+ * - start http server with io instance
+ * - get PORT
+ * - connect client with server
+ * - resolve when successful
  *
  * After all:
- * 1) Close server & client socket
+ * - close server & client socket
  *
- * Tests ---------
- * 1) Client send event & server receives
- * - Send event via client
- * - Server emits ("hello world back")
- */
-
-/**
- * TODOs:
- * Connect actual io server
+ * Test (should work):
+ * - client sends event
+ * - server recieves and resolves test (test is wrapped in a promise)
  *
- * Test sending a message and getting 401
  */
 
 import { createServer } from "node:http";

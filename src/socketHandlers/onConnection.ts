@@ -2,6 +2,7 @@ import { Server, Socket } from "socket.io";
 import Message from "../models/Message";
 import Chat from "../models/Chat";
 import { IUser } from "../models/User";
+import { EVENTS } from "../utils/events";
 
 type IMessageAPI = {
   text: string;
@@ -26,7 +27,7 @@ const handleIncomingNewMessage = async (
     );
 
     if (!participant) {
-      socket.emit("chat:error", "You're not part of this chat");
+      socket.emit(EVENTS["CHAT_ERROR"], "You're not part of this chat");
       return;
     }
 
@@ -44,10 +45,10 @@ const handleIncomingNewMessage = async (
       id: newMessage.id.toString(),
     });
 
-    socket.emit("chat:newMessage", {
+    socket.emit(EVENTS["CHAT_NEW_MESSAGE"], {
       message: resMessage("self"),
     });
-    socket.to(chatId).emit("chat:newMessage", {
+    socket.to(chatId).emit(EVENTS["CHAT_NEW_MESSAGE"], {
       message: resMessage("other"),
     });
   } catch (error) {
@@ -68,7 +69,7 @@ const handleJoinChat = async (socket: Socket, chatId: string) => {
     );
 
     if (!participant) {
-      socket.emit("chat:error", "You're not part of this chat");
+      socket.emit(EVENTS["CHAT_ERROR"], "You're not part of this chat");
       return;
     }
 
@@ -86,7 +87,7 @@ const handleJoinChat = async (socket: Socket, chatId: string) => {
       } as IMessageAPI;
     });
 
-    socket.emit("chat:messages", {
+    socket.emit(EVENTS["CHAT_MESSAGES"], {
       participant: participant.userName,
       messages: result,
     });
@@ -105,12 +106,14 @@ const onConnection = (io: Server, socket: Socket) => {
     console.log("Socket disconnected!");
   });
 
-  socket.on("chat:join", (chatId: string) => handleJoinChat(socket, chatId));
+  socket.on(EVENTS["CHAT_JOIN"], (chatId: string) => handleJoinChat(socket, chatId));
 
-  socket.on("chat:leave", (chatId: string) => handleLeaveChat(socket, chatId));
+  socket.on(EVENTS["CHAT_LEAVE"], (chatId: string) =>
+    handleLeaveChat(socket, chatId)
+  );
 
   socket.on(
-    "chat:newMessage",
+    EVENTS["CHAT_NEW_MESSAGE"],
     ({ chatId, text }: { chatId: string; text: string }) =>
       handleIncomingNewMessage(io, socket, chatId, text)
   );
