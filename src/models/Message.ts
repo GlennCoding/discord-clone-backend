@@ -1,6 +1,16 @@
 import { model, Schema, Types } from "mongoose";
+import { IUser } from "./User";
+import { IChat } from "./Chat";
 
-const messageSchema = new Schema(
+export interface IMessage extends Document {
+  _id: Types.ObjectId;
+  chat: IChat;
+  sender: IUser;
+  createdAt: Date;
+  text: string;
+}
+
+const messageSchema = new Schema<IMessage>(
   {
     chat: {
       type: Schema.Types.ObjectId,

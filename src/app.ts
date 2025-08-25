@@ -8,9 +8,7 @@ import rootRouter from "./routes/root";
 import authRouter from "./routes/auth";
 import registerRouter from "./routes/register";
 import chatRouter from "./routes/api/chats";
-import messageRouter from "./routes/api/messages";
 import verifyJWT from "./middleware/verifyJWT";
-import userRouter from "./routes/api/users";
 import refreshRouter from "./routes/refresh";
 import cookieParser from "cookie-parser";
 import credentials from "./middleware/credentials";
@@ -42,9 +40,7 @@ app.use("/login", authRouter);
 app.use("/refresh", refreshRouter);
 
 app.use(verifyJWT as RequestHandler);
-app.use("/user", userRouter);
 app.use("/chat", chatRouter);
-app.use("/message", messageRouter);
 
 app.use(errorMiddleware);
 

@@ -51,12 +51,12 @@ router.post("/", async (req: UserRequest, res: Response) => {
     if (!foundUser) {
       res
         .status(400)
-        .json({ message: `A user with the username ${participant} doesn't exist` });
+        .json({ error: `A user with the username ${participant} doesn't exist` });
       return;
     }
 
     if (foundUser.id === req.userId) {
-      res.status(400).json({ message: `You can't start a chat with yourself` });
+      res.status(400).json({ error: "You can't start a chat with yourself" });
       return;
     }
 

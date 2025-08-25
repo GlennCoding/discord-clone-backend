@@ -1,10 +1,10 @@
 import { Server, Socket } from "socket.io";
-import Message from "../models/Message";
+import Message, { IMessage } from "../models/Message";
 import Chat from "../models/Chat";
 import { IUser } from "../models/User";
 import { EVENTS } from "../utils/events";
 
-type IMessageAPI = {
+export type IMessageAPI = {
   text: string;
   chatId: string;
   sender: "self" | "other";
