@@ -19,6 +19,10 @@ const handleIncomingNewMessage = async (
   text: string
 ) => {
   try {
+    if (!text) {
+      return socket.emit(EVENTS["CHAT_ERROR"], { error: "Missing text" });
+    }
+
     const chat = await Chat.findOne({ _id: chatId }).populate<{
       participants: IUser[];
     }>("participants", "userName");

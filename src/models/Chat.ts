@@ -3,7 +3,7 @@ import { IUser } from "./User";
 
 export interface IChat extends Document {
   _id: Types.ObjectId;
-  participants: IUser[];
+  participants: (Types.ObjectId | IUser)[];
 }
 
 const arrayLimit = (val: String[]) => {

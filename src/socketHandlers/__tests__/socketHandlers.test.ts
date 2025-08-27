@@ -14,7 +14,6 @@
 
 import { type AddressInfo } from "node:net";
 import { io as ioc, type Socket as ClientSocket } from "socket.io-client";
-import { type Socket as ServerSocket } from "socket.io";
 import { server, io, app } from "../../app";
 import request from "supertest";
 import { setupMongoDB, teardownMongoDB } from "../../__tests__/setup";
@@ -22,6 +21,7 @@ import User, { IUser } from "../../models/User";
 import { EVENTS } from "../../utils/events";
 import { IMessageAPI } from "../onConnection";
 import Message from "../../models/Message";
+import { promisify } from "node:util";
 
 let user1Token: string, user1: IUser | null, chatId: string;
 const user1Data = { userName: "John", password: "Cena" };
@@ -53,66 +53,30 @@ afterAll(async () => {
 });
 
 describe("web sockets", () => {
-  let serverSocket: ServerSocket, clientSocket: ClientSocket, port: number;
+  let clientSocket: ClientSocket;
 
-  beforeAll(
-    () =>
-      new Promise((resolve, reject) => {
-        server;
-
-        server.listen(async () => {
-          port = (server.address() as AddressInfo).port;
-
-          io.on("connection", (socket) => {
-            serverSocket = socket;
-          });
-
-          clientSocket.on("connect", () => {
-            resolve("Connection successful");
-          });
-
-          clientSocket.on("connect_error", (e) => {
-            reject(e);
-          });
-        });
-      })
-  );
+  beforeAll(async () => {
+    await promisify(server.listen).call(server);
+    const port = (server.address() as AddressInfo).port;
+    clientSocket = ioc(`http://localhost:${port}`, {
+      auth: { token: user1Token },
+      reconnectionAttempts: 5,
+      transports: ["websocket"],
+    });
+    await new Promise((resolve, reject) => {
+      clientSocket.on("connect", () => resolve("Connection successful"));
+      clientSocket.on("connect_error", (e) => reject(e));
+    });
+  });
 
   afterAll(async () => {
     await io.close();
     clientSocket.disconnect();
   });
 
-  beforeEach(() => {
-    clientSocket = ioc(`http://localhost:${port}`, {
-      auth: { token: user1Token },
-      reconnectionAttempts: 5,
-    });
-
-    return new Promise((resolve, reject) => {
-      clientSocket.on("connect", () => resolve("Connection successful"));
-
-      clientSocket.on("connect_error", (e) => reject(e));
-    });
-  });
-
   afterEach(() => {
     clientSocket.removeAllListeners();
-    clientSocket.disconnect();
   });
-
-  it("should work", () =>
-    new Promise((done) => {
-      if (!clientSocket || !serverSocket) {
-        throw new Error("clientSocket or serverSocket is undefined");
-      }
-
-      clientSocket.on("hello", (arg) => {
-        expect(arg).toBe("world");
-        done(true);
-      });
-      serverSocket.emit("hello", "world");
-    }));
 
   it("should make clients joining a chat work", () =>
     new Promise((done) => {
@@ -121,7 +85,7 @@ describe("web sockets", () => {
         expect(messages).toEqual([]);
         done(true);
       });
-      clientSocket.emit("chat:join", chatId);
+      clientSocket.emit(EVENTS["CHAT_JOIN"], chatId);
     }));
 
   it("should make a client send a message", () =>
@@ -151,7 +115,7 @@ describe("web sockets", () => {
       text: "Hello World",
     });
 
-    return new Promise((resolve, reject) => {
+    await new Promise((resolve) => {
       clientSocket.on(EVENTS["CHAT_MESSAGES"], (s) => {
         console.log(s);
         resolve({});
@@ -161,7 +125,17 @@ describe("web sockets", () => {
     });
   }, 15000);
 
-  it("should throw 400 on missing inputs", () => {});
+  it("should throw 400 on missing inputs", async () => {
+    await new Promise((resolve) => {
+      clientSocket.on(EVENTS["CHAT_ERROR"], (e) => {
+        expect(e).toEqual({ error: "Missing text" });
+        resolve({});
+      });
+
+      clientSocket.emit(EVENTS["CHAT_JOIN"], chatId);
+      clientSocket.emit(EVENTS["CHAT_NEW_MESSAGE"], { chatId, text: "" });
+    });
+  });
 
   it("should load existing messages upon entering chat", () => {});
 
