@@ -24,6 +24,7 @@ import Message from "../../models/Message";
 import { promisify } from "node:util";
 
 let user1Token: string, user1: IUser | null, chatId: string;
+let user2Token: string, user2: IUser | null;
 const user1Data = { userName: "John", password: "Cena" };
 const user2Data = { userName: "Nama", password: "Rupa" };
 
@@ -37,6 +38,8 @@ beforeAll(async () => {
 
   // Create user 2
   await request(app).post("/register").send(user2Data);
+  const loginRes2 = await request(app).post("/login").send(user2Data);
+  user2Token = loginRes2.body.token;
 
   // Create chat room
   const createChatRes = await request(app)
@@ -53,46 +56,60 @@ afterAll(async () => {
 });
 
 describe("web sockets", () => {
-  let clientSocket: ClientSocket;
+  let user2Socket: ClientSocket;
+  let user1Socket: ClientSocket;
 
   beforeAll(async () => {
     await promisify(server.listen).call(server);
     const port = (server.address() as AddressInfo).port;
-    clientSocket = ioc(`http://localhost:${port}`, {
-      auth: { token: user1Token },
-      reconnectionAttempts: 5,
-      transports: ["websocket"],
-    });
-    await new Promise((resolve, reject) => {
-      clientSocket.on("connect", () => resolve("Connection successful"));
-      clientSocket.on("connect_error", (e) => reject(e));
-    });
+
+    const createSocket = (token: string) =>
+      ioc(`http://localhost:${port}`, {
+        auth: { token },
+        reconnectionAttempts: 5,
+        transports: ["websocket"],
+      });
+
+    const connectClientSocket = (clientSocket: ClientSocket) =>
+      new Promise((resolve, reject) => {
+        clientSocket.on("connect", () => resolve("Connection successful"));
+
+        clientSocket.on("connect_error", (e) => reject(e));
+      });
+
+    user1Socket = createSocket(user1Token);
+    user2Socket = createSocket(user2Token);
+
+    await Promise.all([
+      connectClientSocket(user1Socket),
+      connectClientSocket(user2Socket),
+    ]);
   });
 
   afterAll(async () => {
     await io.close();
-    clientSocket.disconnect();
+    user1Socket.disconnect();
   });
 
   afterEach(() => {
-    clientSocket.removeAllListeners();
+    user1Socket.removeAllListeners();
   });
 
   it("should make clients joining a chat work", () =>
     new Promise((done) => {
-      clientSocket.on(EVENTS["CHAT_MESSAGES"], ({ participant, messages }) => {
+      user1Socket.on(EVENTS["CHAT_MESSAGES"], ({ participant, messages }) => {
         expect(participant).toBe(user2Data.userName);
         expect(messages).toEqual([]);
         done(true);
       });
-      clientSocket.emit(EVENTS["CHAT_JOIN"], chatId);
+      user1Socket.emit(EVENTS["CHAT_JOIN"], chatId);
     }));
 
   it("should make a client send a message", () =>
     new Promise((done) => {
       const messagePayload = { chatId, text: "Hello World" };
 
-      clientSocket.on(EVENTS["CHAT_NEW_MESSAGE"], (res: IMessageAPI) => {
+      user1Socket.on(EVENTS["CHAT_NEW_MESSAGE"], (res: IMessageAPI) => {
         expect(res).toEqual({
           message: {
             id: expect.any(String),
@@ -104,8 +121,8 @@ describe("web sockets", () => {
         });
         done(true);
       });
-      clientSocket.emit(EVENTS["CHAT_JOIN"], chatId);
-      clientSocket.emit(EVENTS["CHAT_NEW_MESSAGE"], messagePayload);
+      user1Socket.emit(EVENTS["CHAT_JOIN"], chatId);
+      user1Socket.emit(EVENTS["CHAT_NEW_MESSAGE"], messagePayload);
     }));
 
   it("should load messages when entering chat", async () => {
@@ -116,30 +133,28 @@ describe("web sockets", () => {
     });
 
     await new Promise((resolve) => {
-      clientSocket.on(EVENTS["CHAT_MESSAGES"], (s) => {
+      user1Socket.on(EVENTS["CHAT_MESSAGES"], (s) => {
         console.log(s);
         resolve({});
       });
 
-      clientSocket.emit(EVENTS["CHAT_JOIN"], chatId);
+      user1Socket.emit(EVENTS["CHAT_JOIN"], chatId);
     });
   }, 15000);
 
   it("should throw 400 on missing inputs", async () => {
     await new Promise((resolve) => {
-      clientSocket.on(EVENTS["CHAT_ERROR"], (e) => {
+      user1Socket.on(EVENTS["CHAT_ERROR"], (e) => {
         expect(e).toEqual({ error: "Missing text" });
         resolve({});
       });
 
-      clientSocket.emit(EVENTS["CHAT_JOIN"], chatId);
-      clientSocket.emit(EVENTS["CHAT_NEW_MESSAGE"], { chatId, text: "" });
+      user1Socket.emit(EVENTS["CHAT_JOIN"], chatId);
+      user1Socket.emit(EVENTS["CHAT_NEW_MESSAGE"], { chatId, text: "" });
     });
   });
 
-  it("should load existing messages upon entering chat", () => {});
-
   it("should load and receive messages from the other chat participant", () => {});
 
-  it("disallow non-participants of a chat to a the chat", () => {});
+  it("disallow users to join and message in a chat that they are not part of", () => {});
 });
