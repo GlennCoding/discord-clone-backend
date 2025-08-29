@@ -18,14 +18,15 @@ import { server, io, app } from "../../app";
 import request from "supertest";
 import { setupMongoDB, teardownMongoDB } from "../../__tests__/setup";
 import User, { IUser } from "../../models/User";
-import { EVENTS } from "../../utils/events";
+import {
+  ERROR_STATUS,
+  EVENT_ERROR,
+  EVENT_SUCCESS,
+  EVENTS,
+} from "../../utils/events";
 import { IMessageAPI } from "../onConnection";
 import Message from "../../models/Message";
 import { promisify } from "node:util";
-
-let user1Token: string, user1: IUser | null;
-let user2Token: string, user2: IUser | null;
-let chatId: string;
 
 type UserData = {
   userName: string;
@@ -34,12 +35,22 @@ type UserData = {
 
 const user1Data: UserData = { userName: "John", password: "Cena" };
 const user2Data: UserData = { userName: "Nama", password: "Rupa" };
+const user3Data: UserData = { userName: "Bob", password: "Baumeister" };
+
+let user1Token: string, user1: IUser;
+let user2Token: string, user2: IUser;
+let user3Token: string, user3: IUser;
+
+let chatId: string;
 
 beforeAll(async () => {
   await setupMongoDB();
 
-  const createUser = async (userData: UserData): Promise<void> => {
+  const createUser = async (userData: UserData): Promise<IUser> => {
     await request(app).post("/register").send(userData);
+    const user = await User.findOne({ userName: userData.userName });
+    if (user === null) throw Error("User not found");
+    return user;
   };
 
   const getUserToken = async (userData: UserData): Promise<string> => {
@@ -47,23 +58,27 @@ beforeAll(async () => {
     return loginRes.body.token;
   };
 
-  // Create user 1
-  await createUser(user1Data);
+  const createChat = async (
+    userToken: string,
+    participant: string
+  ): Promise<string> => {
+    const res = await request(app)
+      .post("/chat")
+      .send({ participant })
+      .set("Authorization", `Bearer ${userToken}`);
+    return res.body.chatId;
+  };
+
+  user1 = await createUser(user1Data);
   user1Token = await getUserToken(user1Data);
 
-  // Create user 2
-  await createUser(user2Data);
+  user2 = await createUser(user2Data);
   user2Token = await getUserToken(user2Data);
 
-  // Create chat room
-  const createChatRes = await request(app)
-    .post("/chat")
-    .send({ participant: user2Data.userName })
-    .set("Authorization", `Bearer ${user1Token}`);
-  chatId = createChatRes.body.chatId;
+  user3 = await createUser(user3Data);
+  user3Token = await getUserToken(user3Data);
 
-  user1 = await User.findOne({ userName: user1Data.userName });
-  user2 = await User.findOne({ userName: user2Data.userName });
+  chatId = await createChat(user1Token, user2Data.userName);
 });
 
 afterAll(async () => {
@@ -71,8 +86,9 @@ afterAll(async () => {
 });
 
 describe("web sockets", () => {
-  let user2Socket: ClientSocket;
   let user1Socket: ClientSocket;
+  let user2Socket: ClientSocket;
+  let user3Socket: ClientSocket;
 
   beforeAll(async () => {
     await promisify(server.listen).call(server);
@@ -94,10 +110,12 @@ describe("web sockets", () => {
 
     user1Socket = createSocket(user1Token);
     user2Socket = createSocket(user2Token);
+    user3Socket = createSocket(user3Token);
 
     await Promise.all([
       connectClientSocket(user1Socket),
       connectClientSocket(user2Socket),
+      connectClientSocket(user3Socket),
     ]);
   });
 
@@ -109,87 +127,102 @@ describe("web sockets", () => {
   afterEach(async () => {
     user1Socket.removeAllListeners();
     user2Socket.removeAllListeners();
+    user3Socket.removeAllListeners();
     await Message.deleteMany({});
   });
 
-  it("should make clients joining a chat work", () =>
-    new Promise((done) => {
-      user1Socket.on(EVENTS["CHAT_MESSAGES"], ({ participant, messages }) => {
-        expect(participant).toBe(user2Data.userName);
-        expect(messages).toEqual([]);
-        done(true);
-      });
-      user1Socket.emit(EVENTS["CHAT_JOIN"], chatId);
-    }));
+  it("should make client joining a chat work", () => async () => {
+    const res: EVENT_SUCCESS<{ participant: string; messages: IMessageAPI[] }> =
+      await user1Socket.emitWithAck(EVENTS["CHAT_JOIN"], chatId);
 
-  it("should make a client send a message", () =>
-    new Promise((done) => {
-      const messagePayload = { chatId, text: "Hello World" };
+    expect(res.data.participant).toBe(user2Data.userName);
+    expect(res.data.messages).toEqual([]);
+  });
 
-      user1Socket.on(EVENTS["CHAT_NEW_MESSAGE"], (res: IMessageAPI) => {
-        expect(res).toEqual({
-          message: {
-            id: expect.any(String),
-            text: messagePayload.text,
-            chatId,
-            createdAt: expect.any(String),
-            sender: "self",
-          } as IMessageAPI,
-        });
-        done(true);
-      });
-      user1Socket.emit(EVENTS["CHAT_JOIN"], chatId);
-      user1Socket.emit(EVENTS["CHAT_NEW_MESSAGE"], messagePayload);
-    }));
+  it("should make a client send a message", () => async () => {
+    await user1Socket.emitWithAck(EVENTS["CHAT_JOIN"], chatId);
+
+    const messagePayload = { chatId, text: "Hello World" };
+    const newMessageAck: EVENT_SUCCESS<{ message: IMessageAPI }> =
+      await user1Socket.emitWithAck(EVENTS["CHAT_NEW_MESSAGE"], messagePayload);
+
+    expect(newMessageAck.status).toBe("OK");
+    expect(newMessageAck.data).toEqual({
+      message: {
+        id: expect.any(String),
+        text: messagePayload.text,
+        chatId,
+        createdAt: expect.any(String),
+        sender: "self",
+      } as IMessageAPI,
+    });
+  });
 
   it("should load messages when entering chat", async () => {
     await Message.create({
       chat: chatId,
-      sender: user1!.id,
+      sender: user1.id,
       text: "Hello World",
     });
     await Message.create({
       chat: chatId,
-      sender: user2!.id,
+      sender: user2.id,
       text: "Hello World 2",
     });
 
     await new Promise((resolve) => {
-      user1Socket.on(EVENTS["CHAT_MESSAGES"], (s) => {
-        expect(s.participant).toBe(user2Data.userName);
-        expect(s.messages[0].text).toBe("Hello World");
-        expect(s.messages[0].sender).toBe("self");
-        expect(s.messages[1].text).toBe("Hello World 2");
-        expect(s.messages[1].sender).toBe("other");
+      const callback = (
+        res: EVENT_SUCCESS<{ participant: string; messages: IMessageAPI[] }>
+      ) => {
+        const {
+          data: { participant, messages },
+        } = res;
+        expect(participant).toBe(user2Data.userName);
+        expect(messages[0]).toEqual(
+          expect.objectContaining({
+            text: "Hello World",
+            sender: "self",
+          } as Pick<IMessageAPI, "text" | "sender">)
+        );
+        expect(messages[1]).toEqual(
+          expect.objectContaining({
+            text: "Hello World 2",
+            sender: "other",
+          } as Pick<IMessageAPI, "text" | "sender">)
+        );
         resolve({});
-      });
+      };
 
-      user1Socket.emit(EVENTS["CHAT_JOIN"], chatId);
+      user1Socket.emit(EVENTS["CHAT_JOIN"], chatId, callback);
     });
-  }, 15000);
+  });
 
-  it("should throw 400 on missing inputs", async () => {
-    await new Promise((resolve) => {
-      user1Socket.on(EVENTS["CHAT_ERROR"], (e) => {
-        expect(e).toEqual({ error: "Missing text" });
-        resolve({});
-      });
+  it("should throw error on missing inputs", async () => {
+    await new Promise(async (resolve) => {
+      const callback = (ack: EVENT_ERROR) => {
+        expect(ack).toEqual({
+          error: ERROR_STATUS["BAD_REQUEST"],
+          message: "Text input is missing",
+        } as EVENT_ERROR);
 
-      user1Socket.emit(EVENTS["CHAT_JOIN"], chatId);
-      user1Socket.emit(EVENTS["CHAT_NEW_MESSAGE"], { chatId, text: "" });
+        resolve(true);
+      };
+
+      user1Socket.emit(EVENTS["CHAT_JOIN"], chatId, () => {});
+
+      user1Socket.emit(
+        EVENTS["CHAT_NEW_MESSAGE"],
+        {
+          chatId,
+          text: "",
+        },
+        callback
+      );
     });
   });
 
   it("makes user2 receive messages form user1", async () => {
     await new Promise((resolve) => {
-      user1Socket.on(
-        EVENTS["CHAT_NEW_MESSAGE"],
-        ({ message }: { message: IMessageAPI }) => {
-          expect(message.text).toBe("Hello User2");
-          expect(message.sender).toEqual("self");
-          resolve({});
-        }
-      );
       user2Socket.on(
         EVENTS["CHAT_NEW_MESSAGE"],
         ({ message }: { message: IMessageAPI }) => {
@@ -199,23 +232,19 @@ describe("web sockets", () => {
         }
       );
 
-      user1Socket.emit(EVENTS["CHAT_JOIN"], chatId);
-      user2Socket.emit(EVENTS["CHAT_JOIN"], chatId);
+      user1Socket.emit(EVENTS["CHAT_JOIN"], chatId, () => {});
+      user2Socket.emit(EVENTS["CHAT_JOIN"], chatId, () => {});
 
-      user1Socket.emit(EVENTS["CHAT_NEW_MESSAGE"], { chatId, text: "Hello User2" });
+      user1Socket.emit(
+        EVENTS["CHAT_NEW_MESSAGE"],
+        { chatId, text: "Hello User2" },
+        () => {}
+      );
     });
   });
 
   it("makes user1 receive messages form user2", async () => {
     await new Promise((resolve) => {
-      user2Socket.on(
-        EVENTS["CHAT_NEW_MESSAGE"],
-        ({ message }: { message: IMessageAPI }) => {
-          expect(message.text).toBe("Hello User1");
-          expect(message.sender).toEqual("self");
-          resolve({});
-        }
-      );
       user1Socket.on(
         EVENTS["CHAT_NEW_MESSAGE"],
         ({ message }: { message: IMessageAPI }) => {
@@ -225,15 +254,29 @@ describe("web sockets", () => {
         }
       );
 
-      user2Socket.emit(EVENTS["CHAT_NEW_MESSAGE"], { chatId, text: "Hello User1" });
+      user1Socket.emit(EVENTS["CHAT_JOIN"], chatId, () => {});
+      user2Socket.emit(EVENTS["CHAT_JOIN"], chatId, () => {});
+
+      user2Socket.emit(
+        EVENTS["CHAT_NEW_MESSAGE"],
+        { chatId, text: "Hello User1" },
+        () => []
+      );
     });
   });
 
-  it("disallow users to join and message in a chat that they are not part of", () => {
-    /**
-     * - Create a user 3
-     * - Make him try to join a chat
-     * - Expect an error
-     */
+  it("disallow users to join and message in a chat that they are not part of", async () => {
+    await new Promise((resolve, reject) => {
+      user3Socket.emit(EVENTS["CHAT_JOIN"], chatId, (ack: EVENT_ERROR) => {
+        if (ack.error !== ERROR_STATUS["UNAUTHORIZED"]) return reject(ack);
+
+        expect(ack).toEqual({
+          error: ERROR_STATUS["UNAUTHORIZED"],
+          message: "You're not part of this chat",
+        } as EVENT_ERROR);
+
+        resolve({});
+      });
+    });
   });
 });

@@ -2,7 +2,7 @@ import { Server, Socket } from "socket.io";
 import Message, { IMessage } from "../models/Message";
 import Chat from "../models/Chat";
 import { IUser } from "../models/User";
-import { EVENTS } from "../utils/events";
+import { ERROR_STATUS, EVENT_ERROR, EVENT_SUCCESS, EVENTS } from "../utils/events";
 
 export type IMessageAPI = {
   text: string;
@@ -13,14 +13,18 @@ export type IMessageAPI = {
 };
 
 const handleIncomingNewMessage = async (
-  io: Server,
   socket: Socket,
-  chatId: string,
-  text: string
+  payload: { chatId: string; text: string },
+  callback: (data: EVENT_SUCCESS<{ message: IMessageAPI }> | EVENT_ERROR) => void
 ) => {
+  const { chatId, text } = payload;
   try {
     if (!text) {
-      return socket.emit(EVENTS["CHAT_ERROR"], { error: "Missing text" });
+      callback({
+        error: ERROR_STATUS["BAD_REQUEST"],
+        message: "Text input is missing",
+      } as EVENT_ERROR);
+      return;
     }
 
     const chat = await Chat.findOne({ _id: chatId }).populate<{
@@ -49,55 +53,98 @@ const handleIncomingNewMessage = async (
       id: newMessage.id.toString(),
     });
 
-    socket.emit(EVENTS["CHAT_NEW_MESSAGE"], {
-      message: resMessage("self"),
-    });
     socket.to(chatId).emit(EVENTS["CHAT_NEW_MESSAGE"], {
       message: resMessage("other"),
     });
+
+    callback({
+      data: {
+        message: resMessage("self"),
+      },
+      status: "OK",
+    } as EVENT_SUCCESS<{
+      message: IMessageAPI;
+    }>);
   } catch (error) {
     console.error("Error fetching messages:", error);
     socket.emit("chat:error", "Failed to fetch chat messages");
   }
 };
 
-const handleJoinChat = async (socket: Socket, chatId: string) => {
-  socket.join(chatId);
-
+const handleJoinChat = async (
+  socket: Socket,
+  chatId: string,
+  callback: (
+    data:
+      | EVENT_SUCCESS<{ participant: string; messages: IMessageAPI[] }>
+      | EVENT_ERROR
+  ) => void
+) => {
+  const currentUserId = socket.data.userId as string;
   try {
     const chat = await Chat.findOne({ _id: chatId }).populate<{
       participants: IUser[];
     }>("participants", "userName");
-    const participant = chat?.participants.find(
-      (p) => p.id.toString() !== socket.data.userId
-    );
 
-    if (!participant) {
-      socket.emit(EVENTS["CHAT_ERROR"], "You're not part of this chat");
+    if (chat === null) {
+      callback({
+        error: ERROR_STATUS["BAD_REQUEST"],
+        message: "This chat doesn't exist",
+      } as EVENT_ERROR);
       return;
     }
+
+    const currentUser = chat.participants.find((p) => p.id === currentUserId);
+    const userIsPartOfChat = currentUser !== undefined;
+
+    if (!userIsPartOfChat) {
+      callback({
+        error: ERROR_STATUS["UNAUTHORIZED"],
+        message: "You're not part of this chat",
+      } as EVENT_ERROR);
+      return;
+    }
+
+    const otherParticipant = chat.participants.find((p) => p.id !== currentUserId);
+
+    if (otherParticipant === undefined) {
+      callback({
+        error: ERROR_STATUS["INTERNAL_ERROR"],
+        message: "Other chat participant not found",
+      } as EVENT_ERROR);
+      return;
+    }
+
+    socket.join(chatId);
 
     const messages = await Message.find({ chat: chatId })
       .populate<{ sender: IUser }>("sender", "userName")
       .sort({ createdAt: 1 });
 
-    const result = messages.map((message) => {
-      return {
-        text: message.text,
-        chatId: message.chat.toString(),
-        sender: message.sender.id === socket.data.userId ? "self" : "other",
-        createdAt: message.createdAt.toISOString(),
-        id: message.id.toString(),
-      } as IMessageAPI;
-    });
+    const formattedMessages = messages.map(
+      (message) =>
+        ({
+          text: message.text,
+          chatId: message.chat.toString(),
+          sender: message.sender.id === currentUserId ? "self" : "other",
+          createdAt: message.createdAt.toISOString(),
+          id: message.id.toString(),
+        } as IMessageAPI)
+    );
 
-    socket.emit(EVENTS["CHAT_MESSAGES"], {
-      participant: participant.userName,
-      messages: result,
+    callback({
+      data: {
+        participant: otherParticipant.userName,
+        messages: formattedMessages,
+      },
+      status: "OK",
     });
   } catch (error) {
-    console.error("Error fetching messages:", error);
-    socket.emit("chat:error", "Failed to fetch chat messages");
+    console.error("Something went wrong", { error });
+    callback({
+      error: ERROR_STATUS["INTERNAL_ERROR"],
+      message: "Something went wrong",
+    } as EVENT_ERROR);
   }
 };
 
@@ -106,11 +153,9 @@ const handleLeaveChat = (socket: Socket, chatId: string) => {
 };
 
 const onConnection = (io: Server, socket: Socket) => {
-  socket.on("disconnect", () => {
-    console.log("Socket disconnected!");
-  });
-
-  socket.on(EVENTS["CHAT_JOIN"], (chatId: string) => handleJoinChat(socket, chatId));
+  socket.on(EVENTS["CHAT_JOIN"], (chatId: string, callback) =>
+    handleJoinChat(socket, chatId, callback)
+  );
 
   socket.on(EVENTS["CHAT_LEAVE"], (chatId: string) =>
     handleLeaveChat(socket, chatId)
@@ -118,8 +163,8 @@ const onConnection = (io: Server, socket: Socket) => {
 
   socket.on(
     EVENTS["CHAT_NEW_MESSAGE"],
-    ({ chatId, text }: { chatId: string; text: string }) =>
-      handleIncomingNewMessage(io, socket, chatId, text)
+    (payload: { chatId: string; text: string }, callback) =>
+      handleIncomingNewMessage(socket, payload, callback)
   );
 };
 
