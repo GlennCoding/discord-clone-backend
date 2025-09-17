@@ -13,16 +13,11 @@ import refreshRouter from "./routes/refresh";
 import cookieParser from "cookie-parser";
 import credentials from "./middleware/credentials";
 import corsOptions from "./config/corsOptions";
-import verifySocketJWT from "./middleware/verifySocketJWT";
-import onConnection from "./socketHandlers/onConnection";
 import { errorMiddleware } from "./middleware/errorMiddleware";
 
 // Initialize Express app
 export const app = express();
 export const server = http.createServer(app);
-export const io = new Server(server, {
-  cors: corsOptions,
-});
 
 // Set trust proxy if behind reverse proxy (e.g. NGINX, Heroku)
 app.set("trust proxy", true);
@@ -43,7 +38,3 @@ app.use(verifyJWT as RequestHandler);
 app.use("/chat", chatRouter);
 
 app.use(errorMiddleware);
-
-// Socket.IO middleware and handlers
-io.use(verifySocketJWT);
-io.on("connection", (socket: Socket) => onConnection(io, socket));
