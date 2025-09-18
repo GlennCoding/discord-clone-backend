@@ -1,43 +1,8 @@
-import { Router, Request, Response } from "express";
-import User from "../models/User";
-import jwt from "jsonwebtoken";
-import getEnvVar from "../utils/getEnvVar";
-import { issueAuthToken } from "../services/authService";
+import { Router } from "express";
+import { handleRefreshToken } from "../controllers/refreshController";
 
 const router = Router();
 
-router.get("/", async (req: Request, res: Response) => {
-  const cookies = req.cookies;
-  if (!cookies?.jwt) {
-    res.status(401).json({ message: "Refresh Token required" });
-    return;
-  }
-  const refreshToken = cookies.jwt;
-
-  // check if refresh token in DB
-  const foundUser = await User.findOne({ refreshTokens: refreshToken }).exec();
-  if (!foundUser) {
-    res.sendStatus(401);
-    return;
-  }
-
-  // jwt.verify refresh token
-  // generate new access token
-
-  const onSuccessfulVerify = () => {
-    const newAccessToken = issueAuthToken(foundUser);
-
-    res.status(200).json({ token: newAccessToken });
-  };
-
-  jwt.verify(
-    refreshToken,
-    getEnvVar("REFRESH_TOKEN_SECRET"),
-    (err: jwt.VerifyErrors | null, decoded: string | jwt.JwtPayload | undefined) => {
-      if (err || decoded === undefined) return res.sendStatus(403);
-      onSuccessfulVerify();
-    }
-  );
-});
+router.get("/", handleRefreshToken);
 
 export default router;
