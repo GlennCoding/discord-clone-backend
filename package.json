@@ -35,7 +35,9 @@
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.20.0",
     "mongoose": "^8.18.1",
-    "socket.io": "^4.8.1"
+    "socket.io": "^4.8.1",
+    "znv": "^0.5.0",
+    "zod": "^4.1.9"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
