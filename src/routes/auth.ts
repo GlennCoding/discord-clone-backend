@@ -1,48 +1,8 @@
-import { Router, Request, Response } from "express";
-import jwt from "jsonwebtoken";
-import getEnvVar from "../utils/getEnvVar";
-import { verifyUser } from "../services/userService";
-import { issueAuthToken, issueRefreshToken } from "../services/authService";
+import { Router } from "express";
+import { handleLogin } from "../controllers/authController";
 
 const router = Router();
 
-router.post("/", async (req: Request, res: Response) => {
-  if (!req.body) {
-    res.status(400).json({ error: "Request body is missing" });
-    return;
-  }
-
-  const { userName, password } = req.body;
-
-  if (!userName || !password) {
-    res.status(400).json({
-      message: "Missing required fields: Username and password are required.",
-    });
-    return;
-  }
-
-  const user = await verifyUser(userName, password);
-
-  // Generate new accessToken
-  const accessToken = issueAuthToken(user);
-
-  // Generate new resfreshToken
-  const refreshToken = issueRefreshToken(user);
-
-  // Update refreshToken in DB
-  user.refreshTokens = [refreshToken];
-  await user.save();
-
-  // Add refreshToken to cookies
-  res.cookie("jwt", refreshToken, {
-    httpOnly: true,
-    secure: true,
-    sameSite: "none",
-    maxAge: 24 * 60 * 60 * 1000,
-  });
-
-  // Send 200 status & send accessToken back
-  res.status(200).json({ message: "Login successful", token: accessToken });
-});
+router.post("/", handleLogin);
 
 export default router;

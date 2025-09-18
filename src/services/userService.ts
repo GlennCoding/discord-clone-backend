@@ -10,7 +10,7 @@ export const createUser = async (userName: string, password: string) => {
   return await user.save();
 };
 
-export const verifyUser = async (
+export const verifyUserPassword = async (
   userName: string,
   password: string
 ): Promise<IUser> => {
@@ -21,4 +21,12 @@ export const verifyUser = async (
 
   if (!isMatch) throw new InvalidCredentialsError();
   return user;
+};
+
+export const saveUserRefreshToken = async (
+  user: IUser,
+  refreshToken: string
+): Promise<void> => {
+  user.refreshTokens = [refreshToken];
+  await user.save();
 };
