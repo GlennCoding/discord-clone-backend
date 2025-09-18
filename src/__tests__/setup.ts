@@ -2,7 +2,7 @@ import { config } from "dotenv";
 import { MongoMemoryServer } from "mongodb-memory-server";
 import mongoose from "mongoose";
 
-config({ path: ".env.test" });
+config({ path: ".env.test.local" });
 
 let mongod: MongoMemoryServer;
 
