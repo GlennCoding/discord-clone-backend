@@ -1,17 +1,3 @@
-/**
- * First: Connect server & client socket (beforeAll)
- * 1) Get a token
- * - /register & /login via super-test
- * 2) connect server from app with token
- *
- * After all:
- * - close server & client socket
- *
- * Test (should work):
- * - Random test -> Check beforeAll
- *
- */
-
 import { type AddressInfo } from "node:net";
 import { io as ioc, type Socket as ClientSocket } from "socket.io-client";
 import { server, app } from "../../app";
@@ -28,18 +14,21 @@ import { IMessageAPI } from "../onConnection";
 import Message from "../../models/Message";
 import { promisify } from "node:util";
 import { io } from "../../sockets";
+import { issueAuthToken } from "../../services/authService";
 
 type UserData = {
   userName: string;
   password: string;
 };
 
-const createUserAndToken = async (userData: UserData): Promise<[IUser, string]> => {
-  await request(app).post("/register").send(userData);
-  const loginRes = await request(app).post("/login").send(userData);
-  const user = await User.findOne({ userName: userData.userName });
-  if (!user) throw Error("User not found");
-  return [user, loginRes.body.token];
+const createUserAndToken = async ({
+  userName,
+  password,
+}: UserData): Promise<[IUser, string]> => {
+  const user = new User({ userName, password });
+  await user.save();
+  const token = issueAuthToken(user);
+  return [user, token];
 };
 
 const createChat = async (

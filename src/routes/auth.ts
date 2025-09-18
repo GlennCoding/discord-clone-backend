@@ -2,6 +2,7 @@ import { Router, Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import getEnvVar from "../utils/getEnvVar";
 import { verifyUser } from "../services/userService";
+import { issueAuthToken, issueRefreshToken } from "../services/authService";
 
 const router = Router();
 
@@ -23,24 +24,10 @@ router.post("/", async (req: Request, res: Response) => {
   const user = await verifyUser(userName, password);
 
   // Generate new accessToken
-  const accessToken = jwt.sign(
-    {
-      UserInfo: {
-        userId: user._id,
-      },
-    },
-    getEnvVar("ACCESS_TOKEN_SECRET"),
-    { expiresIn: "20min" }
-  );
+  const accessToken = issueAuthToken(user);
 
   // Generate new resfreshToken
-  const refreshToken = jwt.sign(
-    {
-      userId: user._id,
-    },
-    getEnvVar("REFRESH_TOKEN_SECRET"),
-    { expiresIn: "1day" }
-  );
+  const refreshToken = issueRefreshToken(user);
 
   // Update refreshToken in DB
   user.refreshTokens = [refreshToken];

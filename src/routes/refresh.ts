@@ -2,6 +2,7 @@ import { Router, Request, Response } from "express";
 import User from "../models/User";
 import jwt from "jsonwebtoken";
 import getEnvVar from "../utils/getEnvVar";
+import { issueAuthToken } from "../services/authService";
 
 const router = Router();
 
@@ -24,15 +25,7 @@ router.get("/", async (req: Request, res: Response) => {
   // generate new access token
 
   const onSuccessfulVerify = () => {
-    const newAccessToken = jwt.sign(
-      {
-        UserInfo: {
-          userId: foundUser._id,
-        },
-      },
-      getEnvVar("ACCESS_TOKEN_SECRET"),
-      { expiresIn: "10min" }
-    );
+    const newAccessToken = issueAuthToken(foundUser);
 
     res.status(200).json({ token: newAccessToken });
   };
