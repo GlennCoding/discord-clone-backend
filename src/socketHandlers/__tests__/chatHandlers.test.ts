@@ -9,8 +9,8 @@ import {
   EVENT_ERROR,
   EVENT_SUCCESS,
   EVENTS,
-} from "../../utils/events";
-import { IMessageAPI } from "../onConnection";
+} from "../../types/events";
+import { IMessageAPI } from "../../types/sockets";
 import Message from "../../models/Message";
 import { promisify } from "node:util";
 import { io } from "../../sockets";
@@ -56,7 +56,7 @@ const connectClientSocket = (clientSocket: ClientSocket) =>
     clientSocket.on("connect_error", (e) => reject(e));
   });
 
-describe("web sockets", () => {
+describe("chat socket handlers", () => {
   const user1Data: UserData = { userName: "John", password: "Cena" };
   const user2Data: UserData = { userName: "Nama", password: "Rupa" };
   const user3Data: UserData = { userName: "Bob", password: "Baumeister" };

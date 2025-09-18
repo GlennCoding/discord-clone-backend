@@ -3,7 +3,7 @@ import { Server, Socket } from "socket.io";
 
 import corsOptions from "./config/corsOptions";
 import verifySocketJWT from "./middleware/verifySocketJWT";
-import onConnection from "./socketHandlers/onConnection";
+import { onConnection } from "./socketHandlers";
 import { server } from "./app";
 
 export const io = new Server(server, {

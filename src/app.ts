@@ -2,7 +2,6 @@ import "./config/loadEnvironment";
 import express, { RequestHandler } from "express";
 import cors from "cors";
 import http from "http";
-import { Server, Socket } from "socket.io";
 
 import rootRouter from "./routes/root";
 import authRouter from "./routes/auth";

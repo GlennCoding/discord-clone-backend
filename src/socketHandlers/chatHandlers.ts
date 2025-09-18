@@ -1,18 +1,11 @@
-import { Server, Socket } from "socket.io";
-import Message, { IMessage } from "../models/Message";
+import { Socket } from "socket.io";
+import Message from "../models/Message";
 import Chat from "../models/Chat";
 import { IUser } from "../models/User";
-import { ERROR_STATUS, EVENT_ERROR, EVENT_SUCCESS, EVENTS } from "../utils/events";
+import { ERROR_STATUS, EVENT_ERROR, EVENT_SUCCESS, EVENTS } from "../types/events";
+import { IMessageAPI } from "../types/sockets";
 
-export type IMessageAPI = {
-  text: string;
-  chatId: string;
-  sender: "self" | "other";
-  createdAt: string;
-  id: string;
-};
-
-const handleIncomingNewMessage = async (
+export const handleIncomingNewMessage = async (
   socket: Socket,
   payload: { chatId: string; text: string },
   callback: (data: EVENT_SUCCESS<{ message: IMessageAPI }> | EVENT_ERROR) => void
@@ -71,7 +64,7 @@ const handleIncomingNewMessage = async (
   }
 };
 
-const handleJoinChat = async (
+export const handleJoinChat = async (
   socket: Socket,
   chatId: string,
   callback: (
@@ -148,24 +141,6 @@ const handleJoinChat = async (
   }
 };
 
-const handleLeaveChat = (socket: Socket, chatId: string) => {
+export const handleLeaveChat = (socket: Socket, chatId: string) => {
   socket.leave(chatId);
 };
-
-const onConnection = (io: Server, socket: Socket) => {
-  socket.on(EVENTS["CHAT_JOIN"], (chatId: string, callback) =>
-    handleJoinChat(socket, chatId, callback)
-  );
-
-  socket.on(EVENTS["CHAT_LEAVE"], (chatId: string) =>
-    handleLeaveChat(socket, chatId)
-  );
-
-  socket.on(
-    EVENTS["CHAT_NEW_MESSAGE"],
-    (payload: { chatId: string; text: string }, callback) =>
-      handleIncomingNewMessage(socket, payload, callback)
-  );
-};
-
-export default onConnection;

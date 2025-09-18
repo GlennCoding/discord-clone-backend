@@ -65,6 +65,10 @@ npm run dev
 
 ### Run Tests
 
+1. Create a .env.test file
+
+2. Run tests
+
 ```bash
 npm run test
 ```

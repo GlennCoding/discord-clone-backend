@@ -1,19 +1,3 @@
-/**
- * First: Connect server & client socket (beforeAll)
- * - start http server with io instance
- * - get PORT
- * - connect client with server
- * - resolve when successful
- *
- * After all:
- * - close server & client socket
- *
- * Test (should work):
- * - client sends event
- * - server recieves and resolves test (test is wrapped in a promise)
- *
- */
-
 import { createServer } from "node:http";
 import { type AddressInfo } from "node:net";
 import { io as ioc, type Socket as ClientSocket } from "socket.io-client";
