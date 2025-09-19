@@ -1,7 +1,6 @@
 import "./config/loadEnvironment";
 import express, { RequestHandler } from "express";
 import cors from "cors";
-import http from "http";
 
 import rootRouter from "./routes/root";
 import authRouter from "./routes/auth";
@@ -16,7 +15,6 @@ import { errorMiddleware } from "./middleware/errorMiddleware";
 
 // Initialize Express app
 export const app = express();
-export const server = http.createServer(app);
 
 // Set trust proxy if behind reverse proxy (e.g. NGINX, Heroku)
 app.set("trust proxy", true);
