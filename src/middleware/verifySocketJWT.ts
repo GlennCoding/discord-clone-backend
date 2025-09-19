@@ -1,6 +1,6 @@
 import { ExtendedError, Socket } from "socket.io";
 import jwt, { JwtPayload, VerifyErrors } from "jsonwebtoken";
-import getEnvVar from "../utils/getEnvVar";
+import { env } from "../utils/env";
 
 const verifySocketJWT = (socket: Socket, next: (err?: ExtendedError) => void) => {
   const token = socket.handshake.auth.token;
@@ -11,7 +11,7 @@ const verifySocketJWT = (socket: Socket, next: (err?: ExtendedError) => void) =>
 
   jwt.verify(
     token,
-    getEnvVar("ACCESS_TOKEN_SECRET"),
+    env.ACCESS_TOKEN_SECRET as string,
     (err: VerifyErrors | null, decoded: string | JwtPayload | undefined) => {
       if (err && err.name === "TokenExpiredError")
         return next(new Error("EXPIRED_TOKEN"));

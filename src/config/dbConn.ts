@@ -1,10 +1,10 @@
 import mongoose from "mongoose";
-import getEnvVar from "../utils/getEnvVar";
+import { env } from "../utils/env";
 
 const connectDB = async () => {
   try {
-    await mongoose.connect(getEnvVar("DATABASE_URI"), {
-      dbName: getEnvVar("DB_NAME"),
+    await mongoose.connect(env.DATABASE_URI as string, {
+      dbName: env.DB_NAME as string,
     });
     console.log("DB connection successful");
   } catch (error) {

@@ -1,0 +1,4 @@
+onlyBuiltDependencies:
+  - bcrypt
+  - esbuild
+  - mongodb-memory-server
