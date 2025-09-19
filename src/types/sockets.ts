@@ -5,13 +5,22 @@ export type TypedServer = Server<ClientToServerEvents, ServerToClientEvents>;
 
 export type TypedSocket = Socket<ClientToServerEvents, ServerToClientEvents>;
 
-type EventParams<T> = T extends (payload: infer P, ack: infer A) => void
-  ? [payload: P, ack?: A]
+type EventParamsWithAck<T> = T extends (payload: infer P, ack: infer A) => void
+  ? [payload: P, ack: A]
   : T extends (payload: infer P) => void
   ? [payload: P]
   : [];
 
-export type EventController<E extends keyof ClientToServerEvents> = (
+type EventParamsWithoutAck<T> = T extends (payload: infer P) => void
+  ? [payload: P]
+  : [];
+
+export type EventControllerWithAck<E extends keyof ClientToServerEvents> = (
   socket: TypedSocket,
-  ...args: EventParams<ClientToServerEvents[E]>
+  ...args: EventParamsWithAck<ClientToServerEvents[E]>
+) => Promise<void> | void;
+
+export type EventControllerWithoutAck<E extends keyof ClientToServerEvents> = (
+  socket: TypedSocket,
+  ...args: EventParamsWithoutAck<ClientToServerEvents[E]>
 ) => Promise<void> | void;
