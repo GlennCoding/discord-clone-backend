@@ -3,6 +3,7 @@ import { app } from "../../../app";
 import request from "supertest";
 import Chat from "../../../models/Chat";
 import User, { IUser } from "../../../models/User";
+import { IChatAPI } from "../../../types/sockets";
 
 let token: string;
 const user1Data = { userName: "John", password: "Cena" };
@@ -61,6 +62,29 @@ describe("/chat", () => {
 
     const chats = await Chat.find({});
     expect(chats.length).toBe(1);
+  });
+
+  it("can get chats", async () => {
+    const user1Id = await User.findOne({ userName: user1Data.userName });
+    const user2Id = await User.findOne({ userName: user2Data.userName });
+
+    const chat = await Chat.create({
+      participants: [user1Id?._id, user2Id?._id],
+    });
+
+    // Create chat room
+    const getChatsRes = await request(app)
+      .get("/chat")
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(getChatsRes.status).toBe(200);
+    console.log(getChatsRes.body);
+    expect(getChatsRes.body).toEqual([
+      {
+        chatId: chat.id!,
+        participant: user2Data.userName,
+      },
+    ] as IChatAPI[]);
   });
 
   it("throws 400 when a participant doesn't exist", async () => {

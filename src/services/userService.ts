@@ -31,6 +31,14 @@ export const saveUserRefreshToken = async (
   await user.save();
 };
 
-export const findUserWithRefreshToken = async (refreshToken: string) => {
-  return await User.findOne({ refreshTokens: refreshToken }).exec();
+export const findUserWithRefreshToken = (
+  refreshToken: string
+): Promise<IUser | null | undefined> => {
+  return User.findOne({ refreshTokens: refreshToken }).exec();
+};
+
+export const findUserWithUserName = (
+  userName: string
+): Promise<IUser | null | undefined> => {
+  return User.findOne({ userName });
 };
