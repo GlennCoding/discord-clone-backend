@@ -5,3 +5,8 @@ export type IMessageAPI = {
   createdAt: string;
   id: string;
 };
+
+export type IChatAPI = {
+  chatId: string;
+  participant: string;
+};
