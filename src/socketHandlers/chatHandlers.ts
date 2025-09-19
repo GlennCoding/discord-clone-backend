@@ -3,13 +3,11 @@ import Chat from "../models/Chat";
 import { IUser } from "../models/User";
 import { ERROR_STATUS, EVENT_ERROR } from "../types/events";
 import { MessageDTO } from "../types/events";
-import { EventController } from "../types/sockets";
+import { EventControllerWithAck, EventControllerWithoutAck } from "../types/sockets";
 
-export const handleIncomingNewMessage: EventController<"message:send"> = async (
-  socket,
-  payload,
-  ack
-) => {
+export const handleIncomingNewMessage: EventControllerWithAck<
+  "message:send"
+> = async (socket, payload, ack) => {
   const { chatId, text } = payload;
   try {
     if (!text) {
@@ -65,7 +63,7 @@ export const handleIncomingNewMessage: EventController<"message:send"> = async (
   }
 };
 
-export const handleJoinChat: EventController<"chat:join"> = async (
+export const handleJoinChat: EventControllerWithAck<"chat:join"> = async (
   socket,
   chatId,
   ack
@@ -138,6 +136,9 @@ export const handleJoinChat: EventController<"chat:join"> = async (
   }
 };
 
-export const handleLeaveChat: EventController<"chat:leave"> = (socket, chatId) => {
+export const handleLeaveChat: EventControllerWithoutAck<"chat:leave"> = (
+  socket,
+  chatId
+) => {
   socket.leave(chatId);
 };
