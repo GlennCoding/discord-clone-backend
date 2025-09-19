@@ -40,5 +40,5 @@ export const findUserWithRefreshToken = (
 export const findUserWithUserName = (
   userName: string
 ): Promise<IUser | null | undefined> => {
-  return User.findOne({ userName });
+  return User.findOne({ userName }).exec();
 };
