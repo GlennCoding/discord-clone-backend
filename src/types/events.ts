@@ -1,11 +1,24 @@
-export enum EVENTS {
-  CHAT_ERROR = "chat:error",
-  CHAT_NEW_MESSAGE = "chat:newMessage",
-  CHAT_MESSAGE = "chat:message",
-  CHAT_LEAVE = "chat:leave",
-  CHAT_JOIN = "chat:join",
-  CHAT_MESSAGES = "chat:messages",
-  UNAUTHORIZED = "unauthorized",
+export interface MessageDTO {
+  text: string;
+  chatId: string;
+  sender: "self" | "other";
+  createdAt: string;
+  id: string;
+}
+
+export interface ChatDTO {
+  chatId: string;
+  participant: string;
+}
+
+export interface JoinChatResponse {
+  participant: string;
+  messages: MessageDTO[];
+}
+
+export interface SendMessagePayload {
+  chatId: string;
+  text: string;
 }
 
 export enum ERROR_STATUS {
@@ -19,7 +32,23 @@ export interface EVENT_ERROR {
   message: String;
 }
 
-export type EVENT_SUCCESS<T> = {
+export interface EVENT_SUCCESS<T> {
   status: "OK";
   data: T;
+}
+
+type Ack<T> = (res: EVENT_SUCCESS<T> | EVENT_ERROR) => void;
+
+export interface ClientToServerEvents {
+  "message:send": (
+    payload: SendMessagePayload,
+    ack: Ack<{ message: MessageDTO }>
+  ) => void;
+  "chat:join": (chatId: string, ack: Ack<JoinChatResponse>) => void;
+  "chat:leave": (chatId: string) => void;
+}
+
+export type ServerToClientEvents = {
+  "message:new": (message: { message: MessageDTO }) => void;
+  "chat:error": (error: string) => void;
 };

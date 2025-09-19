@@ -1,19 +1,19 @@
-import { Socket } from "socket.io";
 import Message from "../models/Message";
 import Chat from "../models/Chat";
 import { IUser } from "../models/User";
-import { ERROR_STATUS, EVENT_ERROR, EVENT_SUCCESS, EVENTS } from "../types/events";
-import { IMessageAPI } from "../types/sockets";
+import { ERROR_STATUS, EVENT_ERROR } from "../types/events";
+import { MessageDTO } from "../types/events";
+import { EventController } from "../types/sockets";
 
-export const handleIncomingNewMessage = async (
-  socket: Socket,
-  payload: { chatId: string; text: string },
-  callback: (data: EVENT_SUCCESS<{ message: IMessageAPI }> | EVENT_ERROR) => void
+export const handleIncomingNewMessage: EventController<"message:send"> = async (
+  socket,
+  payload,
+  ack
 ) => {
   const { chatId, text } = payload;
   try {
     if (!text) {
-      callback({
+      ack({
         error: ERROR_STATUS["BAD_REQUEST"],
         message: "Text input is missing",
       } as EVENT_ERROR);
@@ -28,7 +28,10 @@ export const handleIncomingNewMessage = async (
     );
 
     if (!participant) {
-      socket.emit(EVENTS["CHAT_ERROR"], "You're not part of this chat");
+      ack({
+        error: ERROR_STATUS["BAD_REQUEST"],
+        message: "You're not part of this chat",
+      } as EVENT_ERROR);
       return;
     }
 
@@ -38,7 +41,7 @@ export const handleIncomingNewMessage = async (
       text,
     });
 
-    const resMessage = (sender: "self" | "other"): IMessageAPI => ({
+    const formatMessage = (sender: "self" | "other"): MessageDTO => ({
       text: newMessage.text,
       chatId: newMessage.chat.toString(),
       sender,
@@ -46,32 +49,26 @@ export const handleIncomingNewMessage = async (
       id: newMessage.id.toString(),
     });
 
-    socket.to(chatId).emit(EVENTS["CHAT_NEW_MESSAGE"], {
-      message: resMessage("other"),
+    socket.to(chatId).emit("message:new", {
+      message: formatMessage("other"),
     });
 
-    callback({
-      data: {
-        message: resMessage("self"),
-      },
+    ack({
       status: "OK",
-    } as EVENT_SUCCESS<{
-      message: IMessageAPI;
-    }>);
+      data: {
+        message: formatMessage("self"),
+      },
+    });
   } catch (error) {
     console.error("Error fetching messages:", error);
     socket.emit("chat:error", "Failed to fetch chat messages");
   }
 };
 
-export const handleJoinChat = async (
-  socket: Socket,
-  chatId: string,
-  callback: (
-    data:
-      | EVENT_SUCCESS<{ participant: string; messages: IMessageAPI[] }>
-      | EVENT_ERROR
-  ) => void
+export const handleJoinChat: EventController<"chat:join"> = async (
+  socket,
+  chatId,
+  ack
 ) => {
   const currentUserId = socket.data.userId as string;
   try {
@@ -80,7 +77,7 @@ export const handleJoinChat = async (
     }>("participants", "userName");
 
     if (chat === null) {
-      callback({
+      ack({
         error: ERROR_STATUS["BAD_REQUEST"],
         message: "This chat doesn't exist",
       } as EVENT_ERROR);
@@ -91,7 +88,7 @@ export const handleJoinChat = async (
     const userIsPartOfChat = currentUser !== undefined;
 
     if (!userIsPartOfChat) {
-      callback({
+      ack({
         error: ERROR_STATUS["UNAUTHORIZED"],
         message: "You're not part of this chat",
       } as EVENT_ERROR);
@@ -101,7 +98,7 @@ export const handleJoinChat = async (
     const otherParticipant = chat.participants.find((p) => p.id !== currentUserId);
 
     if (otherParticipant === undefined) {
-      callback({
+      ack({
         error: ERROR_STATUS["INTERNAL_ERROR"],
         message: "Other chat participant not found",
       } as EVENT_ERROR);
@@ -122,10 +119,10 @@ export const handleJoinChat = async (
           sender: message.sender.id === currentUserId ? "self" : "other",
           createdAt: message.createdAt.toISOString(),
           id: message.id.toString(),
-        } as IMessageAPI)
+        } as MessageDTO)
     );
 
-    callback({
+    ack({
       data: {
         participant: otherParticipant.userName,
         messages: formattedMessages,
@@ -134,13 +131,13 @@ export const handleJoinChat = async (
     });
   } catch (error) {
     console.error("Something went wrong", { error });
-    callback({
+    ack({
       error: ERROR_STATUS["INTERNAL_ERROR"],
       message: "Something went wrong",
     } as EVENT_ERROR);
   }
 };
 
-export const handleLeaveChat = (socket: Socket, chatId: string) => {
+export const handleLeaveChat: EventController<"chat:leave"> = (socket, chatId) => {
   socket.leave(chatId);
 };

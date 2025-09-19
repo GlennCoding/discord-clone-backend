@@ -1,24 +1,19 @@
-import { Server, Socket } from "socket.io";
-import { EVENTS } from "../types/events";
+import { TypedServer, TypedSocket } from "../types/sockets";
 import {
   handleJoinChat,
   handleLeaveChat,
   handleIncomingNewMessage,
 } from "./chatHandlers";
 
-const onConnection = (io: Server, socket: Socket) => {
-  socket.on(EVENTS["CHAT_JOIN"], (chatId: string, callback) =>
-    handleJoinChat(socket, chatId, callback)
+const onConnection = (_: TypedServer, socket: TypedSocket) => {
+  socket.on("chat:join", (chatId: string, ack: any) =>
+    handleJoinChat(socket, chatId, ack)
   );
 
-  socket.on(EVENTS["CHAT_LEAVE"], (chatId: string) =>
-    handleLeaveChat(socket, chatId)
-  );
+  socket.on("chat:leave", (chatId: string) => handleLeaveChat(socket, chatId));
 
-  socket.on(
-    EVENTS["CHAT_NEW_MESSAGE"],
-    (payload: { chatId: string; text: string }, callback) =>
-      handleIncomingNewMessage(socket, payload, callback)
+  socket.on("message:send", (payload: { chatId: string; text: string }, ack) =>
+    handleIncomingNewMessage(socket, payload, ack)
   );
 };
 
