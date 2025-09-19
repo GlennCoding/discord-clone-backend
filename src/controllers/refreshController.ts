@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { issueAuthToken } from "../services/authService";
-import getEnvVar from "../utils/getEnvVar";
 import { findUserWithRefreshToken } from "../services/userService";
+import { env } from "../utils/env";
 
 export const handleRefreshToken = async (req: Request, res: Response) => {
   const cookies = req.cookies;
@@ -28,7 +28,7 @@ export const handleRefreshToken = async (req: Request, res: Response) => {
 
   jwt.verify(
     refreshToken,
-    getEnvVar("REFRESH_TOKEN_SECRET"),
+    env.REFRESH_TOKEN_SECRET as string,
     (err: jwt.VerifyErrors | null, decoded: string | jwt.JwtPayload | undefined) => {
       if (err || decoded === undefined) return res.sendStatus(403);
       onSuccessfulVerify();

@@ -1,6 +1,6 @@
 import { IUser } from "../models/User";
 import jwt from "jsonwebtoken";
-import getEnvVar from "../utils/getEnvVar";
+import { env } from "../utils/env";
 
 export const issueAuthToken = (user: IUser) => {
   return jwt.sign(
@@ -9,7 +9,7 @@ export const issueAuthToken = (user: IUser) => {
         userId: user._id,
       },
     },
-    getEnvVar("ACCESS_TOKEN_SECRET"),
+    env.ACCESS_TOKEN_SECRET as string,
     {
       expiresIn: "20min",
     }
@@ -17,7 +17,7 @@ export const issueAuthToken = (user: IUser) => {
 };
 
 export const issueRefreshToken = (user: IUser) => {
-  return jwt.sign({ userId: user._id }, getEnvVar("REFRESH_TOKEN_SECRET"), {
+  return jwt.sign({ userId: user._id }, env.REFRESH_TOKEN_SECRET as string, {
     expiresIn: "1day",
   });
 };

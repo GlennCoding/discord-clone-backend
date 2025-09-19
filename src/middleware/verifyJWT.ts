@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
-import getEnvVar from "../utils/getEnvVar";
+import { env } from "../utils/env";
 
 export interface UserRequest extends Request {
   userId?: string;
@@ -19,7 +19,7 @@ const verifyJWT = (req: UserRequest, res: Response, next: NextFunction) => {
 
   const token = authHeader.split(" ")[1];
 
-  jwt.verify(token, getEnvVar("ACCESS_TOKEN_SECRET"), (err, decoded) => {
+  jwt.verify(token, env.ACCESS_TOKEN_SECRET as string, (err, decoded) => {
     if (err || decoded === undefined) return res.sendStatus(403);
     const payload = decoded as AccessTokenBody;
 
