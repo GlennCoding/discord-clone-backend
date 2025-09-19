@@ -33,7 +33,6 @@ app.use("/register", registerRouter);
 app.use("/login", authRouter);
 app.use("/refresh", refreshRouter);
 
-app.use(verifyJWT as RequestHandler);
-app.use("/chat", chatRouter);
+app.use("/chat", verifyJWT, chatRouter);
 
 app.use(errorMiddleware);
