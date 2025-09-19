@@ -1,6 +1,5 @@
 import { Router, Request, Response } from "express";
-import User from "../models/User";
-import { createUser } from "../services/userService";
+import { createUser, findUserWithUserName } from "../services/userService";
 
 const router = Router();
 
@@ -13,9 +12,9 @@ router.post("/", async (req: Request, res: Response) => {
   }
 
   // Check if user already exists
-  const duplicate = await User.findOne({ userName }).exec();
+  const usernameExistsAlready = await findUserWithUserName(userName);
 
-  if (duplicate) {
+  if (usernameExistsAlready) {
     res.status(409).json({ error: "Username already taken." });
     return;
   }
