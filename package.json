@@ -36,7 +36,6 @@
     "mongodb": "^6.20.0",
     "mongoose": "^8.18.1",
     "socket.io": "^4.8.1",
-    "znv": "^0.5.0",
     "zod": "^4.1.9"
   },
   "devDependencies": {
