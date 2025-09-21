@@ -1,20 +1,15 @@
 import { type AddressInfo } from "node:net";
 import { io as ioc, type Socket as ClientSocket } from "socket.io-client";
-import { server, app } from "../../app";
+import { app } from "../../app";
 import request from "supertest";
 import { setupMongoDB, teardownMongoDB } from "../../__tests__/setup";
 import User, { IUser } from "../../models/User";
-import {
-  ERROR_STATUS,
-  EVENT_ERROR,
-  EVENT_SUCCESS,
-  EVENTS,
-} from "../../types/events";
-import { IMessageAPI } from "../../types/sockets";
+import { ERROR_STATUS, EVENT_ERROR, MessageDTO } from "../../types/events";
 import Message from "../../models/Message";
 import { promisify } from "node:util";
-import { io } from "../../sockets";
 import { issueAuthToken } from "../../services/authService";
+import { io, server } from "../../sockets";
+import { TypedClientSocket } from "../../types/sockets";
 
 type UserData = {
   userName: string;
@@ -49,7 +44,7 @@ const createSocket = (port: number, token: string) =>
     transports: ["websocket"],
   });
 
-const connectClientSocket = (clientSocket: ClientSocket) =>
+const connectClientSocket = (clientSocket: TypedClientSocket) =>
   new Promise((resolve, reject) => {
     clientSocket.on("connect", () => resolve("Connection successful"));
 
@@ -61,9 +56,9 @@ describe("chat socket handlers", () => {
   const user2Data: UserData = { userName: "Nama", password: "Rupa" };
   const user3Data: UserData = { userName: "Bob", password: "Baumeister" };
 
-  let user1Token: string, user1: IUser, user1Socket: ClientSocket;
-  let user2Token: string, user2: IUser, user2Socket: ClientSocket;
-  let user3Token: string, user3: IUser, user3Socket: ClientSocket;
+  let user1Token: string, user1: IUser, user1Socket: TypedClientSocket;
+  let user2Token: string, user2: IUser, user2Socket: TypedClientSocket;
+  let user3Token: string, user3: IUser, user3Socket: TypedClientSocket;
 
   let user1User2chatId: string;
 
@@ -109,29 +104,31 @@ describe("chat socket handlers", () => {
   });
 
   it("should make client joining a chat work", async () => {
-    const ack: EVENT_SUCCESS<{ participant: string; messages: IMessageAPI[] }> =
-      await user1Socket.emitWithAck(EVENTS["CHAT_JOIN"], user1User2chatId);
+    const ack = await user1Socket.emitWithAck("chat:join", user1User2chatId);
+
+    if (ack instanceof EVENT_ERROR) throw new Error(ack.message);
 
     expect(ack.data.participant).toBe(user2Data.userName);
     expect(ack.data.messages).toEqual([]);
   });
 
   it("should make a client send a message", async () => {
-    await user1Socket.emitWithAck(EVENTS["CHAT_JOIN"], user1User2chatId);
+    await user1Socket.emitWithAck("chat:join", user1User2chatId);
 
     const messagePayload = { chatId: user1User2chatId, text: "Hello World" };
-    const newMessageAck: EVENT_SUCCESS<{ message: IMessageAPI }> =
-      await user1Socket.emitWithAck(EVENTS["CHAT_NEW_MESSAGE"], messagePayload);
+    const ack = await user1Socket.emitWithAck("message:send", messagePayload);
 
-    expect(newMessageAck.status).toBe("OK");
-    expect(newMessageAck.data).toEqual({
+    if (ack instanceof EVENT_ERROR) throw new Error(ack.message);
+
+    expect(ack.status).toBe("OK");
+    expect(ack.data).toEqual({
       message: {
         id: expect.any(String),
         text: messagePayload.text,
         chatId: user1User2chatId,
         createdAt: expect.any(String),
         sender: "self",
-      } as IMessageAPI,
+      } as MessageDTO,
     });
   });
 
@@ -147,8 +144,9 @@ describe("chat socket handlers", () => {
       text: "Hello World 2",
     });
 
-    const ack: EVENT_SUCCESS<{ participant: string; messages: IMessageAPI[] }> =
-      await user1Socket.emitWithAck(EVENTS["CHAT_JOIN"], user1User2chatId);
+    const ack = await user1Socket.emitWithAck("chat:join", user1User2chatId);
+
+    if (ack instanceof EVENT_ERROR) throw new Error(ack.message);
 
     const {
       data: { participant, messages },
@@ -159,26 +157,23 @@ describe("chat socket handlers", () => {
       expect.objectContaining({
         text: "Hello World",
         sender: "self",
-      } as Pick<IMessageAPI, "text" | "sender">)
+      } as Pick<MessageDTO, "text" | "sender">)
     );
     expect(messages[1]).toEqual(
       expect.objectContaining({
         text: "Hello World 2",
         sender: "other",
-      } as Pick<IMessageAPI, "text" | "sender">)
+      } as Pick<MessageDTO, "text" | "sender">)
     );
   });
 
   it("should throw error on missing inputs", async () => {
-    await user1Socket.emitWithAck(EVENTS["CHAT_JOIN"], user1User2chatId);
+    await user1Socket.emitWithAck("chat:join", user1User2chatId);
 
-    const ack: EVENT_ERROR = await user1Socket.emitWithAck(
-      EVENTS["CHAT_NEW_MESSAGE"],
-      {
-        chatId: user1User2chatId,
-        text: "",
-      }
-    );
+    const ack = await user1Socket.emitWithAck("message:send", {
+      chatId: user1User2chatId,
+      text: "",
+    });
 
     expect(ack).toEqual({
       error: ERROR_STATUS["BAD_REQUEST"],
@@ -187,10 +182,7 @@ describe("chat socket handlers", () => {
   });
 
   it("disallow users to join and message in a chat that they are not part of", async () => {
-    const ack: EVENT_ERROR = await user3Socket.emitWithAck(
-      EVENTS["CHAT_JOIN"],
-      user1User2chatId
-    );
+    const ack = await user3Socket.emitWithAck("chat:join", user1User2chatId);
 
     expect(ack).toEqual({
       error: ERROR_STATUS["UNAUTHORIZED"],
@@ -200,20 +192,17 @@ describe("chat socket handlers", () => {
 
   it("makes user2 receive messages from user1", async () => {
     await new Promise(async (resolve) => {
-      user2Socket.once(
-        EVENTS["CHAT_NEW_MESSAGE"],
-        ({ message }: { message: IMessageAPI }) => {
-          expect(message.text).toBe("Hello User2");
-          expect(message.sender).toEqual("other");
-          resolve({});
-        }
-      );
+      user2Socket.once("message:new", ({ message }: { message: MessageDTO }) => {
+        expect(message.text).toBe("Hello User2");
+        expect(message.sender).toEqual("other");
+        resolve({});
+      });
 
-      await user1Socket.emitWithAck(EVENTS["CHAT_JOIN"], user1User2chatId);
-      await user2Socket.emitWithAck(EVENTS["CHAT_JOIN"], user1User2chatId);
+      await user1Socket.emitWithAck("chat:join", user1User2chatId);
+      await user2Socket.emitWithAck("chat:join", user1User2chatId);
 
       user1Socket.emit(
-        EVENTS["CHAT_NEW_MESSAGE"],
+        "message:send",
         { chatId: user1User2chatId, text: "Hello User2" },
         () => {}
       );
@@ -222,20 +211,17 @@ describe("chat socket handlers", () => {
 
   it("makes user1 receive messages from user2", async () => {
     await new Promise(async (resolve) => {
-      user1Socket.once(
-        EVENTS["CHAT_NEW_MESSAGE"],
-        ({ message }: { message: IMessageAPI }) => {
-          expect(message.text).toBe("Hello User1");
-          expect(message.sender).toEqual("other");
-          resolve({});
-        }
-      );
+      user1Socket.once("message:new", ({ message }: { message: MessageDTO }) => {
+        expect(message.text).toBe("Hello User1");
+        expect(message.sender).toEqual("other");
+        resolve({});
+      });
 
-      await user1Socket.emitWithAck(EVENTS["CHAT_JOIN"], user1User2chatId);
-      await user2Socket.emitWithAck(EVENTS["CHAT_JOIN"], user1User2chatId);
+      await user1Socket.emitWithAck("chat:join", user1User2chatId);
+      await user2Socket.emitWithAck("chat:join", user1User2chatId);
 
       user2Socket.emit(
-        EVENTS["CHAT_NEW_MESSAGE"],
+        "message:send",
         { chatId: user1User2chatId, text: "Hello User1" },
         () => []
       );

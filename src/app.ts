@@ -1,5 +1,5 @@
 import "./config/loadEnvironment";
-import express, { RequestHandler } from "express";
+import express from "express";
 import cors from "cors";
 
 import rootRouter from "./routes/root";
