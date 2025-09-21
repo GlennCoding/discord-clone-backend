@@ -5,16 +5,17 @@ import http from "http";
 import corsOptions from "./config/corsOptions";
 import verifySocketJWT from "./middleware/verifySocketJWT";
 import { onConnection } from "./socketHandlers";
-import { TypedServer, TypedSocket } from "./types/sockets";
+import { TypedServer } from "./types/sockets";
+import { app } from "./app";
 
-const initSocketServer = (server: http.Server) => {
-  const io: TypedServer = new Server(server, {
-    cors: corsOptions,
-  });
+const server = http.createServer(app);
 
-  // Socket.IO middleware and handlers
-  io.use(verifySocketJWT);
-  io.on("connection", (socket: TypedSocket) => onConnection(io, socket));
-};
+const io: TypedServer = new Server(server, {
+  cors: corsOptions,
+});
 
-export { initSocketServer };
+// Socket.IO middleware and handlers
+io.use(verifySocketJWT);
+io.on("connection", (socket) => onConnection(io, socket));
+
+export { server, io };

@@ -11,10 +11,12 @@ export const handleIncomingNewMessage: EventControllerWithAck<
   const { chatId, text } = payload;
   try {
     if (!text) {
-      ack({
-        error: ERROR_STATUS["BAD_REQUEST"],
-        message: "Text input is missing",
-      } as EVENT_ERROR);
+      ack(
+        new EVENT_ERROR({
+          error: ERROR_STATUS["BAD_REQUEST"],
+          message: "Text input is missing",
+        })
+      );
       return;
     }
 

@@ -1,3 +1,10 @@
+export class EVENT_ERROR {
+  constructor({ error, message }: { error: ERROR_STATUS; message: string }) {
+    this.error = error;
+    this.message = message;
+  }
+}
+
 export interface MessageDTO {
   text: string;
   chatId: string;
@@ -29,7 +36,7 @@ export enum ERROR_STATUS {
 
 export interface EVENT_ERROR {
   error: ERROR_STATUS;
-  message: String;
+  message: string;
 }
 
 export interface EVENT_SUCCESS<T> {
@@ -51,4 +58,6 @@ export interface ClientToServerEvents {
 export type ServerToClientEvents = {
   "message:new": (message: { message: MessageDTO }) => void;
   "chat:error": (error: string) => void;
+  connect: () => void;
+  connect_error: (e: string) => void;
 };
