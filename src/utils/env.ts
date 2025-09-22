@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { treeifyError, z } from "zod";
 
 const DEFAULT_PORT = 8000;
 
@@ -13,7 +13,7 @@ const envSchema = z.object({
 const parsedEnv = envSchema.safeParse(process.env);
 
 if (!parsedEnv.success) {
-  console.error("❌ Invalid environment variables:", parsedEnv.error.format());
+  console.error("❌ Invalid environment variables:", treeifyError(parsedEnv.error));
   process.exit(1);
 }
 
