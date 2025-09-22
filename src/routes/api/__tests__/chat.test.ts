@@ -2,8 +2,8 @@ import { setupMongoDB, teardownMongoDB } from "../../../__tests__/setup";
 import { app } from "../../../app";
 import request from "supertest";
 import Chat from "../../../models/Chat";
-import User, { IUser } from "../../../models/User";
-import { IChatAPI } from "../../../types/sockets";
+import User from "../../../models/User";
+import { ChatDTO } from "../../../types/dto";
 
 let token: string;
 const user1Data = { userName: "John", password: "Cena" };
@@ -84,7 +84,7 @@ describe("/chat", () => {
         chatId: chat.id!,
         participant: user2Data.userName,
       },
-    ] as IChatAPI[]);
+    ] as ChatDTO[]);
   });
 
   it("throws 400 when a participant doesn't exist", async () => {

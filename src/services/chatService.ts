@@ -1,8 +1,8 @@
-import mongoose, { ObjectId } from "mongoose";
+import mongoose from "mongoose";
 import Chat, { IChat } from "../models/Chat";
 import { IUser } from "../models/User";
-import { IChatAPI } from "../types/sockets";
 import Message from "../models/Message";
+import { ChatDTO } from "../types/dto";
 
 export const getUserChats = async (userId: string) => {
   const chats = await Chat.find({ participants: userId })
@@ -12,7 +12,7 @@ export const getUserChats = async (userId: string) => {
   return chats;
 };
 
-export const formatUserChats = (chats: IChat[], userId: string): IChatAPI[] => {
+export const formatUserChats = (chats: IChat[], userId: string): ChatDTO[] => {
   return chats.map((chat) => {
     const other = chat.participants.find((p) => p._id.toString() !== userId);
 

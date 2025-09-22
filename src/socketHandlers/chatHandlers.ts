@@ -2,8 +2,8 @@ import Message from "../models/Message";
 import Chat from "../models/Chat";
 import { IUser } from "../models/User";
 import { ERROR_STATUS, EVENT_ERROR } from "../types/events";
-import { MessageDTO } from "../types/events";
 import { EventControllerWithAck, EventControllerWithoutAck } from "../types/sockets";
+import { MessageDTO } from "../types/dto";
 
 export const handleIncomingNewMessage: EventControllerWithAck<
   "message:send"

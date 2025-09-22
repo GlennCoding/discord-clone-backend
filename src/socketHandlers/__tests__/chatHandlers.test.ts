@@ -1,15 +1,16 @@
-import { type AddressInfo } from "node:net";
-import { io as ioc, type Socket as ClientSocket } from "socket.io-client";
-import { app } from "../../app";
 import request from "supertest";
+import { type AddressInfo } from "node:net";
+import { io as ioc } from "socket.io-client";
+import { app, server } from "../../app";
 import { setupMongoDB, teardownMongoDB } from "../../__tests__/setup";
 import User, { IUser } from "../../models/User";
-import { ERROR_STATUS, EVENT_ERROR, MessageDTO } from "../../types/events";
+import { ERROR_STATUS, EVENT_ERROR } from "../../types/events";
 import Message from "../../models/Message";
 import { promisify } from "node:util";
 import { issueAuthToken } from "../../services/authService";
-import { io, server } from "../../sockets";
+import { io } from "../../sockets";
 import { TypedClientSocket } from "../../types/sockets";
+import { MessageDTO } from "../../types/dto";
 
 type UserData = {
   userName: string;
