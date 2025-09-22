@@ -4,13 +4,14 @@ import {
   deleteChat,
   getAllChatsForUser,
 } from "../../controllers/chatController";
+import { asyncHandler } from "../../utils/asyncHandler";
 
 const router = Router();
 
-router.get("/", getAllChatsForUser);
+router.get("/", asyncHandler(getAllChatsForUser));
 
-router.post("/", createChat);
+router.post("/", asyncHandler(createChat));
 
-router.delete("/:chatId", deleteChat);
+router.delete("/:chatId", asyncHandler(deleteChat));
 
 export default router;
