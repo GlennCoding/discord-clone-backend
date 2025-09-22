@@ -11,10 +11,12 @@ import refreshRouter from "./routes/refresh";
 import cookieParser from "cookie-parser";
 import credentials from "./middleware/credentials";
 import corsOptions from "./config/corsOptions";
+import http from "http";
 import { errorMiddleware } from "./middleware/errorMiddleware";
 
 // Initialize Express app
-export const app = express();
+const app = express();
+const server = http.createServer(app);
 
 // Set trust proxy if behind reverse proxy (e.g. NGINX, Heroku)
 app.set("trust proxy", true);
@@ -38,3 +40,5 @@ app.use((_, res) => {
 });
 
 app.use(errorMiddleware);
+
+export { app, server };

@@ -1,7 +1,8 @@
+import { server } from "./app";
 import { connectDB } from "./config/dbConn";
 import "./config/loadEnvironment";
 import { env } from "./utils/env";
-import { server } from "./sockets";
+import "./sockets";
 
 const start = async () => {
   await connectDB();
