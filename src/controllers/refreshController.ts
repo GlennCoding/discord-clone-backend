@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import { issueAuthToken } from "../services/authService";
 import { findUserWithRefreshToken } from "../services/userService";
 import { env } from "../utils/env";
+import { RefreshtokenNotFoundError } from "../utils/errors";
 
 export const handleRefreshToken = async (req: Request, res: Response) => {
   const cookies = req.cookies;
@@ -12,13 +13,9 @@ export const handleRefreshToken = async (req: Request, res: Response) => {
   }
   const refreshToken = cookies.jwt;
 
-  // check if refresh token in DB
   const user = await findUserWithRefreshToken(refreshToken);
 
-  if (!user) {
-    res.sendStatus(401);
-    return;
-  }
+  if (!user) return new RefreshtokenNotFoundError();
 
   const onSuccessfulVerify = () => {
     const newAccessToken = issueAuthToken(user);

@@ -5,6 +5,7 @@ import {
   saveUserRefreshToken,
 } from "../services/userService";
 import { issueAuthToken, issueRefreshToken } from "../services/authService";
+import { UsernameIsTakenError } from "../utils/errors";
 
 export const handleRegister = async (req: Request, res: Response) => {
   const { userName, password } = req.body;
@@ -16,10 +17,7 @@ export const handleRegister = async (req: Request, res: Response) => {
 
   const usernameExistsAlready = await findUserWithUserName(userName);
 
-  if (usernameExistsAlready) {
-    res.status(409).json({ error: "Username already taken." });
-    return;
-  }
+  if (usernameExistsAlready) return new UsernameIsTakenError();
 
   const user = await createUser(userName, password);
 
