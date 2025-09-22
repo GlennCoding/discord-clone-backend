@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { saveUserRefreshToken, verifyUserPassword } from "../services/userService";
 import { issueAuthToken, issueRefreshToken } from "../services/authService";
+import { InputMissingError } from "../utils/errors";
 
 export const handleLogin = async (req: Request, res: Response) => {
   if (!req.body) {
@@ -10,12 +11,8 @@ export const handleLogin = async (req: Request, res: Response) => {
 
   const { userName, password } = req.body;
 
-  if (!userName || !password) {
-    res.status(400).json({
-      message: "Missing required fields: Username and password are required.",
-    });
-    return;
-  }
+  if (!userName) return new InputMissingError("Username");
+  if (!password) return new InputMissingError("Password");
 
   const user = await verifyUserPassword(userName, password);
 
