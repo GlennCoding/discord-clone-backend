@@ -33,4 +33,8 @@ app.use("/refresh", refreshRouter);
 
 app.use("/chat", verifyJWT, chatRouter);
 
+app.use((_, res) => {
+  res.status(404).json({ error: "Not found" });
+});
+
 app.use(errorMiddleware);
