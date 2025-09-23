@@ -5,8 +5,9 @@ const storage = new Storage({
   projectId: "discord-clone",
 });
 
+const bucket = storage.bucket("profile-pictures");
+
 const ensureBucket = async (bucketName: string) => {
-  const bucket = storage.bucket(bucketName);
   const [exists] = await bucket.exists();
   if (!exists) {
     await storage.createBucket(bucketName);
@@ -19,4 +20,4 @@ ensureBucket("profile-pictures").catch((err) => {
   console.error("Error ensuring bucket:", err);
 });
 
-export { storage, ensureBucket };
+export { storage, bucket };
