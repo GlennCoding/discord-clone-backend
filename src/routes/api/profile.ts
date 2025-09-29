@@ -3,7 +3,7 @@ import multer from "multer";
 import { bucket } from "../../config/storage";
 import User from "../../models/User";
 import { UserRequest } from "../../middleware/verifyJWT";
-import { UserNotFoundError } from "../../utils/errors";
+import { InputMissingError, UserNotFoundError } from "../../utils/errors";
 import { env } from "../../utils/env";
 
 const upload = multer({
@@ -91,9 +91,34 @@ router.get("/", async (req: UserRequest, res: Response, next: NextFunction) => {
     const user = await User.findById(req.userId as string);
     if (!user) throw new Error(`User with ${req.userId} not found`);
 
-    res
-      .status(200)
-      .json({ userName: user.userName, profileImgUrl: user.profileImgUrl });
+    res.status(200).json({
+      userName: user.userName,
+      status: user.status,
+      profileImgUrl: user.profileImgUrl,
+    });
+  } catch (e) {
+    console.log(e);
+    res.status(500).json(e);
+  }
+});
+
+router.post("/", async (req: UserRequest, res: Response, next: NextFunction) => {
+  try {
+    const { status } = req.body;
+
+    if (!status) throw new InputMissingError("status");
+
+    const user = await User.findById(req.userId as string);
+    if (!user) throw new Error(`User with ${req.userId} not found`);
+
+    user.status = status;
+    await user.save();
+
+    res.status(200).json({
+      userName: user.userName,
+      status: user.status,
+      profileImgUrl: user.profileImgUrl,
+    });
   } catch (e) {
     console.log(e);
     res.status(500).json(e);
@@ -101,16 +126,3 @@ router.get("/", async (req: UserRequest, res: Response, next: NextFunction) => {
 });
 
 export default router;
-
-/**
- * TODOs:
- *
- * What to include in profile
- * - Change avatar img
- * - Delete avatar img
- *
- * - Delete Acc
- *
- * - Get user data: username + Avatar
- *
- */
