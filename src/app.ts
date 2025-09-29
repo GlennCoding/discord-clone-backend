@@ -33,9 +33,9 @@ app.use("/", rootRouter);
 app.use("/register", registerRouter);
 app.use("/login", authRouter);
 app.use("/refresh", refreshRouter);
-app.use("/profile", profileRouter);
 
 app.use("/chat", verifyJWT, chatRouter);
+app.use("/profile", verifyJWT, profileRouter);
 
 app.use((_, res) => {
   res.status(404).json({ error: "Not found" });
