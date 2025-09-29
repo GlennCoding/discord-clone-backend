@@ -94,9 +94,9 @@ describe("/chat", () => {
       .send({ participant: nonExistentUser })
       .set("Authorization", `Bearer ${token}`);
 
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(404);
     expect(res.body).toEqual({
-      error: `A user with the username ${nonExistentUser} doesn't exist`,
+      error: `User with username "${nonExistentUser}" not found`,
     });
   });
 

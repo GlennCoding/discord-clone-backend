@@ -29,6 +29,12 @@ export class RefreshtokenNotFoundError extends CustomError {
   }
 }
 
+export class RequestBodyIsMissingError extends CustomError {
+  constructor() {
+    super(400, "Request body is missing");
+  }
+}
+
 export class InputMissingError extends CustomError {
   constructor(inputName: string) {
     super(400, `${inputName} is required`);

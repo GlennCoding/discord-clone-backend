@@ -17,7 +17,7 @@ export const handleRegister = async (req: Request, res: Response) => {
 
   const usernameExistsAlready = await findUserWithUserName(userName);
 
-  if (usernameExistsAlready) return new UsernameIsTakenError();
+  if (usernameExistsAlready) throw new UsernameIsTakenError();
 
   const user = await createUser(userName, password);
 

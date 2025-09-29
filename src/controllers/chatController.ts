@@ -31,13 +31,13 @@ export const getAllChatsForUser = async (req: UserRequest, res: Response) => {
 export const createChat = async (req: UserRequest, res: Response) => {
   const { participant } = req.body || {};
 
-  if (!participant) return new InputMissingError("Participant");
+  if (!participant) throw new InputMissingError("Participant");
 
   const otherUser = await findUserWithUserName(participant);
 
-  if (!otherUser) return new UserNotFoundError(participant);
+  if (!otherUser) throw new UserNotFoundError(participant);
 
-  if (otherUser.id === req.userId) return new CantStartChatWithOneselfError();
+  if (otherUser.id === req.userId) throw new CantStartChatWithOneselfError();
 
   const chat = await findChatBetweenTwoUsers(req.userId as string, otherUser.id);
 
@@ -54,15 +54,15 @@ export const createChat = async (req: UserRequest, res: Response) => {
 export const deleteChat = async (req: UserRequest, res: Response) => {
   const { chatId } = req.params || {};
 
-  if (!chatId) return new InputMissingError("Chat ID");
+  if (!chatId) throw new InputMissingError("Chat ID");
 
   const chat = await findChatWithChatId(chatId);
 
-  if (!chat) return new ChatNotFoundError();
+  if (!chat) throw new ChatNotFoundError();
 
   const userIsPartOfChat = checkIfUserIdPartOfChat(chat, req.userId as string);
 
-  if (!userIsPartOfChat) return new UserNotPartOfChatError();
+  if (!userIsPartOfChat) throw new UserNotPartOfChatError();
 
   await deleteChatService(chat);
 

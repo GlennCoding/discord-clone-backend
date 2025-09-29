@@ -1,18 +1,16 @@
 import { Request, Response } from "express";
 import { saveUserRefreshToken, verifyUserPassword } from "../services/userService";
 import { issueAuthToken, issueRefreshToken } from "../services/authService";
-import { InputMissingError } from "../utils/errors";
+import { InputMissingError, RequestBodyIsMissingError } from "../utils/errors";
 
 export const handleLogin = async (req: Request, res: Response) => {
-  if (!req.body) {
-    res.status(400).json({ error: "Request body is missing" });
-    return;
-  }
+  if (!req.body) throw new RequestBodyIsMissingError();
 
   const { userName, password } = req.body;
 
-  if (!userName) return new InputMissingError("Username");
-  if (!password) return new InputMissingError("Password");
+  if (!userName) throw new InputMissingError("Username");
+
+  if (!password) throw new InputMissingError("Password");
 
   const user = await verifyUserPassword(userName, password);
 
