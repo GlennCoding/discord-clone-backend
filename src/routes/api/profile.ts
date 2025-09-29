@@ -77,12 +77,28 @@ router.delete(
 
       user.profileImgUrl = undefined;
       await user.save();
+
+      res.sendStatus(204);
     } catch (e) {
       console.log(e);
       res.status(500).json(e);
     }
   }
 );
+
+router.get("/", async (req: UserRequest, res: Response, next: NextFunction) => {
+  try {
+    const user = await User.findById(req.userId as string);
+    if (!user) throw new Error(`User with ${req.userId} not found`);
+
+    res
+      .status(200)
+      .json({ userName: user.userName, profileImgUrl: user.profileImgUrl });
+  } catch (e) {
+    console.log(e);
+    res.status(500).json(e);
+  }
+});
 
 export default router;
 
@@ -93,7 +109,8 @@ export default router;
  * - Change avatar img
  * - Delete avatar img
  *
- * - Load avatar img
  * - Delete Acc
+ *
+ * - Get user data: username + Avatar
  *
  */
