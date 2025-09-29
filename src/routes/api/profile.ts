@@ -35,7 +35,10 @@ router.post(
         return res.status(400).json({ error: "No file uploaded" });
       }
 
-      const blob = bucket.file(Date.now() + "-" + req.file.originalname);
+      const user = await User.findById(req.userId as string);
+      if (!user) throw new Error(`User with ${req.userId} not found`);
+
+      const blob = bucket.file(Date.now() + "-" + user.userName);
 
       const blobStream = blob.createWriteStream({
         resumable: false,
@@ -48,8 +51,6 @@ router.post(
         const publicUrl = getPublicUrl(bucket.name, blob.name);
 
         // Save profileImgUrl to user model
-        const user = await User.findById(req.userId as string);
-        if (!user) throw new Error(`User with ${req.userId} not found`);
         user.profileImgUrl = publicUrl;
         await user.save();
 
@@ -67,13 +68,32 @@ router.post(
   }
 );
 
+router.delete(
+  "/picture",
+  async (req: UserRequest, res: Response, next: NextFunction) => {
+    try {
+      const user = await User.findById(req.userId as string);
+      if (!user) throw new Error(`User with ${req.userId} not found`);
+
+      user.profileImgUrl = undefined;
+      await user.save();
+    } catch (e) {
+      console.log(e);
+      res.status(500).json(e);
+    }
+  }
+);
+
 export default router;
 
 /**
  * TODOs:
  *
- * - Test it in production
- * - Q: How to handle similar names of avatars
- * - Q: How to save avatar with user name + unique ID
+ * What to include in profile
+ * - Change avatar img
+ * - Delete avatar img
+ *
+ * - Load avatar img
+ * - Delete Acc
  *
  */
