@@ -6,10 +6,12 @@ import { UserRequest } from "../../middleware/verifyJWT";
 import { InputMissingError, UserNotFoundError } from "../../utils/errors";
 import { env } from "../../utils/env";
 
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5 MB for example
+    fileSize: MAX_FILE_SIZE,
   },
 });
 
@@ -35,8 +37,12 @@ router.post(
         return res.status(400).json({ error: "No file uploaded" });
       }
 
+      if (req.file.size >= MAX_FILE_SIZE) {
+        return res.status(400).json({ error: "Image must be smaller than 5MB" });
+      }
+
       const user = await User.findById(req.userId as string);
-      if (!user) throw new Error(`User with ${req.userId} not found`);
+      if (!user) throw new UserNotFoundError();
 
       const blob = bucket.file(Date.now() + "-" + user.userName);
 
@@ -73,7 +79,7 @@ router.delete(
   async (req: UserRequest, res: Response, next: NextFunction) => {
     try {
       const user = await User.findById(req.userId as string);
-      if (!user) throw new Error(`User with ${req.userId} not found`);
+      if (!user) throw new UserNotFoundError();
 
       user.profileImgUrl = undefined;
       await user.save();
@@ -89,7 +95,7 @@ router.delete(
 router.get("/", async (req: UserRequest, res: Response, next: NextFunction) => {
   try {
     const user = await User.findById(req.userId as string);
-    if (!user) throw new Error(`User with ${req.userId} not found`);
+    if (!user) throw new UserNotFoundError();
 
     res.status(200).json({
       userName: user.userName,
@@ -109,7 +115,7 @@ router.post("/", async (req: UserRequest, res: Response, next: NextFunction) => 
     if (!status) throw new InputMissingError("status");
 
     const user = await User.findById(req.userId as string);
-    if (!user) throw new Error(`User with ${req.userId} not found`);
+    if (!user) throw new UserNotFoundError();
 
     user.status = status;
     await user.save();
