@@ -9,7 +9,7 @@ export class UserNotFoundError extends CustomError {
   constructor(userName?: string) {
     super(
       404,
-      userName ? "User not found" : `User with username "${userName}" not found`
+      userName ? `User with username "${userName}" not found` : "User not found"
     );
   }
 }
