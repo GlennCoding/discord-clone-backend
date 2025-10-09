@@ -3,10 +3,14 @@ import multer from "multer";
 import { bucket } from "../../config/storage";
 import User from "../../models/User";
 import { UserRequest } from "../../middleware/verifyJWT";
-import { InputMissingError, UserNotFoundError } from "../../utils/errors";
+import {
+  CustomError,
+  InputMissingError,
+  UserNotFoundError,
+} from "../../utils/errors";
 import { env } from "../../utils/env";
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+const MAX_FILE_SIZE = 7 * 1024 * 1024; // 7 MB
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -37,6 +41,14 @@ router.post(
         return res.status(400).json({ error: "No file uploaded" });
       }
 
+      // if (req.file.mimetype === "image/gif") {
+      //   return res.status(400).json({ error: "GIFs are not allowed" });
+      // }
+
+      if (!req.file.mimetype.startsWith("image/")) {
+        return res.status(400).json({ error: "File must be an image" });
+      }
+
       if (req.file.size >= MAX_FILE_SIZE) {
         return res.status(400).json({ error: "Image must be smaller than 5MB" });
       }
@@ -59,8 +71,6 @@ router.post(
         // Save profileImgUrl to user model
         user.profileImgUrl = publicUrl;
         await user.save();
-
-        console.log(publicUrl);
 
         res.status(200).json({ url: publicUrl });
       });
@@ -109,10 +119,15 @@ router.get("/", async (req: UserRequest, res: Response, next: NextFunction) => {
 });
 
 router.post("/", async (req: UserRequest, res: Response, next: NextFunction) => {
+  const MAX_STATUS_LENGTH = 200;
+
   try {
     const { status } = req.body;
 
     if (!status) throw new InputMissingError("status");
+
+    if (status.length >= MAX_STATUS_LENGTH)
+      throw new CustomError(400, "Status length should not exceed 200 chars");
 
     const user = await User.findById(req.userId as string);
     if (!user) throw new UserNotFoundError();
