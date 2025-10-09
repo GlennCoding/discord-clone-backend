@@ -24,8 +24,5 @@ export interface SendMessageInput {
 export interface ProfileDTO {
   userName: string;
   status: string;
-  avatar?: {
-    filePath: string;
-    url: string;
-  };
+  profileImgUrl?: string;
 }
