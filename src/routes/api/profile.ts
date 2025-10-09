@@ -9,8 +9,10 @@ import {
   UserNotFoundError,
 } from "../../utils/errors";
 import { env } from "../../utils/env";
+import { ProfileDTO } from "../../types/dto";
 
-const MAX_FILE_SIZE = 7 * 1024 * 1024; // 7 MB
+const MAX_FILE_SIZE_IN_MB = 7;
+const MAX_FILE_SIZE = MAX_FILE_SIZE_IN_MB * 1024 * 1024; // 7 MB
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -37,21 +39,16 @@ router.post(
   upload.single("profilePicture"),
   async (req: UserRequest, res: Response, next: NextFunction) => {
     try {
-      if (!req.file) {
-        return res.status(400).json({ error: "No file uploaded" });
-      }
+      if (!req.file) throw new CustomError(400, "File is missing");
 
-      // if (req.file.mimetype === "image/gif") {
-      //   return res.status(400).json({ error: "GIFs are not allowed" });
-      // }
+      if (!req.file.mimetype.startsWith("image/"))
+        throw new CustomError(400, "File must be an image");
 
-      if (!req.file.mimetype.startsWith("image/")) {
-        return res.status(400).json({ error: "File must be an image" });
-      }
-
-      if (req.file.size >= MAX_FILE_SIZE) {
-        return res.status(400).json({ error: "Image must be smaller than 5MB" });
-      }
+      if (req.file.size >= MAX_FILE_SIZE)
+        throw new CustomError(
+          400,
+          `Image must be smaller than ${MAX_FILE_SIZE_IN_MB}MB`
+        );
 
       const user = await User.findById(req.userId as string);
       if (!user) throw new UserNotFoundError();
@@ -68,8 +65,11 @@ router.post(
       blobStream.on("finish", async () => {
         const publicUrl = getPublicUrl(bucket.name, blob.name);
 
-        // Save profileImgUrl to user model
-        user.profileImgUrl = publicUrl;
+        user.avatar = {
+          filePath: blob.name,
+          url: publicUrl,
+        };
+
         await user.save();
 
         res.status(200).json({ url: publicUrl });
@@ -91,7 +91,11 @@ router.delete(
       const user = await User.findById(req.userId as string);
       if (!user) throw new UserNotFoundError();
 
-      user.profileImgUrl = undefined;
+      if (user.avatar) {
+        await bucket.file(user.avatar.filePath).delete();
+      }
+
+      user.avatar = undefined;
       await user.save();
 
       res.sendStatus(204);
@@ -110,8 +114,8 @@ router.get("/", async (req: UserRequest, res: Response, next: NextFunction) => {
     res.status(200).json({
       userName: user.userName,
       status: user.status,
-      profileImgUrl: user.profileImgUrl,
-    });
+      avatar: user.avatar,
+    } as ProfileDTO);
   } catch (e) {
     console.log(e);
     res.status(500).json(e);
@@ -138,8 +142,8 @@ router.post("/", async (req: UserRequest, res: Response, next: NextFunction) => 
     res.status(200).json({
       userName: user.userName,
       status: user.status,
-      profileImgUrl: user.profileImgUrl,
-    });
+      avatar: user.avatar,
+    } as ProfileDTO);
   } catch (e) {
     console.log(e);
     res.status(500).json(e);

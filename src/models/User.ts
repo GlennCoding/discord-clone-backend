@@ -5,7 +5,10 @@ export interface IUser extends Document {
   userName: string;
   password: string;
   status?: string;
-  profileImgUrl?: string;
+  avatar?: {
+    filePath: string;
+    url: string;
+  };
   refreshTokens?: string[];
 }
 
@@ -13,7 +16,10 @@ const userSchema = new Schema<IUser>({
   userName: { type: String, required: true },
   password: { type: String, required: true },
   status: { type: String },
-  profileImgUrl: { type: String },
+  avatar: {
+    filePath: { type: String, required: true },
+    url: { type: String, required: true },
+  },
   refreshTokens: { type: [String] },
 });
 
