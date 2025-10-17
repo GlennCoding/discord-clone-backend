@@ -1,48 +1,84 @@
 import request from "supertest";
-import User from "../../../models/User";
+import User, { IUser } from "../../../models/User";
 import { setupMongoDB, teardownMongoDB } from "../../../__tests__/setup";
 import { app } from "../../../app";
+import path from "path";
+import { issueAuthToken } from "../../../services/authService";
 import { bucket } from "../../../config/storage";
 
-const user1Data = { userName: "John", password: "Cena" };
+const userData = { userName: "user", password: "pwd" };
+let user: IUser;
+
+vi.mock("../../../config/storage", () => {
+  const finishHandlers: Function[] = [];
+
+  const mockStream = {
+    on: vi.fn((event, handler) => {
+      if (event === "finish") finishHandlers.push(handler);
+      return mockStream;
+    }),
+    end: vi.fn(() => {
+      // simulate async "finish" event
+      setTimeout(() => {
+        finishHandlers.forEach((h) => h());
+      }, 10);
+    }),
+  };
+
+  return {
+    bucket: {
+      name: "mock-bucket",
+      file: vi.fn(() => ({
+        name: "mock-image",
+        createWriteStream: vi.fn(() => mockStream),
+        delete: vi.fn(async () => {}), // needed for delete test
+      })),
+    },
+  };
+});
 
 beforeAll(async () => {
   await setupMongoDB();
+});
+
+beforeEach(async () => {
+  await User.deleteMany({});
+
+  user = await User.create({
+    userName: userData.userName,
+    password: userData.password,
+  });
+
+  await user.save();
 });
 
 afterAll(async () => {
   await teardownMongoDB();
 });
 
-beforeEach(async () => {
-  await User.deleteMany({});
-});
-
 describe("/profile", () => {
   it("can get user profile data", async () => {
-    await request(app).post("/register").send(user1Data);
-    const loginRes = await request(app).post("/login").send(user1Data);
-    const token = loginRes.body.token;
+    if (!user) throw new Error("User not defined");
+    const status = "status";
+    user.status = status;
+    await user.save();
 
-    const user = await User.findOne({ userName: user1Data.userName });
-
-    if (!user) throw Error("User not found");
-    user.status = "I am a new status";
+    const token = issueAuthToken(user);
 
     const res = await request(app)
       .get("/profile")
       .set("Authorization", `Bearer ${token}`);
 
     expect(res.status).toBe(200);
-    expect(res.body.userName).toBe(user1Data.userName);
+    expect(res.body.userName).toBe(userData.userName);
+    expect(res.body.status).toBe(status);
   });
 
   it("can update user status", async () => {
-    await request(app).post("/register").send(user1Data);
-    const loginRes = await request(app).post("/login").send(user1Data);
-    const token = loginRes.body.token;
+    if (!user) throw new Error("User not defined");
+    const token = issueAuthToken(user);
 
-    const newStatus = "I am a new status";
+    const newStatus = "new status";
 
     const res = await request(app)
       .put("/profile")
@@ -54,14 +90,9 @@ describe("/profile", () => {
   });
 
   it("can set a user status to undefined", async () => {
-    await request(app).post("/register").send(user1Data);
-    const loginRes = await request(app).post("/login").send(user1Data);
-    const token = loginRes.body.token;
-
-    const user = await User.findOne({ userName: user1Data.userName });
-
-    if (!user) throw Error("User not found");
-    user.status = "I am a new status";
+    if (!user) throw new Error("User not defined");
+    user.status = "status";
+    const token = issueAuthToken(user);
 
     const newStatus = "";
 
@@ -75,9 +106,8 @@ describe("/profile", () => {
   });
 
   it("should throw an error when user status is too long", async () => {
-    await request(app).post("/register").send(user1Data);
-    const loginRes = await request(app).post("/login").send(user1Data);
-    const token = loginRes.body.token;
+    if (!user) throw new Error("User not defined");
+    const token = issueAuthToken(user);
 
     const longStatus = "a".repeat(201);
 
@@ -89,55 +119,61 @@ describe("/profile", () => {
     expect(res.status).toBe(400);
   });
 
-  // TODO: Implement bucket mock
+  it("uploads file", async () => {
+    if (!user) throw new Error("User not defined");
+    const token = issueAuthToken(user);
+
+    await request(app)
+      .put("/profile")
+      .set("Authorization", `Bearer ${token}`)
+      .attach("profilePicture", path.join(__dirname, "test-image.png"));
+
+    expect(bucket.file).toHaveBeenCalled();
+  });
+
   it("can upload a user profile image", async () => {
-    await request(app).post("/register").send(user1Data);
-    const loginRes = await request(app).post("/login").send(user1Data);
-    const token = loginRes.body.token;
+    if (!user) throw new Error("User not defined");
+    const token = issueAuthToken(user);
 
     const res = await request(app)
       .put("/profile")
       .set("Authorization", `Bearer ${token}`)
-      .attach("profilePicture", "__tests__/test-image.png");
-
-    console.log(res.body);
+      .attach("profilePicture", path.join(__dirname, "test-image.png"));
 
     expect(res.status).toBe(200);
     expect(res.body.profileImgUrl).toBeDefined();
+
+    const updatedUser = await User.findById(user._id);
+    expect(updatedUser?.avatar?.url).toBeDefined();
   });
 
-  // TODO: Implement bucket mock & asyncHandler
-  // it("should throw an error when image size is too large", async () => {
-  //   await request(app).post("/register").send(user1Data);
-  //   const loginRes = await request(app).post("/login").send(user1Data);
-  //   const token = loginRes.body.token;
+  it("should throw an error when image size is too large", async () => {
+    const token = issueAuthToken(user);
 
-  //   const res = await request(app)
-  //     .put("/profile")
-  //     .set("Authorization", `Bearer ${token}`)
-  //     .attach("profilePicture", "__tests__/large-test-image.png");
+    const res = await request(app)
+      .put("/profile")
+      .set("Authorization", `Bearer ${token}`)
+      .attach("profilePicture", path.join(__dirname, "large-test-image.png"));
 
-  //   expect(res.status).toBe(400);
-  // });
+    expect(res.status).toBe(500);
+  });
 
-  // TODO: Implement bucket mock
-  // it("can delete a user profile image", async () => {
-  //   await request(app).post("/register").send(user1Data);
-  //   const loginRes = await request(app).post("/login").send(user1Data);
-  //   const token = loginRes.body.token;
+  it("can delete a user profile image", async () => {
+    if (!user) throw new Error("User not defined");
+    const token = issueAuthToken(user);
 
-  //   await request(app)
-  //     .put("/profile")
-  //     .set("Authorization", `Bearer ${token}`)
-  //     .attach("profilePicture", "__tests__/test-image.png");
+    await request(app)
+      .put("/profile")
+      .set("Authorization", `Bearer ${token}`)
+      .attach("profilePicture", path.join(__dirname, "test-image.png"));
 
-  //   const res = await request(app)
-  //     .delete("/profile/picture")
-  //     .set("Authorization", `Bearer ${token}`);
+    const res = await request(app)
+      .delete("/profile/picture")
+      .set("Authorization", `Bearer ${token}`);
 
-  //   expect(res.status).toBe(204);
+    expect(res.status).toBe(204);
 
-  //   const user = await User.findOne({ userName: user1Data.userName });
-  //   expect(user?.avatar).toBeUndefined();
-  // });
+    const foundUser = await User.findOne({ userName: userData.userName });
+    expect(foundUser?.avatar).toBeUndefined();
+  });
 });
