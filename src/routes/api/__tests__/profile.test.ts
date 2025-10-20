@@ -102,7 +102,7 @@ describe("/profile", () => {
       .send({ status: newStatus });
 
     expect(res.status).toBe(200);
-    expect(res.body.status).toBe(undefined);
+    expect(res.body.status).toBe("");
   });
 
   it("should throw an error when user status is too long", async () => {
@@ -124,7 +124,7 @@ describe("/profile", () => {
     const token = issueAuthToken(user);
 
     await request(app)
-      .put("/profile")
+      .put("/profile/avatar")
       .set("Authorization", `Bearer ${token}`)
       .attach("profilePicture", path.join(__dirname, "test-image.png"));
 
@@ -136,7 +136,7 @@ describe("/profile", () => {
     const token = issueAuthToken(user);
 
     const res = await request(app)
-      .put("/profile")
+      .put("/profile/avatar")
       .set("Authorization", `Bearer ${token}`)
       .attach("profilePicture", path.join(__dirname, "test-image.png"));
 
@@ -151,7 +151,7 @@ describe("/profile", () => {
     const token = issueAuthToken(user);
 
     const res = await request(app)
-      .put("/profile")
+      .put("/profile/avatar")
       .set("Authorization", `Bearer ${token}`)
       .attach("profilePicture", path.join(__dirname, "large-test-image.png"));
 
@@ -162,13 +162,11 @@ describe("/profile", () => {
     if (!user) throw new Error("User not defined");
     const token = issueAuthToken(user);
 
-    await request(app)
-      .put("/profile")
-      .set("Authorization", `Bearer ${token}`)
-      .attach("profilePicture", path.join(__dirname, "test-image.png"));
+    user.avatar = { filePath: "path", url: "url" };
+    await user.save();
 
     const res = await request(app)
-      .delete("/profile/picture")
+      .delete("/profile/avatar")
       .set("Authorization", `Bearer ${token}`);
 
     expect(res.status).toBe(204);

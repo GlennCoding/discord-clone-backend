@@ -4,6 +4,7 @@ import {
   deleteProfileImg,
   getProfile,
   updateProfile,
+  updateProfileImg,
 } from "../../controllers/profileController";
 import { asyncHandler } from "../../utils/asyncHandler";
 
@@ -20,9 +21,12 @@ const upload = multer({
 });
 
 router.get("/", asyncHandler(getProfile));
-
-router.put("/", upload.single("profilePicture"), asyncHandler(updateProfile));
-
-router.delete("/picture", asyncHandler(deleteProfileImg));
+router.put("/", asyncHandler(updateProfile));
+router.put(
+  "/avatar",
+  upload.single("profilePicture"),
+  asyncHandler(updateProfileImg)
+);
+router.delete("/avatar", asyncHandler(deleteProfileImg));
 
 export default router;

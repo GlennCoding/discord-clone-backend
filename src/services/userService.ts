@@ -42,3 +42,9 @@ export const findUserWithUserName = (
 ): Promise<IUser | null | undefined> => {
   return User.findOne({ userName }).exec();
 };
+
+export const findUserWithUserId = (
+  userId: string
+): Promise<IUser | null | undefined> => {
+  return User.findById(userId).exec();
+};
