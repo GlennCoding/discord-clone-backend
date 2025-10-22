@@ -38,6 +38,12 @@ export class RequestBodyIsMissingError extends CustomError {
   }
 }
 
+export class ParamsMissingError extends CustomError {
+  constructor(inputName: string) {
+    super(400, `The parameter ${inputName} is required`);
+  }
+}
+
 export class InputMissingError extends CustomError {
   constructor(inputName: string) {
     super(400, `${inputName} is required`);

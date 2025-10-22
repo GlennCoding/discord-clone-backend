@@ -16,6 +16,7 @@ import {
   UserNotPartOfChatError,
   InputMissingError,
   UserNotFoundError,
+  ParamsMissingError,
 } from "../utils/errors";
 
 export const getAllChatsForUser = async (req: UserRequest, res: Response) => {
@@ -54,7 +55,7 @@ export const createChat = async (req: UserRequest, res: Response) => {
 export const deleteChat = async (req: UserRequest, res: Response) => {
   const { chatId } = req.params || {};
 
-  if (!chatId) throw new InputMissingError("Chat ID");
+  if (!chatId) throw new ParamsMissingError("Chat ID");
 
   const chat = await findChatWithChatId(chatId);
 

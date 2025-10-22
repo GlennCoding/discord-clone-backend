@@ -18,7 +18,7 @@
 - API
 
   - [ ] POST /chat/id/file
-    - verfify request: file existing, file format, chatId exists
+    - verify request: file existing, file format, chatId exists
     - await: upload file & generate path
     - await: create & save chatmessage document
       - if fails, delete file from bucket
@@ -26,6 +26,11 @@
       - io.to(roomId).emit() -> Fails automatically if there is no active socket connection?
     - return res: path
   - [ ] DELETE /chat/id/file
+  - [ ] socket handleJoinChat: load messages -> Load messages & attachments, but how to paginate? -> We want all in one list, don't we? -> Better to populate Attachment to Message
+
+- Model
+
+  - Message (includes an array of attachments) N->1 Chat
 
 - Q: How to do an event queue, to not block request response (Hypothesis)
   - Queue with tasks, runs as it's own service
