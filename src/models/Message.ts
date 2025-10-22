@@ -4,7 +4,7 @@ import { IChat } from "./Chat";
 
 interface IAttachment extends Document {
   path: string;
-  pathUrl: string;
+  downloadUrl: string;
 }
 
 export interface IMessage extends Document {
@@ -13,13 +13,13 @@ export interface IMessage extends Document {
   sender: IUser;
   createdAt: Date;
   text: string;
-  attachment: IAttachment[];
+  attachments: IAttachment[];
 }
 
 const attachmentSchema = new Schema<IAttachment>(
   {
     path: { type: String, required: true },
-    pathUrl: { type: String, required: true },
+    downloadUrl: { type: String, required: true },
   },
   { _id: false }
 );
@@ -38,9 +38,9 @@ const messageSchema = new Schema<IMessage>(
     },
     text: {
       type: String,
-      required: true,
+      required: false,
     },
-    attachment: [{ type: attachmentSchema, required: false }],
+    attachments: [{ type: attachmentSchema, required: false }],
   },
   { timestamps: true }
 );

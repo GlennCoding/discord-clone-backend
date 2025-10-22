@@ -3,12 +3,12 @@ interface Attachment {
 }
 
 export interface MessageDTO {
+  id: string;
   text: string;
   chatId: string;
   sender: "self" | "other";
   createdAt: string;
-  attachments: Attachment[];
-  id: string;
+  attachments?: Attachment[];
 }
 
 export interface ChatDTO {
@@ -22,6 +22,7 @@ export interface JoinChatDTO {
 }
 
 export interface SendMessageAttachmentInput {
+  chatId: string;
   text?: string;
 }
 

@@ -5,11 +5,12 @@ import http from "http";
 
 import rootRouter from "./routes/root";
 import authRouter from "./routes/auth";
-import profileRouter from "./routes/api/profile";
+import refreshRouter from "./routes/refresh";
 import registerRouter from "./routes/register";
+import profileRouter from "./routes/api/profile";
+import messagesRouter from "./routes/api/messages";
 import chatRouter from "./routes/api/chats";
 import verifyJWT from "./middleware/verifyJWT";
-import refreshRouter from "./routes/refresh";
 import cookieParser from "cookie-parser";
 import credentials from "./middleware/credentials";
 import corsOptions from "./config/corsOptions";
@@ -36,6 +37,7 @@ app.use("/refresh", refreshRouter);
 
 app.use("/chat", verifyJWT, chatRouter);
 app.use("/profile", verifyJWT, profileRouter);
+app.use("/messages", verifyJWT, messagesRouter);
 
 app.use((_, res) => {
   res.status(404).json({ error: "Not found" });
