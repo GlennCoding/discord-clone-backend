@@ -21,7 +21,12 @@ export interface JoinChatDTO {
   messages: MessageDTO[];
 }
 
-export interface SendMessageAttachmentInput {
+export interface DeleteMessageAttachmentInput {
+  messageId: string;
+  attachmentPath: string;
+}
+
+export interface SaveMessageAttachmentInput {
   chatId: string;
   text?: string;
 }

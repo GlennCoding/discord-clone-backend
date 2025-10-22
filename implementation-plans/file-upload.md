@@ -17,7 +17,7 @@
 
 - API
 
-  - [ ] POST /chat/id/file
+  - [ ] POST /message/attachment
     - verify request: file existing, file format, chatId exists
     - await: upload file & generate path
     - await: create & save chatmessage document
@@ -25,7 +25,12 @@
     - await: send message to chat room (-> Needs to be sent to an event queue, to retry, if fails)
       - io.to(roomId).emit() -> Fails automatically if there is no active socket connection?
     - return res: path
-  - [ ] DELETE /chat/id/file
+  - [ ] DELETE /message/attachment
+    - verify request: file -> does file exist?, message -> does message exist?, user -> does user exist?
+    - delete file from bucket
+    - delete attachment from message
+      - if there is no text or other attachment, delete the whole message
+    - return res.sendStatus(200)
   - [ ] socket handleJoinChat: load messages -> Load messages & attachments, but how to paginate? -> We want all in one list, don't we? -> Better to populate Attachment to Message
 
 - Model

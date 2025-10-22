@@ -1,6 +1,9 @@
 import { Router } from "express";
 import { asyncHandler } from "../../utils/asyncHandler";
-import { saveMessageAttachment } from "../../controllers/messageController";
+import {
+  deleteMessageAttachement,
+  saveMessageAttachment,
+} from "../../controllers/messageController";
 import multer from "multer";
 
 const router = Router();
@@ -21,6 +24,6 @@ router.post(
   asyncHandler(saveMessageAttachment)
 );
 
-// router.delete("/:chatId", asyncHandler(deleteChat));
+router.delete("/attachment", asyncHandler(deleteMessageAttachement));
 
 export default router;
