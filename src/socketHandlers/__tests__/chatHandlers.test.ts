@@ -1,14 +1,13 @@
 import request from "supertest";
 import { type AddressInfo } from "node:net";
 import { io as ioc } from "socket.io-client";
-import { app, server } from "../../app";
+import { app, io, server } from "../../app";
 import { setupMongoDB, teardownMongoDB } from "../../__tests__/setup";
 import User, { IUser } from "../../models/User";
 import { ERROR_STATUS, EVENT_ERROR } from "../../types/events";
 import Message from "../../models/Message";
 import { promisify } from "node:util";
 import { issueAuthToken } from "../../services/authService";
-import { io } from "../../sockets";
 import { TypedClientSocket } from "../../types/sockets";
 import { MessageDTO } from "../../types/dto";
 
@@ -94,6 +93,7 @@ describe("chat socket handlers", () => {
     user2Socket.disconnect();
     user3Socket.disconnect();
     await io.close();
+    await new Promise((r) => server.close(r));
     await teardownMongoDB();
   });
 

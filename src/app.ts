@@ -15,10 +15,12 @@ import cookieParser from "cookie-parser";
 import credentials from "./middleware/credentials";
 import corsOptions from "./config/corsOptions";
 import { errorMiddleware } from "./middleware/errorMiddleware";
+import { initSocket } from "./sockets";
 
 // Initialize Express app
 const app = express();
 const server = http.createServer(app);
+const io = initSocket();
 
 // Set trust proxy if behind reverse proxy (e.g. NGINX, Heroku)
 app.set("trust proxy", true);
@@ -45,4 +47,4 @@ app.use((_, res) => {
 
 app.use(errorMiddleware);
 
-export { app, server };
+export { app, server, io };
