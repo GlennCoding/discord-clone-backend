@@ -16,6 +16,12 @@ export interface MessageDTO {
   attachments?: AttachmentDTO[];
 }
 
+export interface MeDTO {
+  id: string;
+  username: string;
+  avatarUrl?: string;
+}
+
 export interface ChatDTO {
   chatId: string;
   participant: string;
