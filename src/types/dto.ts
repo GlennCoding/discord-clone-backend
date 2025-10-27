@@ -20,3 +20,9 @@ export interface SendMessageInput {
   chatId: string;
   text: string;
 }
+
+export interface ProfileDTO {
+  userName: string;
+  status: string;
+  profileImgUrl?: string;
+}

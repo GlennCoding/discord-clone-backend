@@ -3,6 +3,7 @@ import { connectDB } from "./config/dbConn";
 import "./config/loadEnvironment";
 import { env } from "./utils/env";
 import "./sockets";
+import "./config/storage";
 
 const start = async () => {
   await connectDB();

@@ -6,8 +6,11 @@ export class CustomError extends Error {
 }
 
 export class UserNotFoundError extends CustomError {
-  constructor(userName: string) {
-    super(404, `User with username "${userName}" not found`);
+  constructor(userName?: string) {
+    super(
+      404,
+      userName ? `User with username "${userName}" not found` : "User not found"
+    );
   }
 }
 
@@ -26,6 +29,12 @@ export class InvalidCredentialsError extends CustomError {
 export class RefreshtokenNotFoundError extends CustomError {
   constructor() {
     super(404, "Refreshtoken not found");
+  }
+}
+
+export class RequestBodyIsMissingError extends CustomError {
+  constructor() {
+    super(400, "Request body is missing");
   }
 }
 

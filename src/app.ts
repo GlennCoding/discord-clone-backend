@@ -1,9 +1,11 @@
 import "./config/loadEnvironment";
 import express from "express";
 import cors from "cors";
+import http from "http";
 
 import rootRouter from "./routes/root";
 import authRouter from "./routes/auth";
+import profileRouter from "./routes/api/profile";
 import registerRouter from "./routes/register";
 import chatRouter from "./routes/api/chats";
 import verifyJWT from "./middleware/verifyJWT";
@@ -11,7 +13,6 @@ import refreshRouter from "./routes/refresh";
 import cookieParser from "cookie-parser";
 import credentials from "./middleware/credentials";
 import corsOptions from "./config/corsOptions";
-import http from "http";
 import { errorMiddleware } from "./middleware/errorMiddleware";
 
 // Initialize Express app
@@ -34,6 +35,7 @@ app.use("/login", authRouter);
 app.use("/refresh", refreshRouter);
 
 app.use("/chat", verifyJWT, chatRouter);
+app.use("/profile", verifyJWT, profileRouter);
 
 app.use((_, res) => {
   res.status(404).json({ error: "Not found" });
