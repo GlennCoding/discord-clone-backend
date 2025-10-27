@@ -14,7 +14,6 @@ import {
   uploadFileToBucket,
 } from "../services/storageService";
 import Message, { IMessage } from "../models/Message";
-import { io } from "../sockets";
 import {
   DeleteMessageAttachmentInput,
   MessageDTO,
@@ -22,8 +21,8 @@ import {
 } from "../types/dto";
 import Chat from "../models/Chat";
 import mongoose from "mongoose";
-import { IUser } from "../models/User";
 import { idsEqual } from "../utils/helper";
+import { io } from "../app";
 
 const getChat = async (chatId: string | undefined, userId: string) => {
   // is user part of chat? -> Chat.find()

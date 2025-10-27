@@ -46,6 +46,7 @@ export const handleIncomingNewMessage: EventControllerWithAck<
       chatId: newMessage.chat.toString(),
       sender,
       createdAt: newMessage.createdAt.toISOString(),
+      attachments: newMessage.attachments,
       id: newMessage.id.toString(),
     });
 
@@ -118,6 +119,7 @@ export const handleJoinChat: EventControllerWithAck<"chat:join"> = async (
           chatId: message.chat.toString(),
           sender: message.sender.id === currentUserId ? "self" : "other",
           createdAt: message.createdAt.toISOString(),
+          attachments: message.attachments,
           id: message.id.toString(),
         } as MessageDTO)
     );
