@@ -23,6 +23,7 @@ import Chat from "../models/Chat";
 import mongoose from "mongoose";
 import { idsEqual } from "../utils/helper";
 import { io } from "../app";
+import { toMessageDTO } from "../utils/dtos/messageDTO";
 
 const getChat = async (chatId: string | undefined, userId: string) => {
   // is user part of chat? -> Chat.find()
@@ -38,18 +39,6 @@ const verifyText = (text?: string) => {
   if (!text) return;
   if (typeof text !== "string") throw new CustomError(400, "text must be string");
 };
-
-const formatMessageToMessageDTO = (
-  message: IMessage,
-  sender: "self" | "other"
-): MessageDTO => ({
-  id: message._id.toString(),
-  text: message.text,
-  chatId: message.chat.id,
-  sender,
-  attachments: message.attachments,
-  createdAt: message.createdAt.toISOString(),
-});
 
 export const saveMessageAttachment = async (
   req: UserRequest<SaveMessageAttachmentInput>,
@@ -88,13 +77,15 @@ export const saveMessageAttachment = async (
     deleteFileFromBucket(fileName);
   }
 
+  const messageDTO = toMessageDTO(newMessage);
+
   // emit new message to chatroom
   io.to(chat.id).emit("message:new", {
-    message: formatMessageToMessageDTO(newMessage, "other"),
+    message: messageDTO,
   });
 
   // Send back Message DTO
-  res.status(200).json(formatMessageToMessageDTO(newMessage, "self"));
+  res.status(200).json({ messae: messageDTO });
 };
 
 const getMessage = async (messageId: string) => {

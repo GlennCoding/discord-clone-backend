@@ -1,4 +1,4 @@
-interface Attachment {
+export interface AttachmentDTO {
   downloadUrl: string;
 }
 
@@ -6,9 +6,14 @@ export interface MessageDTO {
   id: string;
   text: string;
   chatId: string;
-  sender: "self" | "other";
+  sender: {
+    id: string;
+    username: string;
+    avatarUrl?: string;
+  };
   createdAt: string;
-  attachments?: Attachment[];
+  updatedAt?: string;
+  attachments?: AttachmentDTO[];
 }
 
 export interface ChatDTO {

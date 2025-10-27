@@ -17,3 +17,14 @@ Final interactions:
   - Image gets inserted into message list (but with "sending..." status)
   - On error -> Show "Error, try again"
 - Broadcasted image
+
+Next steps:
+- [ ] Improve MessageDTO by having senderID in it 
+  - ~~BE: Change MessageDTO, create toMessageDTO function, implement it in chatHandler and messageController~~
+  - FE: Change MessageDTO in FE and update MessageBySelf & MessageByOther component
+  - FE: For now, only allow images
+- [ ] BE: Add validation that you didn't upload multiple files (at this point)
+- [ ] FE improvements
+  - Add proper styling for messages with attachements
+  - Add image preview
+  - Add FE validator for too big file size -> Make a toast pop up when file is too big

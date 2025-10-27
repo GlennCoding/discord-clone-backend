@@ -2,7 +2,7 @@ import { model, Schema, Types } from "mongoose";
 import { IUser } from "./User";
 import { IChat } from "./Chat";
 
-interface IAttachment extends Document {
+export interface IAttachment extends Document {
   path: string;
   downloadUrl: string;
 }
@@ -12,6 +12,7 @@ export interface IMessage extends Document {
   chat: IChat;
   sender: IUser;
   createdAt: Date;
+  updatedAt?: Date;
   text: string;
   attachments: IAttachment[];
 }

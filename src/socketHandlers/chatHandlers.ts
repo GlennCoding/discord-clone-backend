@@ -4,6 +4,7 @@ import { IUser } from "../models/User";
 import { ERROR_STATUS, EVENT_ERROR } from "../types/events";
 import { EventControllerWithAck, EventControllerWithoutAck } from "../types/sockets";
 import { MessageDTO } from "../types/dto";
+import { toMessageDTO } from "../utils/dtos/messageDTO";
 
 export const handleIncomingNewMessage: EventControllerWithAck<
   "message:send"
@@ -41,23 +42,16 @@ export const handleIncomingNewMessage: EventControllerWithAck<
       text,
     });
 
-    const formatMessage = (sender: "self" | "other"): MessageDTO => ({
-      text: newMessage.text,
-      chatId: newMessage.chat.toString(),
-      sender,
-      createdAt: newMessage.createdAt.toISOString(),
-      attachments: newMessage.attachments,
-      id: newMessage.id.toString(),
-    });
+    const messageDTO = toMessageDTO(newMessage);
 
     socket.to(chatId).emit("message:new", {
-      message: formatMessage("other"),
+      message: messageDTO,
     });
 
     ack({
       status: "OK",
       data: {
-        message: formatMessage("self"),
+        message: messageDTO,
       },
     });
   } catch (error) {
@@ -112,22 +106,10 @@ export const handleJoinChat: EventControllerWithAck<"chat:join"> = async (
       .populate<{ sender: IUser }>("sender", "userName")
       .sort({ createdAt: 1 });
 
-    const formattedMessages = messages.map(
-      (message) =>
-        ({
-          text: message.text,
-          chatId: message.chat.toString(),
-          sender: message.sender.id === currentUserId ? "self" : "other",
-          createdAt: message.createdAt.toISOString(),
-          attachments: message.attachments,
-          id: message.id.toString(),
-        } as MessageDTO)
-    );
-
     ack({
       data: {
         participant: otherParticipant.userName,
-        messages: formattedMessages,
+        messages: messages.map((m) => toMessageDTO(m)),
       },
       status: "OK",
     });
