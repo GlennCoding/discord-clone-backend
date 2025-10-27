@@ -8,6 +8,7 @@ import authRouter from "./routes/auth";
 import refreshRouter from "./routes/refresh";
 import registerRouter from "./routes/register";
 import profileRouter from "./routes/api/profile";
+import meRouter from "./routes/api/me";
 import messagesRouter from "./routes/api/messages";
 import chatRouter from "./routes/api/chats";
 import verifyJWT from "./middleware/verifyJWT";
@@ -37,6 +38,7 @@ app.use("/register", registerRouter);
 app.use("/login", authRouter);
 app.use("/refresh", refreshRouter);
 
+app.use("/me", verifyJWT, meRouter);
 app.use("/chat", verifyJWT, chatRouter);
 app.use("/profile", verifyJWT, profileRouter);
 app.use("/messages", verifyJWT, messagesRouter);

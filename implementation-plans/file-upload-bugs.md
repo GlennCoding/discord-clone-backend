@@ -28,3 +28,17 @@ Next steps:
   - Add proper styling for messages with attachements
   - Add image preview
   - Add FE validator for too big file size -> Make a toast pop up when file is too big
+
+
+
+Frontend next steps:
+- How to handle knowing what my current userId is -> When loading chat, send with it the your and others userIds?
+- Should I save my userId in localstorage?
+- When do I receive my userId?
+  1. When logging in -> Immediately save userId?
+     - Save it to a global context (use Zustand) & localstorage
+     - Have a hook to access it
+  2. On hard reload
+     - Load from localstorage + call /me to get current state (user object might have changed)
+- Add /me to BE
+  - return {userId, username, avatarUrl}

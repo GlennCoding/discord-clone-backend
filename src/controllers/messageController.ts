@@ -13,10 +13,9 @@ import {
   deleteFileFromBucket,
   uploadFileToBucket,
 } from "../services/storageService";
-import Message, { IMessage } from "../models/Message";
+import Message from "../models/Message";
 import {
   DeleteMessageAttachmentInput,
-  MessageDTO,
   SaveMessageAttachmentInput,
 } from "../types/dto";
 import Chat from "../models/Chat";
