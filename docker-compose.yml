@@ -12,19 +12,21 @@ services:
 
   gcs-emulator:
     image: fsouza/fake-gcs-server:latest
-    ports:
-      - "4443:4443"
     command:
       - "-backend"
-      - "memory"
+      - "filesystem"
+      - "-filesystem-root"
+      - "/data"
       - "-scheme"
       - "http"
       - "-host"
       - "0.0.0.0"
       - "-port"
       - "4443"
-    environment:
-      - STORAGE_EMULATOR_HOST=http://localhost:4443
+    ports:
+      - "4443:4443"
+    volumes:
+      - gcs_data:/data
 volumes:
   mongo-data:
   gcs_data:
