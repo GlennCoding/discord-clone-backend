@@ -8,10 +8,10 @@ const transformAttachments = (attachments: IAttachment[]): AttachmentDTO[] => {
 export const toMessageDTO = (message: IMessage): MessageDTO => {
   return {
     id: message._id.toString(),
-    chatId: message.chat.id,
+    chatId: message.chat._id.toString(),
     text: message.text,
     sender: {
-      id: message.sender.id,
+      id: message.sender._id.toString(),
       username: message.sender.userName ?? "",
       avatarUrl: message.sender.avatar?.url,
     },

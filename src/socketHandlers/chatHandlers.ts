@@ -3,12 +3,13 @@ import Chat from "../models/Chat";
 import { IUser } from "../models/User";
 import { ERROR_STATUS, EVENT_ERROR } from "../types/events";
 import { EventControllerWithAck, EventControllerWithoutAck } from "../types/sockets";
-import { MessageDTO } from "../types/dto";
 import { toMessageDTO } from "../utils/dtos/messageDTO";
 
 export const handleIncomingNewMessage: EventControllerWithAck<
   "message:send"
 > = async (socket, payload, ack) => {
+  const currentUserId = socket.data.userId as string;
+
   const { chatId, text } = payload;
   try {
     if (!text) {
@@ -38,7 +39,7 @@ export const handleIncomingNewMessage: EventControllerWithAck<
 
     const newMessage = await Message.create({
       chat: chatId,
-      sender: socket.data.userId,
+      sender: currentUserId,
       text,
     });
 
