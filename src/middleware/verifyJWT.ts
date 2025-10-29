@@ -2,8 +2,9 @@ import { Request, Response, NextFunction } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { env } from "../utils/env";
 
-export interface UserRequest extends Request {
+export interface UserRequest<T = any> extends Request {
   userId?: string;
+  body: Partial<T>;
 }
 
 interface AccessTokenBody extends JwtPayload {

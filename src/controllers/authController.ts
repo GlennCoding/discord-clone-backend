@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { saveUserRefreshToken, verifyUserPassword } from "../services/userService";
 import { issueAuthToken, issueRefreshToken } from "../services/authService";
 import { InputMissingError, RequestBodyIsMissingError } from "../utils/errors";
+import { LoginDTO, MeDTO } from "../types/dto";
 
 export const handleLogin = async (req: Request, res: Response) => {
   if (!req.body) throw new RequestBodyIsMissingError();
@@ -28,5 +29,13 @@ export const handleLogin = async (req: Request, res: Response) => {
   });
 
   // Send 200 status & send accessToken back
-  res.status(200).json({ message: "Login successful", token: accessToken });
+  res.status(200).json({
+    message: "Login successful",
+    token: accessToken,
+    userData: {
+      id: user.id,
+      username: user.userName,
+      avatarUrl: user.avatar?.url,
+    },
+  } as LoginDTO);
 };

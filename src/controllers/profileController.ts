@@ -48,8 +48,6 @@ export const updateProfileImg = async (
   next: NextFunction
 ) => {
   const { file } = req;
-  const user = await findUserWithUserId(req.userId as string);
-  if (!user) throw new UserNotFoundError();
 
   if (!file) throw new CustomError(400, "No file attached");
 
@@ -62,6 +60,9 @@ export const updateProfileImg = async (
   // if (!detected || !detected.mime.startsWith("image/")) {
   //   throw new Error("Uploaded file is not a valid image");
   // }
+
+  const user = await findUserWithUserId(req.userId as string);
+  if (!user) throw new UserNotFoundError();
 
   const previousAvatarFilePath = user.avatar?.filePath;
   const fileName = `avatars/${Date.now()}-${user.userName}-${randomUUID()}`;

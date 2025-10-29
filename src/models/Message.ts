@@ -2,13 +2,28 @@ import { model, Schema, Types } from "mongoose";
 import { IUser } from "./User";
 import { IChat } from "./Chat";
 
+export interface IAttachment extends Document {
+  path: string;
+  downloadUrl: string;
+}
+
 export interface IMessage extends Document {
   _id: Types.ObjectId;
   chat: IChat;
   sender: IUser;
   createdAt: Date;
+  updatedAt?: Date;
   text: string;
+  attachments: IAttachment[];
 }
+
+const attachmentSchema = new Schema<IAttachment>(
+  {
+    path: { type: String, required: true },
+    downloadUrl: { type: String, required: true },
+  },
+  { _id: false }
+);
 
 const messageSchema = new Schema<IMessage>(
   {
@@ -24,8 +39,9 @@ const messageSchema = new Schema<IMessage>(
     },
     text: {
       type: String,
-      required: true,
+      required: false,
     },
+    attachments: [{ type: attachmentSchema, required: false }],
   },
   { timestamps: true }
 );

@@ -14,6 +14,12 @@ export class UserNotFoundError extends CustomError {
   }
 }
 
+export class NotFoundError extends CustomError {
+  constructor(item?: string) {
+    super(404, `${item} not found`);
+  }
+}
+
 export class ChatNotFoundError extends CustomError {
   constructor() {
     super(404, `Chat not found`);
@@ -35,6 +41,12 @@ export class RefreshtokenNotFoundError extends CustomError {
 export class RequestBodyIsMissingError extends CustomError {
   constructor() {
     super(400, "Request body is missing");
+  }
+}
+
+export class ParamsMissingError extends CustomError {
+  constructor(inputName: string) {
+    super(400, `The parameter ${inputName} is required`);
   }
 }
 

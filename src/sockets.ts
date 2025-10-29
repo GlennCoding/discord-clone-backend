@@ -7,12 +7,17 @@ import { onConnection } from "./socketHandlers";
 import { TypedServer } from "./types/sockets";
 import { server } from "./app";
 
-const io: TypedServer = new Server(server, {
-  cors: corsOptions,
-});
+let io: TypedServer;
 
 // Socket.IO middleware and handlers
-io.use(verifySocketJWT);
-io.on("connection", (socket) => onConnection(io, socket));
 
-export { io };
+export const initSocket = () => {
+  io = new Server(server, {
+    cors: corsOptions,
+  });
+
+  io.use(verifySocketJWT);
+  io.on("connection", (socket) => onConnection(io, socket));
+
+  return io;
+};
