@@ -29,8 +29,6 @@
   - Add image preview
   - Add FE validator for too big file size -> Make a toast pop up when file is too big
 
-
-
 ### Frontend next steps:
 Change MessageDTO in FE and update MessageBySelf & MessageByOther component:
 - How to handle knowing what my current userId is -> When loading chat, send with it the your and others userIds?

@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { saveUserRefreshToken, verifyUserPassword } from "../services/userService";
 import { issueAuthToken, issueRefreshToken } from "../services/authService";
 import { InputMissingError, RequestBodyIsMissingError } from "../utils/errors";
-import { MeDTO } from "../types/dto";
+import { LoginDTO, MeDTO } from "../types/dto";
 
 export const handleLogin = async (req: Request, res: Response) => {
   if (!req.body) throw new RequestBodyIsMissingError();
@@ -36,6 +36,6 @@ export const handleLogin = async (req: Request, res: Response) => {
       id: user.id,
       username: user.userName,
       avatarUrl: user.avatar?.url,
-    } as MeDTO,
-  });
+    },
+  } as LoginDTO);
 };

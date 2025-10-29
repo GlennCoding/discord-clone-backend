@@ -1,3 +1,9 @@
+export interface LoginDTO {
+  message: string;
+  token: string;
+  userData: MeDTO;
+}
+
 export interface AttachmentDTO {
   downloadUrl: string;
 }
