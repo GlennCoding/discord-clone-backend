@@ -121,14 +121,13 @@ describe("chat socket handlers", () => {
 
     if (ack instanceof EVENT_ERROR) throw new Error(ack.message);
 
-    console.log(ack.data.message);
-
     expect(ack.status).toBe("OK");
     expect(ack.data.message).toEqual({
       id: expect.any(String),
       text: messagePayload.text,
       chatId: user1User2chatId,
       createdAt: expect.any(String),
+      updatedAt: expect.any(String),
       sender: {
         id: user1._id.toString(),
         username: user1.userName,
