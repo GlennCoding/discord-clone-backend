@@ -14,7 +14,7 @@ export interface IMessage extends Document {
   createdAt: Date;
   updatedAt?: Date;
   text: string;
-  attachments: IAttachment[];
+  attachments?: IAttachment[];
 }
 
 const attachmentSchema = new Schema<IAttachment>(

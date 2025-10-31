@@ -116,6 +116,12 @@ export const deleteMessageAttachement = async (
 
   // delete file from bucket & remove attachment from message
   await deleteFileFromBucket(attachmentPath);
+
+  if (!message.attachments) {
+    res.sendStatus(204);
+    return;
+  }
+
   const newAttachments = message.attachments.filter(
     (a) => a.path !== attachmentPath
   );

@@ -1,22 +1,16 @@
-import { IAttachment, IMessage } from "../../models/Message";
-import { AttachmentDTO, MessageDTO } from "../../types/dto";
+import { MessageDTO } from "../../types/dto";
+import { PopulatedMessage } from "../../types/misc";
 
-const transformAttachments = (attachments: IAttachment[]): AttachmentDTO[] => {
-  return attachments.map((a) => ({ downloadUrl: a.downloadUrl }));
-};
-
-export const toMessageDTO = (message: IMessage): MessageDTO => {
-  return {
-    id: message._id.toString(),
-    chatId: message.chat._id.toString(),
-    text: message.text,
-    sender: {
-      id: message.sender._id.toString(),
-      username: message.sender.userName ?? "",
-      avatarUrl: message.sender.avatar?.url,
-    },
-    createdAt: message.createdAt.toISOString(),
-    updatedAt: message.updatedAt?.toISOString(),
-    attachments: message.attachments && transformAttachments(message.attachments),
-  };
-};
+export const toMessageDTO = (m: PopulatedMessage): MessageDTO => ({
+  id: m._id.toString(),
+  chatId: m.chat._id?.toString?.() ?? m.chat.toString(),
+  text: m.text,
+  sender: {
+    id: m.sender._id.toString(),
+    username: m.sender.userName,
+    avatarUrl: m.sender.avatar?.url,
+  },
+  createdAt: m.createdAt.toISOString(),
+  updatedAt: m.updatedAt?.toISOString(),
+  attachments: m.attachments?.map((a) => ({ downloadUrl: a.downloadUrl })) ?? [],
+});

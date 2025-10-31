@@ -122,28 +122,35 @@ describe("chat socket handlers", () => {
     if (ack instanceof EVENT_ERROR) throw new Error(ack.message);
 
     expect(ack.status).toBe("OK");
-    expect(ack.data).toEqual({
-      message: {
-        id: expect.any(String),
-        text: messagePayload.text,
-        chatId: user1User2chatId,
-        createdAt: expect.any(String),
-        sender: "self",
-      } as MessageDTO,
-    });
+    expect(ack.data.message).toEqual({
+      id: expect.any(String),
+      text: messagePayload.text,
+      chatId: user1User2chatId,
+      createdAt: expect.any(String),
+      updatedAt: expect.any(String),
+      sender: {
+        id: user1._id.toString(),
+        username: user1.userName,
+        avatarUrl: user1.avatar?.url,
+      },
+      attachments: [],
+    } as MessageDTO);
   });
 
   it("should load messages when entering chat", async () => {
-    await Message.create({
+    const user1Message = {
       chat: user1User2chatId,
       sender: user1.id,
       text: "Hello World",
-    });
-    await Message.create({
+    };
+    const user2Message = {
       chat: user1User2chatId,
       sender: user2.id,
       text: "Hello World 2",
-    });
+    };
+
+    await Message.create(user1Message);
+    await Message.create(user2Message);
 
     const ack = await user1Socket.emitWithAck("chat:join", user1User2chatId);
 
@@ -154,18 +161,12 @@ describe("chat socket handlers", () => {
     } = ack;
 
     expect(participant).toBe(user2Data.userName);
-    expect(messages[0]).toEqual(
-      expect.objectContaining({
-        text: "Hello World",
-        sender: "self",
-      } as Pick<MessageDTO, "text" | "sender">)
-    );
-    expect(messages[1]).toEqual(
-      expect.objectContaining({
-        text: "Hello World 2",
-        sender: "other",
-      } as Pick<MessageDTO, "text" | "sender">)
-    );
+
+    expect(messages[0].text).toEqual(user1Message.text);
+    expect(messages[0].sender.id).toEqual(user1Message.sender);
+
+    expect(messages[1].text).toEqual(user2Message.text);
+    expect(messages[1].sender.id).toEqual(user2Message.sender);
   });
 
   it("should throw error on missing inputs", async () => {
@@ -195,7 +196,7 @@ describe("chat socket handlers", () => {
     await new Promise(async (resolve) => {
       user2Socket.once("message:new", ({ message }: { message: MessageDTO }) => {
         expect(message.text).toBe("Hello User2");
-        expect(message.sender).toEqual("other");
+        expect(message.sender.id).toEqual(user1.id);
         resolve({});
       });
 
@@ -214,7 +215,7 @@ describe("chat socket handlers", () => {
     await new Promise(async (resolve) => {
       user1Socket.once("message:new", ({ message }: { message: MessageDTO }) => {
         expect(message.text).toBe("Hello User1");
-        expect(message.sender).toEqual("other");
+        expect(message.sender.id).toEqual(user2.id);
         resolve({});
       });
 

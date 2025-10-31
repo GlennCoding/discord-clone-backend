@@ -43,7 +43,18 @@ export const handleIncomingNewMessage: EventControllerWithAck<
       text,
     });
 
-    const messageDTO = toMessageDTO(newMessage);
+    const populatedMessage = await newMessage.populate([
+      {
+        path: "sender",
+        select: "userName avatar",
+      },
+      {
+        path: "chat",
+        select: "_id",
+      },
+    ]);
+
+    const messageDTO = toMessageDTO(populatedMessage);
 
     socket.to(chatId).emit("message:new", {
       message: messageDTO,
@@ -104,7 +115,7 @@ export const handleJoinChat: EventControllerWithAck<"chat:join"> = async (
     socket.join(chatId);
 
     const messages = await Message.find({ chat: chatId })
-      .populate<{ sender: IUser }>("sender", "userName")
+      .populate<{ sender: IUser }>("sender", "userName avatar")
       .sort({ createdAt: 1 });
 
     ack({
