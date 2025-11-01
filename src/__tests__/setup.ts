@@ -1,10 +1,10 @@
-import { config } from "dotenv";
+import { config } from "dotenv-flow";
 import { MongoMemoryServer } from "mongodb-memory-server";
 import mongoose from "mongoose";
 
-config({ path: ".env.test" });
+config({ node_env: "test", path: process.cwd(), silent: true });
 
-let mongod: MongoMemoryServer;
+let mongod: MongoMemoryServer | null = null;
 
 export const setupMongoDB = async () => {
   mongod = await MongoMemoryServer.create();
@@ -13,5 +13,8 @@ export const setupMongoDB = async () => {
 
 export const teardownMongoDB = async () => {
   await mongoose.disconnect();
-  await mongod.stop();
+  if (mongod) {
+    await mongod.stop();
+    mongod = null;
+  }
 };

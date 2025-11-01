@@ -1,20 +1,13 @@
 import { bucket } from "../config/storage";
 import { env } from "../utils/env";
+import { isProdEnv } from "../utils/helper";
 
-export const getFilePublicUrl = (buketName: string, blobName: string) => {
+export const getLocalUrl = (bucketName: string, blobName: string): string => {
   const encodedBlobName = encodeURIComponent(blobName);
-
-  const localBucketUrl = "http://localhost:4443";
-  const localUrl = `${localBucketUrl}/storage/v1/b/${buketName}/o/${encodedBlobName}?alt=media`;
-
-  const productionUrl = `${env.GCS_PUBLIC_URL}/${buketName}/${encodedBlobName}`;
-
-  if (env.NODE_ENV === "development" || env.NODE_ENV === "test") return localUrl;
-
-  return productionUrl;
+  return `${env.GCS_PUBLIC_URL}/storage/v1/b/${bucketName}/o/${encodedBlobName}?alt=media`;
 };
 
-const UPLOAD_TIMEOUT_MS = 10_000; // 10 seconds
+const UPLOAD_TIMEOUT_MS = 15_000; // 15 seconds
 
 export const uploadFileToBucket = async (
   file: Express.Multer.File,
@@ -39,9 +32,15 @@ export const uploadFileToBucket = async (
       reject(err);
     });
 
-    blobStream.on("finish", () => {
+    blobStream.on("finish", async () => {
       clearTimeout(timeout);
-      resolve(getFilePublicUrl(bucket.name, blob.name) as string);
+      let publicUrl;
+      if (isProdEnv) {
+        publicUrl = await blob.publicUrl();
+      } else {
+        publicUrl = getLocalUrl(bucket.name, blob.name);
+      }
+      resolve(publicUrl);
     });
 
     blobStream.end(file.buffer);
