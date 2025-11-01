@@ -8,7 +8,9 @@ const envSchema = z.object({
   DB_NAME: z.string(),
   ACCESS_TOKEN_SECRET: z.string(),
   REFRESH_TOKEN_SECRET: z.string(),
-  GCS_PUBLIC_URL: z.url(),
+  GCS_PUBLIC_URL: z.string(),
+  GCS_BUCKET_NAME: z.string(),
+  GOOGLE_APPLICATION_CREDENTIALS: z.string(),
   PORT: z.coerce.number().default(DEFAULT_PORT),
 });
 
