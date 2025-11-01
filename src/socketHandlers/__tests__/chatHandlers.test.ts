@@ -5,7 +5,7 @@ import { app, io, server } from "../../app";
 import { setupMongoDB, teardownMongoDB } from "../../__tests__/setup";
 import User, { IUser } from "../../models/User";
 import { ERROR_STATUS, EVENT_ERROR } from "../../types/events";
-import Message from "../../models/Message";
+import Message from "../../models/ChatMessage";
 import { promisify } from "node:util";
 import { issueAuthToken } from "../../services/authService";
 import { TypedClientSocket } from "../../types/sockets";

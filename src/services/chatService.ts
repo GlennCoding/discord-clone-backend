@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import Chat, { IChat } from "../models/Chat";
 import { IUser } from "../models/User";
-import Message from "../models/Message";
+import Message from "../models/ChatMessage";
 import { ChatDTO } from "../types/dto";
 
 export const getUserChats = async (userId: string) => {

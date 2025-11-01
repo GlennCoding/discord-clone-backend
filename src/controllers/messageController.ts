@@ -13,7 +13,7 @@ import {
   deleteFileFromBucket,
   uploadFileToBucket,
 } from "../services/storageService";
-import Message from "../models/Message";
+import Message from "../models/ChatMessage";
 import {
   DeleteMessageAttachmentInput,
   SaveMessageAttachmentInput,

@@ -1,4 +1,4 @@
-import Message from "../models/Message";
+import Message from "../models/ChatMessage";
 import Chat from "../models/Chat";
 import { IUser } from "../models/User";
 import { ERROR_STATUS, EVENT_ERROR } from "../types/events";
