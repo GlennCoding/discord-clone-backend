@@ -7,7 +7,7 @@ export interface IAttachment extends Document {
   downloadUrl: string;
 }
 
-export interface IMessage extends Document {
+export interface IChatMessage extends Document {
   _id: Types.ObjectId;
   chat: IChat;
   sender: IUser;
@@ -25,7 +25,7 @@ const attachmentSchema = new Schema<IAttachment>(
   { _id: false }
 );
 
-const messageSchema = new Schema<IMessage>(
+const chatMessageSchema = new Schema<IChatMessage>(
   {
     chat: {
       type: Schema.Types.ObjectId,
@@ -46,4 +46,4 @@ const messageSchema = new Schema<IMessage>(
   { timestamps: true }
 );
 
-export default model("Message", messageSchema);
+export default model("ChatMessage", chatMessageSchema);
