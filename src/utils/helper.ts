@@ -1,6 +1,6 @@
 import { Types } from "mongoose";
 import { env } from "./env";
-import { CustomError, UserNotFoundError } from "./errors";
+import { CustomError, ParamsMissingError, UserNotFoundError } from "./errors";
 import { findUserWithUserId } from "../services/userService";
 
 export const idsEqual = (a: any, b: any): boolean => {
@@ -21,4 +21,15 @@ export const ensureUser = async (userId: string | undefined) => {
   const user = await findUserWithUserId(userId);
   if (!user) throw new UserNotFoundError();
   return user;
+};
+
+export const ensureParam = (
+  paramName: string,
+  param: string | undefined,
+  options?: { isObjectId?: boolean }
+): string => {
+  if (!param) throw new ParamsMissingError(paramName);
+  const trimmed = param.trim();
+  if (options?.isObjectId) ensureValidObjectId(trimmed, paramName);
+  return trimmed;
 };

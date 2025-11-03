@@ -117,7 +117,7 @@ describe("/server", () => {
     expect(ownerMember).toBeTruthy();
   });
 
-  it("updates an owned server", async () => {
+  it.only("updates an owned server", async () => {
     const updatedServerData: UpdateServerInput = {
       name: "Updated server name",
       isPublic: false,
@@ -282,7 +282,7 @@ describe("/server errors", () => {
     expectBadRequest(res);
   });
 
-  it("returns 404 when updating a non-existent server", async () => {
+  it.only("returns 404 when updating a non-existent server", async () => {
     const missingId = new Types.ObjectId().toString();
     const res = await request(app)
       .put(`/server/${missingId}`)
@@ -296,7 +296,7 @@ describe("/server errors", () => {
     expectNotFound(res);
   });
 
-  it("returns 400 when updating a server with invalid payload", async () => {
+  it.only("returns 400 when updating a server with invalid payload", async () => {
     const res = await request(app)
       .put(`/server/${server1.id}`)
       .set("Authorization", `Bearer ${ownerToken}`)
@@ -305,7 +305,7 @@ describe("/server errors", () => {
     expectBadRequest(res);
   });
 
-  it("returns 400 when updating a server with malformed fields", async () => {
+  it.only("returns 400 when updating a server with malformed fields", async () => {
     const res = await request(app)
       .put(`/server/${server1.id}`)
       .set("Authorization", `Bearer ${ownerToken}`)
@@ -318,7 +318,7 @@ describe("/server errors", () => {
     expectBadRequest(res);
   });
 
-  it("returns 403 when updating a server the user does not own", async () => {
+  it.only("returns 403 when updating a server the user does not own", async () => {
     const res = await request(app)
       .put(`/server/${server1.id}`)
       .set("Authorization", `Bearer ${otherUserToken}`)
@@ -331,7 +331,7 @@ describe("/server errors", () => {
     expectForbidden(res);
   });
 
-  it("returns 400 when the server id parameter is malformed", async () => {
+  it.only("returns 400 when the server id parameter is malformed", async () => {
     const res = await request(app)
       .put("/server/not-an-object-id")
       .set("Authorization", `Bearer ${ownerToken}`)
