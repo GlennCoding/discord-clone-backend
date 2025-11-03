@@ -1,9 +1,10 @@
-import { model, Schema, HydratedDocument } from "mongoose";
+import { model, Schema, HydratedDocument, Types } from "mongoose";
 import { IRole } from "./Role";
 import { IServer } from "./Server";
 
 // TODO: Look into if I can define the types without extending the Document
-export interface IChannel {
+export interface IChannel extends Document {
+  _id: Types.ObjectId;
   server: IServer;
   name: string;
   order: number;

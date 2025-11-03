@@ -12,8 +12,8 @@ import {
   JoinServerDTO,
 } from "../../../types/dto";
 import Server, { IServer } from "../../../models/Server";
-import Member from "../../../models/Member";
-import Role from "../../../models/Role";
+import Member, { IMember } from "../../../models/Member";
+import Role, { IRole } from "../../../models/Role";
 import Channel from "../../../models/Channel";
 import {
   expectBadRequest,
@@ -37,29 +37,31 @@ const server1Data = {
   description: "Server description",
 };
 
-const createExtraServer = async ({
-  user = user1,
-  isMember = false,
+const createServer = async ({
+  owner,
   isPublic = true,
 }: {
-  user?: IUser;
-  isMember?: boolean;
+  owner: IUser;
   isPublic?: boolean;
 }) => {
   const randString = new Types.ObjectId().toString();
   const newServer = await Server.create({
     name: randString,
     shortId: randString,
-    owner: user2,
+    owner,
     isPublic: isPublic,
   });
-  await Member.create({ user: user2, server: newServer });
-
-  if (isMember) {
-    await Member.create({ user: user, server: newServer });
-  }
+  await Member.create({ user: owner, server: newServer });
 
   return newServer;
+};
+
+const addMemberToServer = async (
+  server: IServer,
+  user: IUser,
+  roles?: IRole[]
+): Promise<IMember> => {
+  return await Member.create({ user, server, roles });
 };
 
 beforeAll(async () => {
@@ -152,7 +154,7 @@ describe("/server", () => {
   });
 
   it("lists all public servers", async () => {
-    const server2 = await createExtraServer({});
+    const server2 = await createServer({ owner: user2 });
 
     const { status, body } = await request(app)
       .get("/server/public")
@@ -170,7 +172,8 @@ describe("/server", () => {
   });
 
   it("lists all servers the user has joined", async () => {
-    const server2 = await createExtraServer({ isMember: true });
+    const server2 = await createServer({ owner: user2 });
+    await addMemberToServer(server2, user1);
 
     const { status, body } = await request(app)
       .get("/server/joined")
@@ -187,17 +190,20 @@ describe("/server", () => {
     );
   });
 
-  it("returns detailed data for a server the user has joined", async () => {
-    const server2 = await createExtraServer({});
+  it.only("returns detailed data for a server the user has joined", async () => {
+    const server2 = await createServer({ owner: user2 });
     const role = await Role.create({ server: server2, name: "Role1" });
     const channel = await Channel.create({
       server: server2,
       name: "General",
       order: 1,
-      disallowedRoles: [role],
     });
-
-    await Member.create({ user: user1, server: server2, roles: [role] });
+    const channel2 = await Channel.create({
+      server: server2,
+      name: "Channel 2",
+      order: 2,
+    });
+    addMemberToServer(server2, user1, [role]);
 
     const { status, body } = await request(app)
       .get(`/server/${server2.shortId}`)
@@ -211,6 +217,7 @@ describe("/server", () => {
     expect(data.description).toBe(server2.description);
     expect(data.channels).toEqual([
       { id: channel.id, name: channel.name, order: channel.order },
+      { id: channel2.id, name: channel2.name, order: channel2.order },
     ]);
     expect(data.members).toHaveLength(2);
     expect(data.members).toEqual(
@@ -221,8 +228,36 @@ describe("/server", () => {
     );
   });
 
+  it.only("returns only permitted channels of a server the user has joined", async () => {
+    const server2 = await createServer({ owner: user2 });
+    const role = await Role.create({ server: server2, name: "Role1" });
+    const channel = await Channel.create({
+      server: server2,
+      name: "General",
+      order: 1,
+    });
+    const channel2 = await Channel.create({
+      server: server2,
+      name: "Channel 2",
+      order: 2,
+      disallowedRoles: [role],
+    });
+    addMemberToServer(server2, user1, [role]);
+
+    const { status, body } = await request(app)
+      .get(`/server/${server2.shortId}`)
+      .set("Authorization", `Bearer ${ownerToken}`);
+
+    expect(status).toBe(200);
+
+    const data = body as ServerDTO;
+    expect(data.channels).toEqual([
+      { id: channel.id, name: channel.name, order: channel.order },
+    ]);
+  });
+
   it("joins a public server and creates a membership", async () => {
-    const server2 = await createExtraServer({});
+    const server2 = await createServer({ owner: user2 });
 
     const { status, body: rawBody } = await request(app)
       .post(`/server/${server2.shortId}/join`)
@@ -240,7 +275,8 @@ describe("/server", () => {
   });
 
   it("prevents duplicate memberships when joining the same server twice", async () => {
-    const server2 = await createExtraServer({});
+    const server2 = await createServer({ owner: user2 });
+    await addMemberToServer(server2, user1);
 
     await request(app)
       .post(`/server/${server2.shortId}/join`)
@@ -370,7 +406,7 @@ describe("/server errors", () => {
   });
 
   it("returns 403 when requesting details for a server the user has not joined", async () => {
-    const server2 = await createExtraServer({});
+    const server2 = await createServer({ owner: user2 });
 
     const res = await request(app)
       .get(`/server/${server2.shortId}`)
@@ -388,7 +424,7 @@ describe("/server errors", () => {
   });
 
   it("returns 403 when trying to join a private server without permission", async () => {
-    const server2 = await createExtraServer({});
+    const server2 = await createServer({ owner: user2, isPublic: false });
 
     const res = await request(app)
       .post(`/server/${server2.shortId}/join`)

@@ -6,6 +6,7 @@ import {
   deleteServer,
   getAllPublicServers,
   getAllJoinedServers,
+  getServer,
 } from "../../controllers/serverController";
 
 const router = Router();
@@ -16,7 +17,7 @@ router.delete("/:id", asyncHandler(deleteServer));
 
 router.get("/public", asyncHandler(getAllPublicServers));
 router.get("/joined", asyncHandler(getAllJoinedServers));
-// router.get("/:shortId");
+router.get("/:shortId", asyncHandler(getServer));
 // router.post("/:shortId/join", asyncHandler());
 
 export default router;
