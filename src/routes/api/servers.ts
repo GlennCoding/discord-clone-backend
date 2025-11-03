@@ -1,18 +1,11 @@
 import { Router } from "express";
-import multer from "multer";
-import {
-  deleteProfileImg,
-  getProfile,
-  updateProfile,
-  updateProfileImg,
-} from "../../controllers/profileController";
 import { asyncHandler } from "../../utils/asyncHandler";
-import { createServer } from "../../controllers/serverController";
+import { createServer, updateServer } from "../../controllers/serverController";
 
 const router = Router();
 
 router.post("/", asyncHandler(createServer));
-// router.put("/:id");
+router.put("/:id", asyncHandler(updateServer));
 // router.delete("/:id", asyncHandler());
 
 // router.get("/public", asyncHandler());

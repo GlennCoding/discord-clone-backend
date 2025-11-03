@@ -73,3 +73,9 @@ export class UsernameIsTakenError extends CustomError {
     super(409, "Username is already taken");
   }
 }
+
+export class NoPermissionError extends CustomError {
+  constructor() {
+    super(403, "You don't have permission for this action");
+  }
+}

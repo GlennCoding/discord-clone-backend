@@ -10,6 +10,7 @@ import registerRouter from "./routes/register";
 import profileRouter from "./routes/api/profile";
 import meRouter from "./routes/api/me";
 import messagesRouter from "./routes/api/messages";
+import serverRouter from "./routes/api/servers";
 import chatRouter from "./routes/api/chats";
 import verifyJWT from "./middleware/verifyJWT";
 import cookieParser from "cookie-parser";
@@ -42,6 +43,7 @@ app.use("/me", verifyJWT, meRouter);
 app.use("/chat", verifyJWT, chatRouter);
 app.use("/profile", verifyJWT, profileRouter);
 app.use("/messages", verifyJWT, messagesRouter);
+app.use("/server", verifyJWT, serverRouter);
 
 app.use((_, res) => {
   res.status(404).json({ error: "Not found" });

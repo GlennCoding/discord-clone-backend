@@ -8,7 +8,7 @@ export interface IServer extends Document {
   iconUrl?: string;
   owner: IUser;
   description?: string;
-  isPublic: string;
+  isPublic: boolean;
   createdAt: Date;
   updatedAt?: Date;
 }
@@ -20,7 +20,7 @@ const serverSchema = new Schema<IServer>(
     iconUrl: { type: String },
     owner: { type: Schema.Types.ObjectId, ref: "User", required: true },
     description: { type: String },
-    isPublic: { type: String, required: true },
+    isPublic: { type: Boolean, required: true },
   },
   {
     timestamps: true,

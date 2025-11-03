@@ -1,7 +1,7 @@
 import { model, Schema, Document, Types } from "mongoose";
 import { IServer } from "./Server";
 
-enum Permissions {
+export enum RolePermission {
   ChannelAdmin = "CHANNEL_ADMIN",
   RoleAdmin = "ROLE_ADMIN",
   ServerAdmin = "SERVER_ADMIN",
@@ -11,7 +11,7 @@ export interface IRole extends Document {
   _id: Types.ObjectId;
   server: IServer;
   name: string;
-  permissions: Permissions[];
+  permissions: RolePermission[];
   createdAt: Date;
   updatedAt?: Date;
 }
