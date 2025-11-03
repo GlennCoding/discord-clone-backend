@@ -58,3 +58,50 @@ export interface ProfileDTO {
   status: string;
   profileImgUrl?: string;
 }
+
+export interface CreateServerInput {
+  name: string;
+  description?: string;
+  isPublic: boolean;
+}
+
+export interface CreateServerDTO {
+  shortId: string;
+}
+
+export type UpdateServerInput = CreateServerInput;
+
+export type UpdateServerDTO = UpdateServerInput;
+
+export interface ChannelDTO {
+  id: string;
+  order: number;
+  name: string;
+}
+
+export interface MemberDTO {
+  name: string;
+  roles: string[];
+}
+
+export interface ServerDTO {
+  id: string;
+  name: string;
+  description?: string;
+  iconUrl?: string;
+  channels: ChannelDTO[];
+  members: MemberDTO[];
+}
+
+export interface JoinServerDTO {
+  shortId: string;
+}
+
+export interface ServerListDTO {
+  servers: Array<{
+    name: string;
+    shortId: string;
+    description?: string;
+    iconUrl?: string;
+  }>;
+}
