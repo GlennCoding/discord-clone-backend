@@ -1,4 +1,5 @@
 import { CustomError } from "./errors";
+import { ZodSchema } from "zod";
 
 export function validateStatus(status: any) {
   const MAX_STATUS_LENGTH = 200;
@@ -13,3 +14,18 @@ export function validateStatus(status: any) {
     );
   }
 }
+
+export const parseWithSchema = <T>(
+  schema: ZodSchema<T>,
+  data: unknown
+): T => {
+  const result = schema.safeParse(data);
+  if (!result.success) {
+    const message =
+      result.error.issues.map((issue) => issue.message).join(", ") ||
+      "Invalid request body";
+    throw new CustomError(400, message);
+  }
+
+  return result.data;
+};
