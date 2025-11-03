@@ -2,8 +2,11 @@ import { Response } from "express";
 import { UserRequest } from "../middleware/verifyJWT";
 import z from "zod";
 import {
+  ChannelDTO,
   CreateServerDTO,
   CreateServerInput,
+  MemberDTO,
+  ServerDTO,
   ServerListDTO,
   ServerListItemDTO,
   UpdateServerDTO,
@@ -12,9 +15,9 @@ import {
 import Server, { IServer } from "../models/Server";
 import { ensureParam, ensureUser } from "../utils/helper";
 import { randomShortId } from "../utils/ids";
-import Member from "../models/Member";
+import Member, { IMember } from "../models/Member";
 import Role, { IRole, RolePermission } from "../models/Role";
-import Channel from "../models/Channel";
+import Channel, { IChannel } from "../models/Channel";
 import { CustomError, NoPermissionError, NotFoundError } from "../utils/errors";
 import { isDeepStrictEqual } from "util";
 import { parseWithSchema } from "../utils/validators";
@@ -54,6 +57,46 @@ const toServerListItemDTO = (servers: IServer[]): ServerListItemDTO[] => {
   }));
 };
 
+const checkIfMemberRolesIncludedInDisallowedRoles = (
+  disAllowedRoles: IRole[],
+  memberRoles: IRole[]
+) => {
+  for (const disallowedRole of disAllowedRoles) {
+    if (memberRoles.some((memberRole) => memberRole.id === disallowedRole.id))
+      return true;
+  }
+  return false;
+};
+
+const filterDisallowedRolesOfChannels = (
+  channels: IChannel[],
+  memberRoles: IRole[]
+) => {
+  const allowedChannels: IChannel[] = [];
+  for (const c of channels) {
+    const memberHasNoAccessToChannel = checkIfMemberRolesIncludedInDisallowedRoles(
+      c.disallowedRoles,
+      memberRoles
+    );
+    if (memberHasNoAccessToChannel) continue;
+
+    allowedChannels.push(c);
+  }
+  return allowedChannels;
+};
+
+const toChannelDTO = ({ _id, name, order }: IChannel): ChannelDTO => ({
+  id: _id.toString(),
+  name,
+  order,
+});
+
+const toMemberDTO = ({ roles, user, nickname }: IMember): MemberDTO => ({
+  name: nickname || user.userName,
+  roles: roles.map((r) => r.name),
+  avatarUrl: user.avatar?.url,
+});
+
 export const createServer = async (
   req: UserRequest<CreateServerInput>,
   res: Response<CreateServerDTO>
@@ -83,7 +126,8 @@ export const updateServer = async (
 
   // check if user has permission
   const foundMember = await Member.findOne({ user, server: foundServer }).populate(
-    "roles"
+    "roles",
+    "permissions"
   );
   if (!foundMember) throw new CustomError(403, "You are no member of this server");
 
@@ -160,4 +204,35 @@ export const getAllJoinedServers = async (
   const serverDTOs: ServerListItemDTO[] = toServerListItemDTO(servers);
 
   res.status(200).json({ servers: serverDTOs });
+};
+
+export const getServer = async (req: UserRequest, res: Response<ServerDTO>) => {
+  const shortId = ensureParam("shortId", req.params.shortId, { isObjectId: true });
+  const user = await ensureUser(req.userId);
+
+  const server = await Server.findOne({ shortId });
+  if (!server) throw new NotFoundError("Server");
+
+  const allChannelMembers = await Member.find({ server })
+    .populate("user")
+    .populate("roles", "_id name permissions");
+  const currentMember = allChannelMembers.find((m) => m.user.id === user.id);
+
+  if (!currentMember) throw new CustomError(403, "You are no member of this server");
+
+  const channels = await Channel.find({ server }).populate("disallowedRoles", "_id");
+
+  const allowedChannels = filterDisallowedRolesOfChannels(
+    channels,
+    currentMember.roles
+  );
+
+  res.status(200).json({
+    id: server.id,
+    name: server.name,
+    channels: allowedChannels.map((c) => toChannelDTO(c)),
+    description: server.description,
+    iconUrl: server.iconUrl,
+    members: allChannelMembers.map((m) => toMemberDTO(m)),
+  });
 };

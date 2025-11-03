@@ -82,6 +82,7 @@ export interface ChannelDTO {
 export interface MemberDTO {
   name: string;
   roles: string[];
+  avatarUrl?: string;
 }
 
 export interface ServerDTO {
