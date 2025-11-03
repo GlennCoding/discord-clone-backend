@@ -9,7 +9,7 @@ import {
   UpdateServerDTO,
   UpdateServerInput,
 } from "../types/dto";
-import Server from "../models/Server";
+import Server, { IServer } from "../models/Server";
 import { ensureParam, ensureUser } from "../utils/helper";
 import { randomShortId } from "../utils/ids";
 import Member from "../models/Member";
@@ -43,6 +43,15 @@ const checkPermissionInRoles = (roles: IRole[], permission: RolePermission) => {
     if (hasPermission) return true;
   }
   return false;
+};
+
+const toServerListItemDTO = (servers: IServer[]): ServerListItemDTO[] => {
+  return servers.map((s) => ({
+    name: s.name,
+    shortId: s.shortId,
+    description: s.description,
+    iconUrl: s.iconUrl,
+  }));
 };
 
 export const createServer = async (
@@ -135,12 +144,20 @@ export const getAllPublicServers = async (
   res: Response<ServerListDTO>
 ) => {
   const servers = await Server.find({ isPublic: true });
-  const serverDTOs: ServerListItemDTO[] = servers.map((s) => ({
-    name: s.name,
-    shortId: s.shortId,
-    description: s.description,
-    iconUrl: s.iconUrl,
-  }));
+  const serverDTOs: ServerListItemDTO[] = toServerListItemDTO(servers);
+
+  res.status(200).json({ servers: serverDTOs });
+};
+
+export const getAllJoinedServers = async (
+  req: UserRequest,
+  res: Response<ServerListDTO>
+) => {
+  const user = await ensureUser(req.userId);
+  const members = await Member.find({ user }).populate("server");
+
+  const servers: IServer[] = members.map((m) => m.server);
+  const serverDTOs: ServerListItemDTO[] = toServerListItemDTO(servers);
 
   res.status(200).json({ servers: serverDTOs });
 };
