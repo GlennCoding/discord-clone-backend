@@ -1,0 +1,88 @@
+<!-- - Create a server -> POST /server
+  - inputs: name, description, isPublic
+  - return: slug
+  - Errors:
+    - Name input missing
+- Update a server -> PUT /server/:id
+  - inputs: name, description, isPublic
+  - return: name, description, isPublic
+  - Errors:
+    - Server with that id doesn't exist
+    - Input field missing
+    - You're not the owner or don't have role with permission
+- Delete a server -> DELETE /server/:id
+  - return: 204 Success
+  - Errors:
+    - Server with that id doesn't exist
+    - You're not the owner
+- Get all public servers -> GET /server/public
+  - return: servers list with isPublic === true
+- Get my servers -> GET /server/joined
+  - return: server list with Server <- Member <- User
+- Get one server -> GET /server/:id
+  - return: server
+  - Errors:
+    - Server doesn't exist
+    - You are not part of this server
+- Join server -> POST /server/:id/join
+  - return: success
+  - Errors:
+    - Server doesn't exist
+
+--- Controllers --- -->
+
+- Create a server -> POST /server #
+  - validate inputs
+    - name, description, isPublic -> Implement with zod
+  - create Server
+  - create Member
+  - respond
+    - CreateServerDTO
+
+- Update a server -> PUT /server/:id #
+  - validate inputs
+    - name, description, isPublic -> Implement with zod
+  - check if server exists
+  - check if user has permission
+    - If he is a member
+    - If he is owner or has role with permission
+  - update Server document
+  - respond
+    - UpdateServerDTO
+
+- Delete a server -> DELETE /server/:id
+  - check if server exists
+  - check if user has permission
+    - If he is a member
+    - If he is owner
+  - delete Server document
+  - respond with 204
+
+- Get all public servers -> GET /server/public #
+  - Servers.findAll() -> where isPublic === true
+  - respond
+    - ServerListDTO
+- Get my servers -> GET /server/joined #
+  - Members.findAll() -> where user
+  - Members.populate -> with servers 
+  - respond
+    - ServerListDTO
+- Get one server -> GET /server/:shortId #
+  - find server
+  - check if user is a member
+    - populate users roles
+  - get all members for that server
+    - populate their roles
+  - get all roles for that server
+  - get all channels for that server
+    - filter out which ones user can see
+      - channel -> filer if for channels that allow your roles
+  - respond
+    - ServerDTO
+- Join server -> POST /server/:shortId/join
+  - find server -> check public === true
+  - check if user is a member already
+    - if yes, return 200
+    - if not, create member model
+  - respond
+    - shortId

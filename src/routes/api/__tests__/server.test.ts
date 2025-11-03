@@ -194,7 +194,7 @@ describe("/server", () => {
       server: server2,
       name: "General",
       order: 1,
-      allowedRoles: [role],
+      disallowedRoles: [role],
     });
 
     await Member.create({ user: user1, server: server2, roles: [role] });

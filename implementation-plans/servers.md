@@ -44,3 +44,4 @@
   - return: success
   - Errors:
     - Server doesn't exist
+
