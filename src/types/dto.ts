@@ -97,11 +97,13 @@ export interface JoinServerDTO {
   shortId: string;
 }
 
+export interface ServerListItemDTO {
+  name: string;
+  shortId: string;
+  description?: string;
+  iconUrl?: string;
+}
+
 export interface ServerListDTO {
-  servers: Array<{
-    name: string;
-    shortId: string;
-    description?: string;
-    iconUrl?: string;
-  }>;
+  servers: ServerListItemDTO[];
 }

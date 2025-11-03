@@ -4,6 +4,8 @@ import z from "zod";
 import {
   CreateServerDTO,
   CreateServerInput,
+  ServerListDTO,
+  ServerListItemDTO,
   UpdateServerDTO,
   UpdateServerInput,
 } from "../types/dto";
@@ -126,4 +128,19 @@ export const deleteServer = async (req: UserRequest, res: Response) => {
   ]);
 
   res.sendStatus(204);
+};
+
+export const getAllPublicServers = async (
+  _: UserRequest,
+  res: Response<ServerListDTO>
+) => {
+  const servers = await Server.find({ isPublic: true });
+  const serverDTOs: ServerListItemDTO[] = servers.map((s) => ({
+    name: s.name,
+    shortId: s.shortId,
+    description: s.description,
+    iconUrl: s.iconUrl,
+  }));
+
+  res.status(200).json({ servers: serverDTOs });
 };
