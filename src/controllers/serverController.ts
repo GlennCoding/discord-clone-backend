@@ -11,9 +11,11 @@ import Server from "../models/Server";
 import { ensureParam, ensureUser } from "../utils/helper";
 import { randomShortId } from "../utils/ids";
 import Member from "../models/Member";
+import Role, { IRole, RolePermission } from "../models/Role";
+import Channel from "../models/Channel";
 import { CustomError, NoPermissionError, NotFoundError } from "../utils/errors";
-import { IRole, RolePermission } from "../models/Role";
 import { isDeepStrictEqual } from "util";
+import { parseWithSchema } from "../utils/validators";
 
 const baseServerSchema = z.object({
   name: z.string().trim().min(1, "Name is required"),
@@ -45,7 +47,7 @@ export const createServer = async (
   req: UserRequest<CreateServerInput>,
   res: Response<CreateServerDTO>
 ) => {
-  const payload = createServerSchema.parse(req.body);
+  const payload = parseWithSchema(createServerSchema, req.body);
   const owner = await ensureUser(req.userId);
 
   const shortId = await generateUniqueShortId();
@@ -60,8 +62,8 @@ export const updateServer = async (
   req: UserRequest<UpdateServerInput>,
   res: Response<UpdateServerDTO>
 ) => {
-  const serverId = ensureParam("shortId", req.params.id, { isObjectId: true });
-  const payload = updateServerSchema.parse(req.body);
+  const serverId = ensureParam("id", req.params.id, { isObjectId: true });
+  const payload = parseWithSchema(updateServerSchema, req.body);
   const user = await ensureUser(req.userId);
 
   // check if server exists
@@ -105,4 +107,23 @@ export const updateServer = async (
     isPublic: updatedServer.isPublic,
     description: updatedServer.description,
   });
+};
+
+export const deleteServer = async (req: UserRequest, res: Response) => {
+  const serverId = ensureParam("id", req.params.id, { isObjectId: true });
+  const user = await ensureUser(req.userId);
+
+  const server = await Server.findById(serverId).populate("owner");
+  if (!server) throw new NotFoundError("Server");
+
+  if (server.owner.id !== user.id) throw new NoPermissionError();
+
+  await Promise.all([
+    Channel.deleteMany({ server: server._id }),
+    Role.deleteMany({ server: server._id }),
+    Member.deleteMany({ server: server._id }),
+    server.deleteOne(),
+  ]);
+
+  res.sendStatus(204);
 };
