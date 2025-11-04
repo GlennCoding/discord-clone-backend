@@ -77,9 +77,3 @@ export const toChannelDTO = ({ _id, name, order }: IChannel): ChannelDTO => ({
   name,
   order,
 });
-
-export const toMemberDTO = ({ roles, user, nickname }: IMember): MemberDTO => ({
-  name: nickname || user.userName,
-  roles: roles.map((r) => r.name),
-  avatarUrl: user.avatar?.url,
-});

@@ -26,7 +26,6 @@ import {
   ensureShortId,
   filterDisallowedRolesOfChannels,
   toChannelDTO,
-  toMemberDTO,
 } from "../services/serverService";
 
 const baseServerSchema = z.object({
@@ -156,7 +155,7 @@ export const getServer = async (req: UserRequest, res: Response<ServerDTO>) => {
 
   const allChannelMembers = await Member.find({ server })
     .populate("user")
-    .populate("roles", "_id name permissions");
+    .populate("roles", "_id permissions");
   const currentMember = allChannelMembers.find((m) => m.user.id === user.id);
 
   if (!currentMember) throw new CustomError(403, "You are no member of this server");
@@ -174,7 +173,7 @@ export const getServer = async (req: UserRequest, res: Response<ServerDTO>) => {
     channels: allowedChannels.map((c) => toChannelDTO(c)),
     description: server.description,
     iconUrl: server.iconUrl,
-    members: allChannelMembers.map((m) => toMemberDTO(m)),
+    membersCount: allChannelMembers.length,
   });
 };
 

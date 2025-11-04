@@ -91,7 +91,7 @@ export interface ServerDTO {
   description?: string;
   iconUrl?: string;
   channels: ChannelDTO[];
-  members: MemberDTO[];
+  membersCount: number;
 }
 
 export interface JoinServerDTO {

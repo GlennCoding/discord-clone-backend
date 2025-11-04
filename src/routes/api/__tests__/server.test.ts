@@ -220,13 +220,7 @@ describe("/server", () => {
       { id: channel.id, name: channel.name, order: channel.order },
       { id: channel2.id, name: channel2.name, order: channel2.order },
     ]);
-    expect(data.members).toHaveLength(2);
-    expect(data.members).toEqual(
-      expect.arrayContaining([
-        { name: user1.userName, roles: [role.name] },
-        { name: user2.userName, roles: [] },
-      ])
-    );
+    expect(data.membersCount).toBe(2);
   });
 
   it("returns only permitted channels of a server the user has joined", async () => {
