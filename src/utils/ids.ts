@@ -1,13 +1,13 @@
 import { randomBytes } from "crypto";
 
-const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-const ID_LENGTH = 6;
+const SHORT_ID_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+const SHORT_ID_LENGTH = 6;
 
 export const randomShortId = () => {
-  const bytes = randomBytes(ID_LENGTH);
+  const bytes = randomBytes(SHORT_ID_LENGTH);
   let out = "";
-  for (let i = 0; i < ID_LENGTH; i += 1) {
-    out += ALPHABET[bytes[i] % ALPHABET.length];
+  for (let i = 0; i < SHORT_ID_LENGTH; i += 1) {
+    out += SHORT_ID_CHARS[bytes[i] % SHORT_ID_CHARS.length];
   }
   return out;
 };
