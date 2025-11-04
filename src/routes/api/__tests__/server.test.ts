@@ -21,6 +21,7 @@ import {
   expectForbidden,
   expectUnauthorized,
 } from "../../../__tests__/helpers/assertions";
+import { generateUniqueShortId } from "../../../services/serverService";
 
 let ownerToken: string;
 let otherUserToken: string;
@@ -44,12 +45,12 @@ const createServer = async ({
   owner: IUser;
   isPublic?: boolean;
 }) => {
-  const randString = new Types.ObjectId().toString();
+  const shortId = await generateUniqueShortId();
   const newServer = await Server.create({
-    name: randString,
-    shortId: randString,
+    name: shortId,
+    shortId,
     owner,
-    isPublic: isPublic,
+    isPublic,
   });
   await Member.create({ user: owner, server: newServer });
 
@@ -190,7 +191,7 @@ describe("/server", () => {
     );
   });
 
-  it.only("returns detailed data for a server the user has joined", async () => {
+  it("returns detailed data for a server the user has joined", async () => {
     const server2 = await createServer({ owner: user2 });
     const role = await Role.create({ server: server2, name: "Role1" });
     const channel = await Channel.create({
@@ -228,7 +229,7 @@ describe("/server", () => {
     );
   });
 
-  it.only("returns only permitted channels of a server the user has joined", async () => {
+  it("returns only permitted channels of a server the user has joined", async () => {
     const server2 = await createServer({ owner: user2 });
     const role = await Role.create({ server: server2, name: "Role1" });
     const channel = await Channel.create({
@@ -236,7 +237,7 @@ describe("/server", () => {
       name: "General",
       order: 1,
     });
-    const channel2 = await Channel.create({
+    await Channel.create({
       server: server2,
       name: "Channel 2",
       order: 2,
@@ -398,8 +399,10 @@ describe("/server errors", () => {
   });
 
   it("returns 404 when requesting details for a non-existent server", async () => {
+    const missingShortId = await generateUniqueShortId();
+
     const res = await request(app)
-      .get("/server/unknown")
+      .get(`/server/${missingShortId}`)
       .set("Authorization", `Bearer ${ownerToken}`);
 
     expectNotFound(res);
@@ -416,8 +419,10 @@ describe("/server errors", () => {
   });
 
   it("returns 404 when trying to join a non-existent server", async () => {
+    const missingShortId = await generateUniqueShortId();
+
     const res = await request(app)
-      .post("/server/nope/join")
+      .post(`/server/${missingShortId}/join`)
       .set("Authorization", `Bearer ${ownerToken}`);
 
     expectNotFound(res);

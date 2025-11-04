@@ -2,10 +2,9 @@ import { Response } from "express";
 import { UserRequest } from "../middleware/verifyJWT";
 import z from "zod";
 import {
-  ChannelDTO,
   CreateServerDTO,
   CreateServerInput,
-  MemberDTO,
+  JoinServerDTO,
   ServerDTO,
   ServerListDTO,
   ServerListItemDTO,
@@ -14,13 +13,21 @@ import {
 } from "../types/dto";
 import Server, { IServer } from "../models/Server";
 import { ensureParam, ensureUser } from "../utils/helper";
-import { randomShortId } from "../utils/ids";
-import Member, { IMember } from "../models/Member";
-import Role, { IRole, RolePermission } from "../models/Role";
-import Channel, { IChannel } from "../models/Channel";
+import Member from "../models/Member";
+import Role, { RolePermission } from "../models/Role";
+import Channel from "../models/Channel";
 import { CustomError, NoPermissionError, NotFoundError } from "../utils/errors";
 import { isDeepStrictEqual } from "util";
 import { parseWithSchema } from "../utils/validators";
+import {
+  generateUniqueShortId,
+  checkPermissionInRoles,
+  toServerListItemDTO,
+  ensureShortId,
+  filterDisallowedRolesOfChannels,
+  toChannelDTO,
+  toMemberDTO,
+} from "../services/serverService";
 
 const baseServerSchema = z.object({
   name: z.string().trim().min(1, "Name is required"),
@@ -30,72 +37,6 @@ const baseServerSchema = z.object({
 
 export const createServerSchema = baseServerSchema;
 export const updateServerSchema = baseServerSchema;
-
-const generateUniqueShortId = async (): Promise<string> => {
-  let shortId = randomShortId();
-
-  while (await Server.exists({ shortId })) {
-    shortId = randomShortId();
-  }
-  return shortId;
-};
-
-const checkPermissionInRoles = (roles: IRole[], permission: RolePermission) => {
-  for (const role of roles) {
-    const hasPermission = role.permissions.some((p) => p === permission);
-    if (hasPermission) return true;
-  }
-  return false;
-};
-
-const toServerListItemDTO = (servers: IServer[]): ServerListItemDTO[] => {
-  return servers.map((s) => ({
-    name: s.name,
-    shortId: s.shortId,
-    description: s.description,
-    iconUrl: s.iconUrl,
-  }));
-};
-
-const checkIfMemberRolesIncludedInDisallowedRoles = (
-  disAllowedRoles: IRole[],
-  memberRoles: IRole[]
-) => {
-  for (const disallowedRole of disAllowedRoles) {
-    if (memberRoles.some((memberRole) => memberRole.id === disallowedRole.id))
-      return true;
-  }
-  return false;
-};
-
-const filterDisallowedRolesOfChannels = (
-  channels: IChannel[],
-  memberRoles: IRole[]
-) => {
-  const allowedChannels: IChannel[] = [];
-  for (const c of channels) {
-    const memberHasNoAccessToChannel = checkIfMemberRolesIncludedInDisallowedRoles(
-      c.disallowedRoles,
-      memberRoles
-    );
-    if (memberHasNoAccessToChannel) continue;
-
-    allowedChannels.push(c);
-  }
-  return allowedChannels;
-};
-
-const toChannelDTO = ({ _id, name, order }: IChannel): ChannelDTO => ({
-  id: _id.toString(),
-  name,
-  order,
-});
-
-const toMemberDTO = ({ roles, user, nickname }: IMember): MemberDTO => ({
-  name: nickname || user.userName,
-  roles: roles.map((r) => r.name),
-  avatarUrl: user.avatar?.url,
-});
 
 export const createServer = async (
   req: UserRequest<CreateServerInput>,
@@ -207,7 +148,7 @@ export const getAllJoinedServers = async (
 };
 
 export const getServer = async (req: UserRequest, res: Response<ServerDTO>) => {
-  const shortId = ensureParam("shortId", req.params.shortId, { isObjectId: true });
+  const shortId = ensureShortId(req.params.shortId);
   const user = await ensureUser(req.userId);
 
   const server = await Server.findOne({ shortId });
@@ -235,4 +176,22 @@ export const getServer = async (req: UserRequest, res: Response<ServerDTO>) => {
     iconUrl: server.iconUrl,
     members: allChannelMembers.map((m) => toMemberDTO(m)),
   });
+};
+
+export const joinServer = async (req: UserRequest, res: Response<JoinServerDTO>) => {
+  const shortId = ensureShortId(req.params.shortId);
+  const user = await ensureUser(req.userId);
+
+  const server = await Server.findOne({ shortId });
+  if (!server) throw new NotFoundError("Server");
+
+  const member = await Member.findOne({ server, user });
+
+  if (!server.isPublic && !member) {
+    throw new CustomError(403, "This server is private");
+  } else if (!member) {
+    await Member.create({ server, user });
+  }
+
+  res.status(200).json({ shortId: shortId });
 };

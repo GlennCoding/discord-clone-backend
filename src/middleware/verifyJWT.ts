@@ -16,16 +16,18 @@ interface AccessTokenBody extends JwtPayload {
 const verifyJWT = (req: UserRequest, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
 
-  if (!authHeader?.startsWith("Bearer ")) return res.sendStatus(401);
+  if (!authHeader?.startsWith("Bearer "))
+    return res.status(401).json({ error: "Missing token" });
 
   const token = authHeader.split(" ")[1];
 
   jwt.verify(token, env.ACCESS_TOKEN_SECRET as string, (err, decoded) => {
-    if (err || decoded === undefined) return res.sendStatus(403);
+    if (err || decoded === undefined)
+      return res.status(403).json({ error: "Could not verify token" });
     const payload = decoded as AccessTokenBody;
 
     if (payload.UserInfo === undefined || payload.UserInfo.userId === undefined)
-      return res.status(403).json({ message: "Missing user info in token" });
+      return res.status(403).json({ error: "Missing user info in token" });
 
     req.userId = payload.UserInfo.userId;
     next();
