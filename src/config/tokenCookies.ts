@@ -1,0 +1,33 @@
+import { CookieOptions, Response } from "express";
+import { isProdEnv } from "../utils/helper";
+
+export const ACCESS_TOKEN_COOKIE_NAME = "access_token";
+export const REFRESH_TOKEN_COOKIE_NAME = "refresh_token";
+
+const FIFTEEN_MINUTES_MS = 15 * 60 * 1000;
+const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+
+const baseCookieOptions: CookieOptions = {
+  httpOnly: true,
+  secure: isProdEnv,
+  sameSite: isProdEnv ? "none" : "lax",
+};
+
+const ACCESS_TOKEN_COOKIE_OPTIONS: CookieOptions = {
+  ...baseCookieOptions,
+  maxAge: FIFTEEN_MINUTES_MS,
+};
+
+const REFRESH_TOKEN_COOKIE_OPTIONS: CookieOptions = {
+  ...baseCookieOptions,
+  maxAge: SEVEN_DAYS_MS,
+  path: "/refresh",
+};
+
+export const setAccessTokenCookie = (res: Response, token: string) => {
+  res.cookie(ACCESS_TOKEN_COOKIE_NAME, token, ACCESS_TOKEN_COOKIE_OPTIONS);
+};
+
+export const setRefreshTokenCookie = (res: Response, token: string) => {
+  res.cookie(REFRESH_TOKEN_COOKIE_NAME, token, REFRESH_TOKEN_COOKIE_OPTIONS);
+};

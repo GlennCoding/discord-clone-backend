@@ -1,28 +1,24 @@
-import { setupMongoDB, teardownMongoDB } from "../../../__tests__/setup";
 import { app } from "../../../app";
 import request from "supertest";
 import Chat from "../../../models/Chat";
 import User from "../../../models/User";
 import { ChatDTO } from "../../../types/dto";
+import { buildAccessTokenCookie } from "../../../__tests__/helpers/cookies";
+import { issueAuthToken } from "../../../services/authService";
 
 let token: string;
 const user1Data = { userName: "John", password: "Cena" };
 const user2Data = { userName: "Nama", password: "Rupa" };
 
 beforeAll(async () => {
-  await setupMongoDB();
-
   // Create user 1
   await request(app).post("/register").send(user1Data);
-  const loginRes = await request(app).post("/login").send(user1Data);
-  token = loginRes.body.token;
+  const user1 = await User.findOne({ userName: user1Data.userName });
+  if (!user1) throw new Error("User 1 not found");
+  token = issueAuthToken(user1);
 
   // Create user 2
   await request(app).post("/register").send(user2Data);
-});
-
-afterAll(async () => {
-  await teardownMongoDB();
 });
 
 beforeEach(async () => {
@@ -36,7 +32,7 @@ describe("/chat", () => {
     const createChatRes = await request(app)
       .post("/chat")
       .send({ participant: user2Data.userName })
-      .set("Authorization", `Bearer ${token}`);
+      .set("Cookie", [buildAccessTokenCookie(token)]);
     expect(createChatRes.status).toBe(201);
 
     const user1Id = await User.findOne({ userName: user1Data.userName });
@@ -51,13 +47,13 @@ describe("/chat", () => {
     await request(app)
       .post("/chat")
       .send({ participant: user2Data.userName })
-      .set("Authorization", `Bearer ${token}`)
+      .set("Cookie", [buildAccessTokenCookie(token)])
       .expect(201);
 
     await request(app)
       .post("/chat")
       .send({ participant: user2Data.userName })
-      .set("Authorization", `Bearer ${token}`)
+      .set("Cookie", [buildAccessTokenCookie(token)])
       .expect(200);
 
     const chats = await Chat.find({});
@@ -75,7 +71,7 @@ describe("/chat", () => {
     // Create chat room
     const getChatsRes = await request(app)
       .get("/chat")
-      .set("Authorization", `Bearer ${token}`);
+      .set("Cookie", [buildAccessTokenCookie(token)]);
 
     expect(getChatsRes.status).toBe(200);
     console.log(getChatsRes.body);
@@ -92,7 +88,7 @@ describe("/chat", () => {
     const res = await request(app)
       .post("/chat")
       .send({ participant: nonExistentUser })
-      .set("Authorization", `Bearer ${token}`);
+      .set("Cookie", [buildAccessTokenCookie(token)]);
 
     expect(res.status).toBe(404);
     expect(res.body).toEqual({
@@ -104,7 +100,7 @@ describe("/chat", () => {
     const res = await request(app)
       .post("/chat")
       .send({ participant: user1Data.userName })
-      .set("Authorization", `Bearer ${token}`);
+      .set("Cookie", [buildAccessTokenCookie(token)]);
 
     expect(res.status).toBe(400);
     expect(res.body).toEqual({

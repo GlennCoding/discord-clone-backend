@@ -1,6 +1,5 @@
 import request from "supertest";
 import { Types } from "mongoose";
-import { setupMongoDB, teardownMongoDB } from "../../../__tests__/setup";
 import User, { IUser } from "../../../models/User";
 import { issueAuthToken } from "../../../services/authService";
 import { app } from "../../../app";
@@ -21,6 +20,7 @@ import {
   expectForbidden,
   expectUnauthorized,
 } from "../../../__tests__/helpers/assertions";
+import { buildAccessTokenCookie } from "../../../__tests__/helpers/cookies";
 import { generateUniqueShortId } from "../../../services/serverService";
 
 let ownerToken: string;
@@ -66,8 +66,6 @@ const addMemberToServer = async (
 };
 
 beforeAll(async () => {
-  await setupMongoDB();
-
   user1 = await User.create(user1Data);
   user2 = await User.create(user2Data);
 
@@ -89,7 +87,6 @@ afterEach(async () => {
 
 afterAll(async () => {
   await User.deleteMany({});
-  await teardownMongoDB();
 });
 
 describe("/server", () => {
@@ -102,7 +99,7 @@ describe("/server", () => {
 
     const { status, body } = await request(app)
       .post("/server")
-      .set("Authorization", `Bearer ${ownerToken}`)
+      .set("Cookie", [buildAccessTokenCookie(ownerToken)])
       .send(payload);
 
     expect(status).toBe(201);
@@ -129,7 +126,7 @@ describe("/server", () => {
 
     const { status, body } = await request(app)
       .put(`/server/${server1.id}`)
-      .set("Authorization", `Bearer ${ownerToken}`)
+      .set("Cookie", [buildAccessTokenCookie(ownerToken)])
       .send(updatedServerData);
 
     expect(status).toBe(200);
@@ -143,7 +140,7 @@ describe("/server", () => {
   it("deletes an owned server", async () => {
     const { status } = await request(app)
       .delete(`/server/${server1.id}`)
-      .set("Authorization", `Bearer ${ownerToken}`);
+      .set("Cookie", [buildAccessTokenCookie(ownerToken)]);
 
     expect(status).toBe(204);
 
@@ -159,7 +156,7 @@ describe("/server", () => {
 
     const { status, body } = await request(app)
       .get("/server/public")
-      .set("Authorization", `Bearer ${ownerToken}`);
+      .set("Cookie", [buildAccessTokenCookie(ownerToken)]);
 
     expect(status).toBe(200);
 
@@ -178,7 +175,7 @@ describe("/server", () => {
 
     const { status, body } = await request(app)
       .get("/server/joined")
-      .set("Authorization", `Bearer ${ownerToken}`);
+      .set("Cookie", [buildAccessTokenCookie(ownerToken)]);
 
     expect(status).toBe(200);
 
@@ -208,7 +205,7 @@ describe("/server", () => {
 
     const { status, body } = await request(app)
       .get(`/server/${server2.shortId}`)
-      .set("Authorization", `Bearer ${ownerToken}`);
+      .set("Cookie", [buildAccessTokenCookie(ownerToken)]);
 
     expect(status).toBe(200);
 
@@ -247,7 +244,7 @@ describe("/server", () => {
 
     const { status, body } = await request(app)
       .get(`/server/${server2.shortId}`)
-      .set("Authorization", `Bearer ${ownerToken}`);
+      .set("Cookie", [buildAccessTokenCookie(ownerToken)]);
 
     expect(status).toBe(200);
 
@@ -262,7 +259,7 @@ describe("/server", () => {
 
     const { status, body: rawBody } = await request(app)
       .post(`/server/${server2.shortId}/join`)
-      .set("Authorization", `Bearer ${ownerToken}`);
+      .set("Cookie", [buildAccessTokenCookie(ownerToken)]);
 
     expect(status).toBe(200);
     const body = rawBody as JoinServerDTO;
@@ -281,11 +278,11 @@ describe("/server", () => {
 
     await request(app)
       .post(`/server/${server2.shortId}/join`)
-      .set("Authorization", `Bearer ${ownerToken}`);
+      .set("Cookie", [buildAccessTokenCookie(ownerToken)]);
 
     const secondJoin = await request(app)
       .post(`/server/${server2.shortId}/join`)
-      .set("Authorization", `Bearer ${ownerToken}`);
+      .set("Cookie", [buildAccessTokenCookie(ownerToken)]);
 
     expect(secondJoin.status).toBe(200);
 
@@ -313,7 +310,7 @@ describe("/server errors", () => {
   it("returns 400 when creating a server without required fields", async () => {
     const res = await request(app)
       .post("/server")
-      .set("Authorization", `Bearer ${ownerToken}`)
+      .set("Cookie", [buildAccessTokenCookie(ownerToken)])
       .send({ isPublic: true } as Partial<CreateServerInput>);
 
     expectBadRequest(res);
@@ -323,7 +320,7 @@ describe("/server errors", () => {
     const missingId = new Types.ObjectId().toString();
     const res = await request(app)
       .put(`/server/${missingId}`)
-      .set("Authorization", `Bearer ${ownerToken}`)
+      .set("Cookie", [buildAccessTokenCookie(ownerToken)])
       .send({
         name: "Updated",
         description: "Desc",
@@ -336,7 +333,7 @@ describe("/server errors", () => {
   it("returns 400 when updating a server with invalid payload", async () => {
     const res = await request(app)
       .put(`/server/${server1.id}`)
-      .set("Authorization", `Bearer ${ownerToken}`)
+      .set("Cookie", [buildAccessTokenCookie(ownerToken)])
       .send({});
 
     expectBadRequest(res);
@@ -345,7 +342,7 @@ describe("/server errors", () => {
   it("returns 400 when updating a server with malformed fields", async () => {
     const res = await request(app)
       .put(`/server/${server1.id}`)
-      .set("Authorization", `Bearer ${ownerToken}`)
+      .set("Cookie", [buildAccessTokenCookie(ownerToken)])
       .send({
         name: "   ",
         description: "Invalid payload",
@@ -358,7 +355,7 @@ describe("/server errors", () => {
   it("returns 403 when updating a server the user does not own", async () => {
     const res = await request(app)
       .put(`/server/${server1.id}`)
-      .set("Authorization", `Bearer ${otherUserToken}`)
+      .set("Cookie", [buildAccessTokenCookie(otherUserToken)])
       .send({
         name: "Hack attempt",
         description: "Should not work",
@@ -371,7 +368,7 @@ describe("/server errors", () => {
   it("returns 400 when the server id parameter is malformed", async () => {
     const res = await request(app)
       .put("/server/not-an-object-id")
-      .set("Authorization", `Bearer ${ownerToken}`)
+      .set("Cookie", [buildAccessTokenCookie(ownerToken)])
       .send({
         name: "Valid name",
         description: "Desc",
@@ -385,7 +382,7 @@ describe("/server errors", () => {
     const missingId = new Types.ObjectId().toString();
     const res = await request(app)
       .delete(`/server/${missingId}`)
-      .set("Authorization", `Bearer ${ownerToken}`);
+      .set("Cookie", [buildAccessTokenCookie(ownerToken)]);
 
     expectNotFound(res);
   });
@@ -393,7 +390,7 @@ describe("/server errors", () => {
   it("returns 403 when deleting a server the user does not own", async () => {
     const res = await request(app)
       .delete(`/server/${server1.id}`)
-      .set("Authorization", `Bearer ${otherUserToken}`);
+      .set("Cookie", [buildAccessTokenCookie(otherUserToken)]);
 
     expectForbidden(res);
   });
@@ -403,7 +400,7 @@ describe("/server errors", () => {
 
     const res = await request(app)
       .get(`/server/${missingShortId}`)
-      .set("Authorization", `Bearer ${ownerToken}`);
+      .set("Cookie", [buildAccessTokenCookie(ownerToken)]);
 
     expectNotFound(res);
   });
@@ -413,7 +410,7 @@ describe("/server errors", () => {
 
     const res = await request(app)
       .get(`/server/${server2.shortId}`)
-      .set("Authorization", `Bearer ${ownerToken}`);
+      .set("Cookie", [buildAccessTokenCookie(ownerToken)]);
 
     expectForbidden(res);
   });
@@ -423,7 +420,7 @@ describe("/server errors", () => {
 
     const res = await request(app)
       .post(`/server/${missingShortId}/join`)
-      .set("Authorization", `Bearer ${ownerToken}`);
+      .set("Cookie", [buildAccessTokenCookie(ownerToken)]);
 
     expectNotFound(res);
   });
@@ -433,7 +430,7 @@ describe("/server errors", () => {
 
     const res = await request(app)
       .post(`/server/${server2.shortId}/join`)
-      .set("Authorization", `Bearer ${ownerToken}`);
+      .set("Cookie", [buildAccessTokenCookie(ownerToken)]);
 
     expectForbidden(res);
   });

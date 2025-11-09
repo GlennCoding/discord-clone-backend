@@ -4,11 +4,11 @@
  * 2. returns 401 on unauthorized request
  */
 import request from "supertest";
-import { setupMongoDB, teardownMongoDB } from "../../../__tests__/setup";
 import User, { IUser } from "../../../models/User";
 import { issueAuthToken } from "../../../services/authService";
 import { app } from "../../../app";
 import { MeDTO } from "../../../types/dto";
+import { buildAccessTokenCookie } from "../../../__tests__/helpers/cookies";
 
 /**
  * Before all -> Setup mongo, create user, get token
@@ -27,23 +27,17 @@ const userData = {
 } as IUser;
 
 beforeAll(async () => {
-  await setupMongoDB();
-
   user = await User.create(userData);
   await user.save();
 
   token = issueAuthToken(user);
 });
 
-afterAll(async () => {
-  await teardownMongoDB();
-});
-
 describe("/me", () => {
   it("should return userData", async () => {
     const res = await request(app)
       .get("/me")
-      .set("Authorization", `Bearer ${token}`);
+      .set("Cookie", [buildAccessTokenCookie(token)]);
 
     expect(res.body).toEqual({
       id: user.id,

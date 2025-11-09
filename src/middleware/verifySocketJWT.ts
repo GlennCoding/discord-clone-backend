@@ -1,9 +1,26 @@
 import { ExtendedError, Socket } from "socket.io";
 import jwt, { JwtPayload, VerifyErrors } from "jsonwebtoken";
 import { env } from "../utils/env";
+import { ACCESS_TOKEN_COOKIE_NAME } from "../config/tokenCookies";
+
+const getCookieValue = (cookieHeader: string | undefined, name: string) => {
+  if (!cookieHeader) return undefined;
+
+  return cookieHeader
+    .split(";")
+    .map((cookie) => cookie.trim())
+    .filter(Boolean)
+    .map((cookie) => {
+      const [cookieName, ...valueParts] = cookie.split("=");
+      return [cookieName, valueParts.join("=")];
+    })
+    .find(([cookieName]) => cookieName === name)?.[1];
+};
 
 const verifySocketJWT = (socket: Socket, next: (err?: ExtendedError) => void) => {
-  const token = socket.handshake.auth.token;
+  const cookieHeader = socket.handshake.headers.cookie;
+  const tokenFromCookies = getCookieValue(cookieHeader, ACCESS_TOKEN_COOKIE_NAME);
+  const token = tokenFromCookies ?? socket.handshake.auth?.token;
 
   if (!token) {
     return next(new Error("NO_TOKEN"));

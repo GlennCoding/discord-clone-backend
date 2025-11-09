@@ -3,6 +3,7 @@ import { saveUserRefreshToken, verifyUserPassword } from "../services/userServic
 import { issueAuthToken, issueRefreshToken } from "../services/authService";
 import { InputMissingError, RequestBodyIsMissingError } from "../utils/errors";
 import { LoginDTO, MeDTO } from "../types/dto";
+import { setAccessTokenCookie, setRefreshTokenCookie } from "../config/tokenCookies";
 
 export const handleLogin = async (req: Request, res: Response) => {
   if (!req.body) throw new RequestBodyIsMissingError();
@@ -21,21 +22,15 @@ export const handleLogin = async (req: Request, res: Response) => {
 
   await saveUserRefreshToken(user, refreshToken);
 
-  res.cookie("jwt", refreshToken, {
-    httpOnly: true,
-    secure: true,
-    sameSite: "none",
-    maxAge: 24 * 60 * 60 * 1000,
-  });
+  setAccessTokenCookie(res, accessToken);
+  setRefreshTokenCookie(res, refreshToken);
 
-  // Send 200 status & send accessToken back
-  res.status(200).json({
+  return res.status(200).json({
     message: "Login successful",
-    token: accessToken,
     userData: {
       id: user.id,
       username: user.userName,
       avatarUrl: user.avatar?.url,
     },
-  } as LoginDTO);
+  });
 };
