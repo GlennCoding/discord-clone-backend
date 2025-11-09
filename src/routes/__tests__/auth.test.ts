@@ -1,16 +1,7 @@
 import request from "supertest";
 import { app } from "../../app";
 import User from "../../models/User";
-import { setupMongoDB, teardownMongoDB } from "../../__tests__/setup";
 import jwt from "jsonwebtoken";
-
-beforeAll(async () => {
-  await setupMongoDB();
-});
-
-afterAll(async () => {
-  await teardownMongoDB();
-});
 
 describe("/register", () => {
   beforeEach(async () => {
@@ -51,7 +42,7 @@ describe("/register", () => {
       });
     });
 
-    it("should login with correct password and return a token and refresh token cookie", async () => {
+    it("should login with correct password and set access/refresh token cookies", async () => {
       const res = await request(app)
         .post("/login")
         .send({ userName: user.userName, password: user.password });
@@ -59,20 +50,35 @@ describe("/register", () => {
       expect(res.status).toBe(200);
       expect(res.body.message).toEqual("Login successful");
 
-      // Check auth token
-      expect(typeof res.body.token).toBe("string");
-      expect(res.body.token).toBeTruthy;
+      // Check response payload
+      expect(res.body.userData.username).toEqual(user.userName);
 
-      const decoded = jwt.decode(res.body.token);
-      expect(decoded).toHaveProperty("UserInfo.userId");
-      expect(decoded).toHaveProperty("exp");
-
-      // Check cookie
-      const cookies = res.headers["set-cookie"];
+      // Check cookies
+      const rawSetCookieHeader = res.headers["set-cookie"];
+      const cookies = Array.isArray(rawSetCookieHeader)
+        ? rawSetCookieHeader
+        : rawSetCookieHeader
+        ? [rawSetCookieHeader]
+        : undefined;
       expect(cookies).toBeDefined();
       expect(cookies).toEqual(
-        expect.arrayContaining([expect.stringContaining("jwt=")])
+        expect.arrayContaining([
+          expect.stringContaining("access_token="),
+          expect.stringContaining("refresh_token="),
+        ])
       );
+
+      const accessTokenCookie = cookies?.find((cookie) =>
+        cookie.startsWith("access_token=")
+      );
+      expect(accessTokenCookie).toBeDefined();
+
+      const accessToken = accessTokenCookie?.split(";")[0].split("=")[1];
+      expect(accessToken).toBeDefined();
+
+      const decoded = jwt.decode(decodeURIComponent(accessToken as string));
+      expect(decoded).toHaveProperty("UserInfo.userId");
+      expect(decoded).toHaveProperty("exp");
     });
   });
 });

@@ -2,7 +2,6 @@ import request from "supertest";
 import { type AddressInfo } from "node:net";
 import { io as ioc } from "socket.io-client";
 import { app, io, server } from "../../app";
-import { setupMongoDB, teardownMongoDB } from "../../__tests__/setup";
 import User, { IUser } from "../../models/User";
 import { ERROR_STATUS, EVENT_ERROR } from "../../types/events";
 import Message from "../../models/ChatMessage";
@@ -10,6 +9,7 @@ import { promisify } from "node:util";
 import { issueAuthToken } from "../../services/authService";
 import { TypedClientSocket } from "../../types/sockets";
 import { MessageDTO } from "../../types/dto";
+import { buildAccessTokenCookie } from "../../__tests__/helpers/cookies";
 
 type UserData = {
   userName: string;
@@ -33,15 +33,16 @@ const createChat = async (
   const res = await request(app)
     .post("/chat")
     .send({ participant })
-    .set("Authorization", `Bearer ${userToken}`);
+    .set("Cookie", [buildAccessTokenCookie(userToken)]);
   return res.body.chatId;
 };
 
 const createSocket = (port: number, token: string) =>
   ioc(`http://localhost:${port}`, {
-    auth: { token },
+    extraHeaders: { cookie: buildAccessTokenCookie(token) },
     reconnectionAttempts: 5,
     transports: ["websocket"],
+    withCredentials: true,
   });
 
 const connectClientSocket = (clientSocket: TypedClientSocket) =>
@@ -63,8 +64,6 @@ describe("chat socket handlers", () => {
   let user1User2chatId: string;
 
   beforeAll(async () => {
-    await setupMongoDB();
-
     // Create Users
     [user1, user1Token] = await createUserAndToken(user1Data);
     [user2, user2Token] = await createUserAndToken(user2Data);
@@ -94,7 +93,6 @@ describe("chat socket handlers", () => {
     user3Socket.disconnect();
     await io.close();
     await new Promise((r) => server.close(r));
-    await teardownMongoDB();
   });
 
   afterEach(async () => {

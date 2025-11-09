@@ -1,10 +1,10 @@
 import request from "supertest";
 import User, { IUser } from "../../../models/User";
-import { setupMongoDB, teardownMongoDB } from "../../../__tests__/setup";
 import { app } from "../../../app";
 import path from "path";
 import { issueAuthToken } from "../../../services/authService";
 import { bucket } from "../../../config/storage";
+import { buildAccessTokenCookie } from "../../../__tests__/helpers/cookies";
 
 const userData = { userName: "user", password: "pwd" };
 let user: IUser;
@@ -37,10 +37,6 @@ vi.mock("../../../config/storage", () => {
   };
 });
 
-beforeAll(async () => {
-  await setupMongoDB();
-});
-
 beforeEach(async () => {
   await User.deleteMany({});
 
@@ -50,10 +46,6 @@ beforeEach(async () => {
   });
 
   await user.save();
-});
-
-afterAll(async () => {
-  await teardownMongoDB();
 });
 
 describe("/profile", () => {
@@ -67,7 +59,7 @@ describe("/profile", () => {
 
     const res = await request(app)
       .get("/profile")
-      .set("Authorization", `Bearer ${token}`);
+      .set("Cookie", [buildAccessTokenCookie(token)]);
 
     expect(res.status).toBe(200);
     expect(res.body.userName).toBe(userData.userName);
@@ -82,7 +74,7 @@ describe("/profile", () => {
 
     const res = await request(app)
       .put("/profile")
-      .set("Authorization", `Bearer ${token}`)
+      .set("Cookie", [buildAccessTokenCookie(token)])
       .send({ status: newStatus });
 
     expect(res.status).toBe(200);
@@ -98,7 +90,7 @@ describe("/profile", () => {
 
     const res = await request(app)
       .put("/profile")
-      .set("Authorization", `Bearer ${token}`)
+      .set("Cookie", [buildAccessTokenCookie(token)])
       .send({ status: newStatus });
 
     expect(res.status).toBe(200);
@@ -113,7 +105,7 @@ describe("/profile", () => {
 
     const res = await request(app)
       .put("/profile")
-      .set("Authorization", `Bearer ${token}`)
+      .set("Cookie", [buildAccessTokenCookie(token)])
       .send({ status: longStatus });
 
     expect(res.status).toBe(400);
@@ -125,7 +117,7 @@ describe("/profile", () => {
 
     await request(app)
       .put("/profile/avatar")
-      .set("Authorization", `Bearer ${token}`)
+      .set("Cookie", [buildAccessTokenCookie(token)])
       .attach("profilePicture", path.join(__dirname, "test-image.png"));
 
     expect(bucket.file).toHaveBeenCalled();
@@ -137,7 +129,7 @@ describe("/profile", () => {
 
     const res = await request(app)
       .put("/profile/avatar")
-      .set("Authorization", `Bearer ${token}`)
+      .set("Cookie", [buildAccessTokenCookie(token)])
       .attach("profilePicture", path.join(__dirname, "test-image.png"));
 
     expect(res.status).toBe(200);
@@ -152,7 +144,7 @@ describe("/profile", () => {
 
     const res = await request(app)
       .put("/profile/avatar")
-      .set("Authorization", `Bearer ${token}`)
+      .set("Cookie", [buildAccessTokenCookie(token)])
       .attach("profilePicture", path.join(__dirname, "large-test-image.png"));
 
     expect(res.status).toBe(500);
@@ -167,7 +159,7 @@ describe("/profile", () => {
 
     const res = await request(app)
       .delete("/profile/avatar")
-      .set("Authorization", `Bearer ${token}`);
+      .set("Cookie", [buildAccessTokenCookie(token)]);
 
     expect(res.status).toBe(204);
 

@@ -1,17 +1,8 @@
 import request from "supertest";
 import { app } from "../../app";
 import User from "../../models/User";
-import { setupMongoDB, teardownMongoDB } from "../../__tests__/setup";
 
 describe("/register", () => {
-  beforeAll(async () => {
-    await setupMongoDB();
-  });
-
-  afterAll(async () => {
-    await teardownMongoDB();
-  });
-
   beforeEach(async () => {
     await User.deleteMany({});
   });
@@ -25,7 +16,7 @@ describe("/register", () => {
     expect(userInDb).not.toBeNull();
     expect(userInDb!.userName).toBe(payload.userName);
     expect(userInDb!.password).not.toBe(payload.password);
-  });
+  }, 10000);
 
   it("should throw an error for a duplicate username", async () => {
     await User.create({ userName: "Test", password: "password123" });

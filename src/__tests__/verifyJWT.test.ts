@@ -1,5 +1,6 @@
 import verifyJWT, { UserRequest } from "../middleware/verifyJWT";
 import jwt from "jsonwebtoken";
+import { ACCESS_TOKEN_COOKIE_NAME } from "../config/tokenCookies";
 
 vi.mock("jsonwebtoken");
 
@@ -9,7 +10,7 @@ describe("verifyJWT", () => {
   let next: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
-    req = { headers: {} };
+    req = { headers: {}, cookies: {} };
     res = {
       sendStatus: vi.fn().mockReturnThis(),
       status: vi.fn().mockReturnThis(),
@@ -18,10 +19,10 @@ describe("verifyJWT", () => {
     next = vi.fn();
   });
 
-  it("should return 401 if token is missing in header", () => {
+  it("should return 401 if token is missing in cookies", () => {
     verifyJWT(req as UserRequest, res, next);
 
-    expect(res!.sendStatus).toHaveBeenCalledWith(401);
+    expect(res!.status).toHaveBeenCalledWith(401);
     expect(next).not.toHaveBeenCalled();
   });
 
@@ -30,10 +31,10 @@ describe("verifyJWT", () => {
       (_t, _s, cb: any) => cb(new Error("bad token"), undefined)
     );
 
-    req.headers!.authorization = "Bearer unvalid_token";
+    req.cookies = { [ACCESS_TOKEN_COOKIE_NAME]: "invalid_token" };
     verifyJWT(req as UserRequest, res, next);
 
-    expect(res!.sendStatus).toHaveBeenCalledWith(403);
+    expect(res!.status).toHaveBeenCalledWith(403);
     expect(next).not.toHaveBeenCalled();
   });
 
@@ -42,7 +43,7 @@ describe("verifyJWT", () => {
       (_t, _s, cb: any) => cb(null, { UserInfo: { userId: 123 } })
     );
 
-    req.headers = { authorization: "Bearer goodToken" };
+    req.cookies = { [ACCESS_TOKEN_COOKIE_NAME]: "goodToken" };
     verifyJWT(req as UserRequest, res, next);
 
     expect(req.userId).toBe(123);

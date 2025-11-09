@@ -6,6 +6,7 @@ import {
 } from "../services/userService";
 import { issueAuthToken, issueRefreshToken } from "../services/authService";
 import { UsernameIsTakenError } from "../utils/errors";
+import { setAccessTokenCookie, setRefreshTokenCookie } from "../config/tokenCookies";
 
 export const handleRegister = async (req: Request, res: Response) => {
   const { userName, password } = req.body;
@@ -27,14 +28,15 @@ export const handleRegister = async (req: Request, res: Response) => {
 
   await saveUserRefreshToken(user, refreshToken);
 
-  res.cookie("jwt", refreshToken, {
-    httpOnly: true,
-    secure: true,
-    sameSite: "none",
-    maxAge: 24 * 60 * 60 * 1000,
-  });
+  setAccessTokenCookie(res, accessToken);
+  setRefreshTokenCookie(res, refreshToken);
 
-  res
-    .status(201)
-    .json({ message: "User registered successfully.", token: accessToken });
+  return res.status(201).json({
+    message: "Registered successfully",
+    userData: {
+      id: user.id,
+      username: user.userName,
+      avatarUrl: user.avatar?.url,
+    },
+  });
 };

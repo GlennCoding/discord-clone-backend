@@ -4,23 +4,29 @@ import { issueAuthToken } from "../services/authService";
 import { findUserWithRefreshToken } from "../services/userService";
 import { env } from "../utils/env";
 import { RefreshtokenNotFoundError } from "../utils/errors";
+import {
+  REFRESH_TOKEN_COOKIE_NAME,
+  setAccessTokenCookie,
+} from "../config/tokenCookies";
 
 export const handleRefreshToken = async (req: Request, res: Response) => {
-  const cookies = req.cookies;
-  if (!cookies?.jwt) {
-    res.status(401).json({ message: "Refresh Token required" });
+  const refreshToken = req.cookies?.[REFRESH_TOKEN_COOKIE_NAME];
+
+  if (!refreshToken) {
+    res.status(401).json({ message: "Refresh token required" });
     return;
   }
-  const refreshToken = cookies.jwt;
 
   const user = await findUserWithRefreshToken(refreshToken);
 
-  if (!user) return new RefreshtokenNotFoundError();
+  if (!user) throw new RefreshtokenNotFoundError();
 
   const onSuccessfulVerify = () => {
     const newAccessToken = issueAuthToken(user);
 
-    res.status(200).json({ token: newAccessToken });
+    setAccessTokenCookie(res, newAccessToken);
+
+    res.status(200).json({ message: "Token refreshed" });
   };
 
   jwt.verify(
