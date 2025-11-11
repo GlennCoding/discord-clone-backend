@@ -147,7 +147,19 @@ describe("/profile", () => {
       .set("Cookie", [buildAccessTokenCookie(token)])
       .attach("profilePicture", path.join(__dirname, "large-test-image.png"));
 
-    expect(res.status).toBe(500);
+    expect(res.status).toBe(413);
+  });
+
+  it("rejects non image files", async () => {
+    const token = issueAuthToken(user);
+
+    const res = await request(app)
+      .put("/profile/avatar")
+      .set("Cookie", [buildAccessTokenCookie(token)])
+      .attach("profilePicture", path.join(__dirname, "invalid-file.txt"));
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/unsupported file type/i);
   });
 
   it("can delete a user profile image", async () => {

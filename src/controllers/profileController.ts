@@ -1,6 +1,6 @@
 import { NextFunction, Response } from "express";
 import { UserRequest } from "../middleware/verifyJWT";
-import { UserNotFoundError, CustomError } from "../utils/errors";
+import { UserNotFoundError, CustomError, InputMissingError } from "../utils/errors";
 import User from "../models/User";
 import { ProfileDTO } from "../types/dto";
 import { validateStatus } from "../utils/validators";
@@ -9,8 +9,12 @@ import {
   uploadProfileImgToBucket,
 } from "../services/profileService";
 import { findUserWithUserId } from "../services/userService";
-import { randomUUID } from "crypto";
-import { fileTypeFromFile } from "file-type";
+import {
+  ALLOWED_IMAGE_MIME_TYPES,
+  MAX_PROFILE_IMAGE_FILE_SIZE_BYTES,
+} from "../config/upload";
+import { validateUploadedFile } from "../utils/fileValidation";
+import { buildObjectKey } from "../utils/storagePaths";
 
 export const getProfile = async (req: UserRequest, res: Response) => {
   const user = await findUserWithUserId(req.userId as string);
@@ -49,25 +53,24 @@ export const updateProfileImg = async (
 ) => {
   const { file } = req;
 
-  if (!file) throw new CustomError(400, "No file attached");
-
-  if (!file.mimetype.startsWith("image/"))
-    throw new CustomError(400, "File must be an image");
-
-  // TODO: Implement file-type check
-  // const detected = await fileTypeFromFile(file); // Don't know what to input here
-
-  // if (!detected || !detected.mime.startsWith("image/")) {
-  //   throw new Error("Uploaded file is not a valid image");
-  // }
+  const validatedFile = await validateUploadedFile(file, {
+    allowedMimeTypes: ALLOWED_IMAGE_MIME_TYPES,
+    maxFileSizeBytes: MAX_PROFILE_IMAGE_FILE_SIZE_BYTES,
+  });
 
   const user = await findUserWithUserId(req.userId as string);
   if (!user) throw new UserNotFoundError();
 
   const previousAvatarFilePath = user.avatar?.filePath;
-  const fileName = `avatars/${Date.now()}-${user.userName}-${randomUUID()}`;
+  const fileName = buildObjectKey("avatars", user.userName, validatedFile.ext);
 
-  const publicUrl = await uploadProfileImgToBucket(file, fileName);
+  if (!file) throw new InputMissingError("File");
+
+  const publicUrl = await uploadProfileImgToBucket(
+    file,
+    fileName,
+    validatedFile.mime
+  );
 
   user.avatar = { filePath: fileName, url: publicUrl };
 
