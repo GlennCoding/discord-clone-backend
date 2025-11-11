@@ -31,6 +31,7 @@ export interface MeDTO {
 export interface ChatDTO {
   chatId: string;
   participant: string;
+  participantAvatarUrl?: string;
 }
 
 export interface JoinChatDTO {

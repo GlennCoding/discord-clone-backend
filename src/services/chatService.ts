@@ -1,12 +1,12 @@
 import mongoose from "mongoose";
 import Chat, { IChat } from "../models/Chat";
-import { IUser } from "../models/User";
+import User, { IUser } from "../models/User";
 import Message from "../models/ChatMessage";
 import { ChatDTO } from "../types/dto";
 
 export const getUserChats = async (userId: string) => {
   const chats = await Chat.find({ participants: userId })
-    .populate<{ participants: IUser[] }>("participants", "userName")
+    .populate<{ participants: IUser[] }>("participants", "userName avatar")
     .exec();
 
   return chats;
@@ -20,9 +20,12 @@ export const formatUserChats = (chats: IChat[], userId: string): ChatDTO[] => {
       throw Error(`Chat ${chat._id} doesn't contain other partipants`);
     }
 
+    const avatarUrl = (other as IUser).avatar && (other as IUser).avatar!.url;
+
     return {
       chatId: chat.id,
       participant: (other as IUser).userName,
+      participantAvatarUrl: avatarUrl,
     };
   });
 };

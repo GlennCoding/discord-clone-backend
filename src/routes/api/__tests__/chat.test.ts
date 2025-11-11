@@ -1,24 +1,29 @@
 import { app } from "../../../app";
 import request from "supertest";
 import Chat from "../../../models/Chat";
-import User from "../../../models/User";
+import User, { IUser } from "../../../models/User";
 import { ChatDTO } from "../../../types/dto";
 import { buildAccessTokenCookie } from "../../../__tests__/helpers/cookies";
 import { issueAuthToken } from "../../../services/authService";
 
 let token: string;
 const user1Data = { userName: "John", password: "Cena" };
-const user2Data = { userName: "Nama", password: "Rupa" };
+const user2Data = {
+  userName: "Nama",
+  password: "Rupa",
+  avatar: { filePath: "path", url: "url.com" },
+};
+let user1: IUser;
+let user2: IUser;
 
 beforeAll(async () => {
-  // Create user 1
-  await request(app).post("/register").send(user1Data);
-  const user1 = await User.findOne({ userName: user1Data.userName });
-  if (!user1) throw new Error("User 1 not found");
+  user1 = await User.create(user1Data);
+  await user1.save();
   token = issueAuthToken(user1);
 
   // Create user 2
-  await request(app).post("/register").send(user2Data);
+  user2 = await User.create(user2Data);
+  await user2.save();
 });
 
 beforeEach(async () => {
@@ -35,8 +40,7 @@ describe("/chat", () => {
       .set("Cookie", [buildAccessTokenCookie(token)]);
     expect(createChatRes.status).toBe(201);
 
-    const user1Id = await User.findOne({ userName: user1Data.userName });
-    const chatInDB = await Chat.findOne({ participants: user1Id });
+    const chatInDB = await Chat.findOne({ participants: user1 });
 
     expect(createChatRes.body.chatId).toBeTruthy;
     expect(chatInDB).not.toBeNull();
@@ -78,7 +82,8 @@ describe("/chat", () => {
     expect(getChatsRes.body).toEqual([
       {
         chatId: chat.id!,
-        participant: user2Data.userName,
+        participant: user2.userName,
+        participantAvatarUrl: user2.avatar!.url,
       },
     ] as ChatDTO[]);
   });
