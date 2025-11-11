@@ -16,12 +16,13 @@ const UPLOAD_TIMEOUT_MS = 10_000; // 10 seconds
 
 export const uploadProfileImgToBucket = async (
   file: Express.Multer.File,
-  fileName: string
+  fileName: string,
+  contentType: string
 ): Promise<string> => {
   const blob = bucket.file(fileName);
   const blobStream = blob.createWriteStream({
     resumable: false,
-    contentType: file.mimetype,
+    contentType,
   });
 
   return new Promise((resolve, reject) => {

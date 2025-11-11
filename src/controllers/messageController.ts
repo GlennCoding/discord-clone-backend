@@ -8,7 +8,6 @@ import {
   UserNotFoundError,
 } from "../utils/errors";
 import { findUserWithUserId } from "../services/userService";
-import { randomUUID } from "crypto";
 import {
   deleteFileFromBucket,
   uploadFileToBucket,
@@ -23,13 +22,25 @@ import mongoose from "mongoose";
 import { idsEqual } from "../utils/helper";
 import { io } from "../app";
 import { toMessageDTO } from "../utils/dtos/messageDTO";
+import {
+  ALLOWED_MESSAGE_ATTACHMENT_MIME_TYPES,
+  MAX_MESSAGE_ATTACHMENT_FILE_SIZE_BYTES,
+} from "../config/upload";
+import { validateUploadedFile } from "../utils/fileValidation";
+import { buildObjectKey } from "../utils/storagePaths";
 
 const getChat = async (chatId: string | undefined, userId: string) => {
   // is user part of chat? -> Chat.find()
   const foundChat = await Chat.findOne({ _id: chatId });
   if (!foundChat) throw new CustomError(400, "Chat doesn't exist");
 
-  foundChat.participants.includes(new mongoose.Types.ObjectId(userId));
+  const userIsParticipant = foundChat.participants.some((participant) =>
+    idsEqual(participant, new mongoose.Types.ObjectId(userId))
+  );
+
+  if (!userIsParticipant) {
+    throw new CustomError(403, "User is not part of this chat");
+  }
 
   return foundChat;
 };
@@ -57,9 +68,18 @@ export const saveMessageAttachment = async (
 
   verifyText(text);
 
+  const validatedFile = await validateUploadedFile(file, {
+    allowedMimeTypes: ALLOWED_MESSAGE_ATTACHMENT_MIME_TYPES,
+    maxFileSizeBytes: MAX_MESSAGE_ATTACHMENT_FILE_SIZE_BYTES,
+  });
+
   // upload file
-  const fileName = `message-attachment/${Date.now()}-${randomUUID()}`;
-  const downloadUrl = await uploadFileToBucket(file, fileName);
+  const fileName = buildObjectKey(
+    "message-attachment",
+    user.id ?? user._id.toString(),
+    validatedFile.ext
+  );
+  const downloadUrl = await uploadFileToBucket(file, fileName, validatedFile.mime);
 
   // create & save Message document (if fails, delete file from bucket)
   const newMessage = new Message({
@@ -84,7 +104,7 @@ export const saveMessageAttachment = async (
   });
 
   // Send back Message DTO
-  res.status(200).json({ messae: messageDTO });
+  res.status(200).json({ message: messageDTO });
 };
 
 const getMessage = async (messageId: string) => {

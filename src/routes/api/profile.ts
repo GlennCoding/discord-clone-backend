@@ -7,16 +7,14 @@ import {
   updateProfileImg,
 } from "../../controllers/profileController";
 import { asyncHandler } from "../../utils/asyncHandler";
+import { MAX_PROFILE_IMAGE_FILE_SIZE_BYTES } from "../../config/upload";
 
 const router = Router();
-
-const MAX_FILE_SIZE_IN_MB = 7;
-const MAX_FILE_SIZE = MAX_FILE_SIZE_IN_MB * 1024 * 1024; // 7 MB
 
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: MAX_FILE_SIZE,
+    fileSize: MAX_PROFILE_IMAGE_FILE_SIZE_BYTES,
   },
 });
 
