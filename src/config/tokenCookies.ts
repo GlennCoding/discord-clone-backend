@@ -10,7 +10,7 @@ const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 const baseCookieOptions: CookieOptions = {
   httpOnly: true,
   secure: isProdEnv,
-  sameSite: isProdEnv ? "none" : "lax",
+  sameSite: "none",
 };
 
 const ACCESS_TOKEN_COOKIE_OPTIONS: CookieOptions = {
