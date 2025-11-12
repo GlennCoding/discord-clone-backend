@@ -81,7 +81,7 @@ export const handleJoinChat: EventControllerWithAck<"chat:join"> = async (
   try {
     const chat = await Chat.findOne({ _id: chatId }).populate<{
       participants: IUser[];
-    }>("participants", "userName");
+    }>("participants", "userName avatar");
 
     if (chat === null) {
       ack({
@@ -120,7 +120,10 @@ export const handleJoinChat: EventControllerWithAck<"chat:join"> = async (
 
     ack({
       data: {
-        participant: otherParticipant.userName,
+        participant: {
+          username: otherParticipant.userName,
+          avatarUrl: otherParticipant.avatar?.url,
+        },
         messages: messages.map((m) => toMessageDTO(m)),
       },
       status: "OK",

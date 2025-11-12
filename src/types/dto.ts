@@ -35,7 +35,10 @@ export interface ChatDTO {
 }
 
 export interface JoinChatDTO {
-  participant: string;
+  participant: {
+    username: string;
+    avatarUrl?: string;
+  };
   messages: MessageDTO[];
 }
 

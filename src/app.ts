@@ -18,6 +18,7 @@ import credentials from "./middleware/credentials";
 import corsOptions from "./config/corsOptions";
 import { errorMiddleware } from "./middleware/errorMiddleware";
 import { initSocket } from "./sockets";
+import { NotFoundError } from "./utils/errors";
 
 // Initialize Express app
 const app = express();
@@ -46,7 +47,7 @@ app.use("/messages", verifyJWT, messagesRouter);
 app.use("/server", verifyJWT, serverRouter);
 
 app.use((_, res) => {
-  res.status(404).json({ error: "Not found" });
+  throw new NotFoundError("endpoint");
 });
 
 app.use(errorMiddleware);
