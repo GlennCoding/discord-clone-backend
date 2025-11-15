@@ -8,9 +8,11 @@ const FIFTEEN_MINUTES_MS = 15 * 60 * 1000;
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
 const baseCookieOptions: CookieOptions = {
+  domain: isProdEnv ? ".discordclone.de" : undefined,
   httpOnly: true,
   secure: isProdEnv,
   sameSite: "none",
+  path: "/",
 };
 
 const ACCESS_TOKEN_COOKIE_OPTIONS: CookieOptions = {
