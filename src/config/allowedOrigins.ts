@@ -9,7 +9,7 @@ const allowedOrigins = [
 ];
 
 if (!isProdEnv) {
-  allowedOrigins.push("http://localhost:3500", "http://localhost:3500");
+  allowedOrigins.push("http://localhost:3000", "http://localhost:3500");
 }
 
 export default allowedOrigins;
