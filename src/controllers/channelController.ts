@@ -9,6 +9,8 @@ import Member from "../models/Member";
 import Channel from "../models/Channel";
 import { CustomError, NoPermissionError, NotFoundError } from "../utils/errors";
 import { toChannelDTO } from "../services/serverService";
+import { serverRoom } from "../utils/socketRooms";
+import { io } from "../app";
 
 const channelPayloadSchema = z.object({
   name: z.string().trim().min(1, "Name is required"),
@@ -47,7 +49,10 @@ export const createChannel = async (
     order: nextOrder,
   });
 
-  res.status(201).json(toChannelDTO(channel));
+  const channelDTO = toChannelDTO(channel);
+  io.to(serverRoom(server.id)).emit("channel:created", channelDTO);
+
+  res.status(201).json(channelDTO);
 };
 
 export const updateChannel = async (
@@ -63,8 +68,11 @@ export const updateChannel = async (
 
   channel.name = payload.name;
   const updatedChannel = await channel.save();
+  const updatedDTO = toChannelDTO(updatedChannel);
 
-  res.status(200).json(toChannelDTO(updatedChannel));
+  io.to(serverRoom(server.id)).emit("channel:updated", updatedDTO);
+
+  res.status(200).json(updatedDTO);
 };
 
 export const deleteChannel = async (req: UserRequest, res: Response) => {
@@ -73,6 +81,8 @@ export const deleteChannel = async (req: UserRequest, res: Response) => {
 
   const deleted = await Channel.findOneAndDelete({ _id: channelId, server });
   if (!deleted) throw new NotFoundError("Channel");
+
+  io.to(serverRoom(server.id)).emit("channel:deleted", deleted.id);
 
   res.sendStatus(204);
 };

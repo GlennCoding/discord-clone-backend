@@ -10,6 +10,7 @@ import {
   ServerListItemDTO,
   UpdateServerDTO,
   UpdateServerInput,
+  UpdatedServerDTO,
 } from "../types/dto";
 import Server, { IServer } from "../models/Server";
 import { ensureParam, ensureUser } from "../utils/helper";
@@ -28,6 +29,8 @@ import {
   toChannelDTO,
   toMemberDTO,
 } from "../services/serverService";
+import { io } from "../app";
+import { serverRoom } from "../utils/socketRooms";
 
 const baseServerSchema = z.object({
   name: z.string().trim().min(1, "Name is required"),
@@ -98,11 +101,22 @@ export const updateServer = async (
   foundServer.isPublic = payload.isPublic;
   const updatedServer = await foundServer.save();
 
-  res.status(200).json({
+  const responseBody = {
     name: updatedServer.name,
     isPublic: updatedServer.isPublic,
     description: updatedServer.description,
-  });
+  };
+
+  res.status(200).json(responseBody);
+
+  const updatedServerDTO: UpdatedServerDTO = {
+    id: updatedServer.id,
+    name: updatedServer.name,
+    description: updatedServer.description,
+    iconUrl: updatedServer.iconUrl,
+  };
+
+  io.to(serverRoom(updatedServer.id)).emit("server:updated", updatedServerDTO);
 };
 
 export const deleteServer = async (req: UserRequest, res: Response) => {
@@ -122,6 +136,8 @@ export const deleteServer = async (req: UserRequest, res: Response) => {
   ]);
 
   res.sendStatus(204);
+
+  io.to(serverRoom(server.id)).emit("server:deleted", server.id);
 };
 
 export const getAllPublicServers = async (
