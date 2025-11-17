@@ -12,6 +12,7 @@ import meRouter from "./routes/api/me";
 import messagesRouter from "./routes/api/messages";
 import serverRouter from "./routes/api/servers";
 import chatRouter from "./routes/api/chats";
+import channelRouter from "./routes/api/channels";
 import verifyJWT from "./middleware/verifyJWT";
 import cookieParser from "cookie-parser";
 import credentials from "./middleware/credentials";
@@ -45,6 +46,7 @@ app.use("/chat", verifyJWT, chatRouter);
 app.use("/profile", verifyJWT, profileRouter);
 app.use("/messages", verifyJWT, messagesRouter);
 app.use("/server", verifyJWT, serverRouter);
+app.use("/channel", verifyJWT, channelRouter);
 
 app.use((_, res) => {
   throw new NotFoundError("endpoint");
