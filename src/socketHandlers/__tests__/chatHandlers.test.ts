@@ -1,15 +1,17 @@
 import request from "supertest";
-import { type AddressInfo } from "node:net";
-import { io as ioc } from "socket.io-client";
-import { app, io, server } from "../../app";
+import { app } from "../../app";
 import User, { IUser } from "../../models/User";
 import { ERROR_STATUS, EVENT_ERROR } from "../../types/events";
 import Message from "../../models/ChatMessage";
-import { promisify } from "node:util";
 import { issueAuthToken } from "../../services/authService";
 import { TypedClientSocket } from "../../types/sockets";
 import { MessageDTO } from "../../types/dto";
 import { buildAccessTokenCookie } from "../../__tests__/helpers/cookies";
+import {
+  acquireSocketServer,
+  releaseSocketServer,
+  connectSocketWithToken,
+} from "./helpers/socketTestUtils";
 
 type UserData = {
   userName: string;
@@ -37,20 +39,13 @@ const createChat = async (
   return res.body.chatId;
 };
 
-const createSocket = (port: number, token: string) =>
-  ioc(`http://localhost:${port}`, {
-    extraHeaders: { cookie: buildAccessTokenCookie(token) },
-    reconnectionAttempts: 5,
-    transports: ["websocket"],
-    withCredentials: true,
-  });
+beforeAll(async () => {
+  await acquireSocketServer();
+});
 
-const connectClientSocket = (clientSocket: TypedClientSocket) =>
-  new Promise((resolve, reject) => {
-    clientSocket.on("connect", () => resolve("Connection successful"));
-
-    clientSocket.on("connect_error", (e) => reject(e));
-  });
+afterAll(async () => {
+  await releaseSocketServer();
+});
 
 describe("chat socket handlers", () => {
   const user1Data: UserData = { userName: "John", password: "Cena" };
@@ -72,27 +67,16 @@ describe("chat socket handlers", () => {
     user1User2chatId = await createChat(user1Token, user2Data.userName);
 
     // Create & Connect User Sockets
-    await promisify(server.listen).call(server);
-    const port = (server.address() as AddressInfo).port;
-
-    user1Socket = createSocket(port, user1Token);
-    user2Socket = createSocket(port, user2Token);
-    user3Socket = createSocket(port, user3Token);
-
-    // Wait for all Sockets to be connected
-    await Promise.all([
-      connectClientSocket(user1Socket),
-      connectClientSocket(user2Socket),
-      connectClientSocket(user3Socket),
-    ]);
+    user1Socket = await connectSocketWithToken(user1Token);
+    user2Socket = await connectSocketWithToken(user2Token);
+    user3Socket = await connectSocketWithToken(user3Token);
   });
 
   afterAll(async () => {
     user1Socket.disconnect();
     user2Socket.disconnect();
     user3Socket.disconnect();
-    await io.close();
-    await new Promise((r) => server.close(r));
+    await User.deleteMany({});
   });
 
   afterEach(async () => {
@@ -107,7 +91,7 @@ describe("chat socket handlers", () => {
 
     if (ack instanceof EVENT_ERROR) throw new Error(ack.message);
 
-    expect(ack.data.participant).toBe(user2Data.userName);
+    expect(ack.data.participant.username).toBe(user2Data.userName);
     expect(ack.data.messages).toEqual([]);
   });
 
@@ -158,7 +142,7 @@ describe("chat socket handlers", () => {
       data: { participant, messages },
     } = ack;
 
-    expect(participant).toBe(user2Data.userName);
+    expect(participant.username).toBe(user2Data.userName);
 
     expect(messages[0].text).toEqual(user1Message.text);
     expect(messages[0].sender.id).toEqual(user1Message.sender);
