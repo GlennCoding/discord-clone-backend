@@ -112,3 +112,10 @@ export interface ServerListItemDTO {
 export interface ServerListDTO {
   servers: ServerListItemDTO[];
 }
+
+export interface UpdatedServerDTO {
+  id: string;
+  name: string;
+  description?: string;
+  iconUrl?: string;
+}
