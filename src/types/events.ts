@@ -1,4 +1,11 @@
-import { SendMessageInput, MessageDTO, JoinChatDTO } from "./dto";
+import {
+  SendMessageInput,
+  MessageDTO,
+  JoinChatDTO,
+  ServerDTO,
+  UpdatedServerDTO,
+  ChannelDTO,
+} from "./dto";
 
 export class EVENT_ERROR {
   constructor({ error, message }: { error: ERROR_STATUS; message: string }) {
@@ -32,11 +39,18 @@ export interface ClientToServerEvents {
   ) => void;
   "chat:join": (chatId: string, ack: Ack<JoinChatDTO>) => void;
   "chat:leave": (chatId: string) => void;
+  "server:subscribe": (serverId: string, ack: Ack<ServerDTO>) => void;
+  "server:unsubscribe": (serverId: string) => void;
 }
 
 export type ServerToClientEvents = {
   "message:new": (message: { message: MessageDTO }) => void;
   "chat:error": (error: string) => void;
+  "server:updated": (server: UpdatedServerDTO) => void;
+  "server:deleted": (serverId: string) => void;
+  "channel:created": (channel: ChannelDTO) => void;
+  "channel:updated": (channel: ChannelDTO) => void;
+  "channel:deleted": (channelId: string) => void;
   connect: () => void;
   connect_error: (e: string) => void;
 };
