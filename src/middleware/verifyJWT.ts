@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import jwt, { JwtPayload, VerifyErrors } from "jsonwebtoken";
+import jwt, { JwtPayload, TokenExpiredError, VerifyErrors } from "jsonwebtoken";
 import { env } from "../utils/env";
 import { ACCESS_TOKEN_COOKIE_NAME } from "../config/tokenCookies";
 
@@ -28,6 +28,9 @@ const verifyJWT = (req: UserRequest, res: Response, next: NextFunction) => {
     token,
     env.ACCESS_TOKEN_SECRET as string,
     (err: VerifyErrors | null, decoded: string | JwtPayload | undefined) => {
+      if (err instanceof TokenExpiredError)
+        return res.status(401).json({ error: "Token expired" });
+
       if (err || decoded === undefined)
         return res.status(403).json({ error: "Could not verify token" });
       const payload = decoded as AccessTokenBody;
