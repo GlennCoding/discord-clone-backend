@@ -8,6 +8,11 @@ import {
   handleServerSubscribe,
   handleServerUnsubscribe,
 } from "./serverHandlers";
+import {
+  handleChannelMessagesSubscribe,
+  handleChannelMessagesUnsubscribe,
+  handleIncomingChannelMessage,
+} from "./channelMessageHandlers";
 
 const onConnection = (_: TypedServer, socket: TypedSocket) => {
   socket.on("chat:join", (chatId: string, ack: any) =>
@@ -26,6 +31,18 @@ const onConnection = (_: TypedServer, socket: TypedSocket) => {
 
   socket.on("server:unsubscribe", (serverId: string) =>
     handleServerUnsubscribe(socket, serverId)
+  );
+
+  socket.on("channelMessages:subscribe", (channelId: string, ack: any) =>
+    handleChannelMessagesSubscribe(socket, channelId, ack)
+  );
+
+  socket.on("channelMessages:unsubscribe", (channelId: string, ack: any) =>
+    handleChannelMessagesUnsubscribe(socket, channelId, ack)
+  );
+
+  socket.on("channelMessage:new", (payload, ack) =>
+    handleIncomingChannelMessage(socket, payload, ack)
   );
 };
 

@@ -5,6 +5,9 @@ import {
   ServerDTO,
   UpdatedServerDTO,
   ChannelDTO,
+  ChannelSubscribeDTO,
+  ChannelMessageDTO,
+  SendChannelMessageInput,
 } from "./dto";
 
 export class EVENT_ERROR {
@@ -41,6 +44,18 @@ export interface ClientToServerEvents {
   "chat:leave": (chatId: string) => void;
   "server:subscribe": (serverId: string, ack: Ack<ServerDTO>) => void;
   "server:unsubscribe": (serverId: string) => void;
+  "channelMessages:subscribe": (
+    channelId: string,
+    ack: Ack<ChannelSubscribeDTO>
+  ) => void;
+  "channelMessages:unsubscribe": (
+    channelId: string,
+    ack: Ack<{ success: true }>
+  ) => void;
+  "channelMessage:new": (
+    payload: SendChannelMessageInput,
+    ack: Ack<{ message: ChannelMessageDTO }>
+  ) => void;
 }
 
 export type ServerToClientEvents = {
@@ -51,6 +66,7 @@ export type ServerToClientEvents = {
   "channel:created": (channel: ChannelDTO) => void;
   "channel:updated": (channel: ChannelDTO) => void;
   "channel:deleted": (channelId: string) => void;
+  "channelMessage:new": (message: ChannelMessageDTO) => void;
   connect: () => void;
   connect_error: (e: string) => void;
 };
