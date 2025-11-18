@@ -135,7 +135,8 @@ export interface ChannelMessageDTO {
 }
 
 export interface ChannelSubscribeDTO {
-  channel: Omit<ChannelDTO, "order">;
+  serverId: string;
+  channel: ChannelDTO;
   messages: ChannelMessageDTO[];
 }
 
