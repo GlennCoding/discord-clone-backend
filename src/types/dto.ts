@@ -1,8 +1,9 @@
 export interface LoginDTO {
   message: string;
-  token: string;
   userData: MeDTO;
 }
+
+export type RegisterDTO = LoginDTO;
 
 export interface AttachmentDTO {
   downloadUrl: string;

@@ -2,10 +2,10 @@ import { Request, Response } from "express";
 import { saveUserRefreshToken, verifyUserPassword } from "../services/userService";
 import { issueAuthToken, issueRefreshToken } from "../services/authService";
 import { InputMissingError, RequestBodyIsMissingError } from "../utils/errors";
-import { LoginDTO, MeDTO } from "../types/dto";
+import { LoginDTO } from "../types/dto";
 import { setAccessTokenCookie, setRefreshTokenCookie } from "../config/tokenCookies";
 
-export const handleLogin = async (req: Request, res: Response) => {
+export const handleLogin = async (req: Request, res: Response<LoginDTO>) => {
   if (!req.body) throw new RequestBodyIsMissingError();
 
   const { userName, password } = req.body;

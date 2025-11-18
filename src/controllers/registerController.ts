@@ -5,15 +5,15 @@ import {
   saveUserRefreshToken,
 } from "../services/userService";
 import { issueAuthToken, issueRefreshToken } from "../services/authService";
-import { UsernameIsTakenError } from "../utils/errors";
+import { CustomError, UsernameIsTakenError } from "../utils/errors";
 import { setAccessTokenCookie, setRefreshTokenCookie } from "../config/tokenCookies";
+import { RegisterDTO } from "../types/dto";
 
-export const handleRegister = async (req: Request, res: Response) => {
+export const handleRegister = async (req: Request, res: Response<RegisterDTO>) => {
   const { userName, password } = req.body;
 
   if (userName === undefined || password === undefined) {
-    res.status(400).json({ error: "username and password are required." });
-    return;
+    throw new CustomError(400, "Username and password are required.");
   }
 
   const usernameExistsAlready = await findUserWithUserName(userName);
