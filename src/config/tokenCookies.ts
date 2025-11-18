@@ -11,7 +11,7 @@ const baseCookieOptions: CookieOptions = {
   domain: isProdEnv ? ".discordclone.de" : undefined,
   httpOnly: true,
   secure: isProdEnv,
-  sameSite: "none",
+  sameSite: isProdEnv ? "lax" : "none",
   path: "/",
 };
 
@@ -32,4 +32,12 @@ export const setAccessTokenCookie = (res: Response, token: string) => {
 
 export const setRefreshTokenCookie = (res: Response, token: string) => {
   res.cookie(REFRESH_TOKEN_COOKIE_NAME, token, REFRESH_TOKEN_COOKIE_OPTIONS);
+};
+
+export const clearAccessTokenCookie = (res: Response) => {
+  res.clearCookie(ACCESS_TOKEN_COOKIE_NAME, ACCESS_TOKEN_COOKIE_OPTIONS);
+};
+
+export const clearRefreshTokenCookie = (res: Response) => {
+  res.clearCookie(REFRESH_TOKEN_COOKIE_NAME, REFRESH_TOKEN_COOKIE_OPTIONS);
 };

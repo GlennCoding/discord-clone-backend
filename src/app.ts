@@ -6,6 +6,7 @@ import http from "http";
 import rootRouter from "./routes/root";
 import authRouter from "./routes/auth";
 import refreshRouter from "./routes/refresh";
+import logoutRouter from "./routes/logout";
 import registerRouter from "./routes/register";
 import profileRouter from "./routes/api/profile";
 import meRouter from "./routes/api/me";
@@ -40,6 +41,7 @@ app.use("/", rootRouter);
 app.use("/register", registerRouter);
 app.use("/login", authRouter);
 app.use("/refresh", refreshRouter);
+app.use("/logout", logoutRouter);
 
 app.use("/me", verifyJWT, meRouter);
 app.use("/chat", verifyJWT, chatRouter);

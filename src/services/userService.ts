@@ -48,3 +48,13 @@ export const findUserWithUserId = (
 ): Promise<IUser | null | undefined> => {
   return User.findById(userId).exec();
 };
+
+export const removeUserRefreshToken = async (
+  user: IUser,
+  refreshToken: string
+): Promise<void> => {
+  user.refreshTokens = (user.refreshTokens ?? []).filter(
+    (token) => token !== refreshToken
+  );
+  await user.save();
+};
