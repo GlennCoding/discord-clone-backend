@@ -1,5 +1,6 @@
 import { CookieOptions, Response } from "express";
 import { isProdEnv } from "../utils/helper";
+import { fa } from "zod/v4/locales";
 
 export const ACCESS_TOKEN_COOKIE_NAME = "access_token";
 export const REFRESH_TOKEN_COOKIE_NAME = "refresh_token";
@@ -11,7 +12,7 @@ const baseCookieOptions: CookieOptions = {
   domain: isProdEnv ? ".discordclone.de" : undefined,
   httpOnly: true,
   secure: isProdEnv,
-  sameSite: isProdEnv ? "lax" : "none",
+  sameSite: isProdEnv ? "lax" : false,
   path: "/",
 };
 
