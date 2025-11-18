@@ -119,3 +119,27 @@ export interface UpdatedServerDTO {
   description?: string;
   iconUrl?: string;
 }
+
+export interface ChannelMessageDTO {
+  id: string;
+  text: string;
+  channelId: string;
+  sender: {
+    id: string;
+    username: string;
+    avatarUrl?: string;
+  };
+  createdAt: string;
+  updatedAt?: string;
+  attachments?: AttachmentDTO[];
+}
+
+export interface ChannelSubscribeDTO {
+  channel: Omit<ChannelDTO, "order">;
+  messages: ChannelMessageDTO[];
+}
+
+export interface SendChannelMessageInput {
+  channelId: string;
+  text: string;
+}
