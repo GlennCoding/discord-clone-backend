@@ -1,30 +1,37 @@
 import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
-import { issueAuthToken } from "../services/authService";
-import { findUserWithRefreshToken } from "../services/userService";
-import { env } from "../utils/env";
-import { RefreshtokenNotFoundError } from "../utils/errors";
+import { issueAuthToken, issueRefreshToken } from "../services/authService";
 import {
+  findUserWithRefreshToken,
+  saveUserRefreshToken,
+} from "../services/userService";
+import { env } from "../utils/env";
+import { CustomError, RefreshtokenNotFoundError } from "../utils/errors";
+import {
+  clearAccessTokenCookie,
+  clearRefreshTokenCookie,
   REFRESH_TOKEN_COOKIE_NAME,
   setAccessTokenCookie,
+  setRefreshTokenCookie,
 } from "../config/tokenCookies";
 
 export const handleRefreshToken = async (req: Request, res: Response) => {
   const refreshToken = req.cookies?.[REFRESH_TOKEN_COOKIE_NAME];
 
-  if (!refreshToken) {
-    res.status(401).json({ message: "Refresh token required" });
-    return;
-  }
+  if (!refreshToken) throw new RefreshtokenNotFoundError();
 
   const user = await findUserWithRefreshToken(refreshToken);
 
-  if (!user) throw new RefreshtokenNotFoundError();
+  if (!user) throw new CustomError(404, "Owner of this refreshtoken not found");
 
-  const onSuccessfulVerify = () => {
+  const onSuccessfulVerify = async () => {
     const newAccessToken = issueAuthToken(user);
+    const newRefreshToken = issueRefreshToken(user);
+
+    await saveUserRefreshToken(user, refreshToken);
 
     setAccessTokenCookie(res, newAccessToken);
+    setRefreshTokenCookie(res, newRefreshToken);
 
     res.status(200).json({ message: "Token refreshed" });
   };
@@ -33,7 +40,11 @@ export const handleRefreshToken = async (req: Request, res: Response) => {
     refreshToken,
     env.REFRESH_TOKEN_SECRET as string,
     (err: jwt.VerifyErrors | null, decoded: string | jwt.JwtPayload | undefined) => {
-      if (err || decoded === undefined) return res.sendStatus(403);
+      if (err || decoded === undefined) {
+        clearAccessTokenCookie(res);
+        clearRefreshTokenCookie(res);
+        return res.sendStatus(403);
+      }
       onSuccessfulVerify();
     }
   );
