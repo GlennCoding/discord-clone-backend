@@ -1,5 +1,5 @@
 import { ExtendedError, Socket } from "socket.io";
-import jwt, { JwtPayload, TokenExpiredError, VerifyErrors } from "jsonwebtoken";
+import jwt, { JwtPayload, VerifyErrors } from "jsonwebtoken";
 import { env } from "../utils/env";
 import { ACCESS_TOKEN_COOKIE_NAME } from "../config/tokenCookies";
 
@@ -30,7 +30,7 @@ const verifySocketJWT = (socket: Socket, next: (err?: ExtendedError) => void) =>
     token,
     env.ACCESS_TOKEN_SECRET as string,
     (err: VerifyErrors | null, decoded: string | JwtPayload | undefined) => {
-      if (err instanceof TokenExpiredError)
+      if (err && err instanceof jwt.TokenExpiredError)
         return next(new Error("EXPIRED_TOKEN"));
 
       if (err || decoded === undefined) return next(new Error("INVALID_TOKEN"));
