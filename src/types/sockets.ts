@@ -30,3 +30,28 @@ export type EventControllerWithoutAck<E extends keyof ClientToServerEvents> = (
   socket: TypedSocket,
   ...args: EventParamsWithoutAck<ClientToServerEvents[E]>
 ) => Promise<void> | void;
+
+export class EVENT_ERROR {
+  constructor({ error, message }: { error: ERROR_STATUS; message: string }) {
+    this.error = error;
+    this.message = message;
+  }
+}
+
+export enum ERROR_STATUS {
+  UNAUTHORIZED = "Unauthorized",
+  BAD_REQUEST = "Bad request",
+  INTERNAL_ERROR = "Internal error",
+}
+
+export interface EVENT_ERROR {
+  error: ERROR_STATUS;
+  message: string;
+}
+
+export interface EVENT_SUCCESS<T> {
+  status: "OK";
+  data: T;
+}
+
+export type Ack<T> = (res: EVENT_SUCCESS<T> | EVENT_ERROR) => void;

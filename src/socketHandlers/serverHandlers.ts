@@ -2,7 +2,7 @@ import Channel from "../models/Channel";
 import Member from "../models/Member";
 import Server from "../models/Server";
 import { ServerDTO } from "../types/dto";
-import { ERROR_STATUS, EVENT_ERROR } from "../types/events";
+import { ERROR_STATUS, EVENT_ERROR } from "../types/sockets";
 import {
   EventControllerWithAck,
   EventControllerWithoutAck,
@@ -50,11 +50,7 @@ const handleAckError = (
     mapErrorToAck(ack, status, error.message);
   } else {
     console.error("server:subscribe failed", error);
-    mapErrorToAck(
-      ack,
-      ERROR_STATUS.INTERNAL_ERROR,
-      "Unable to subscribe to server"
-    );
+    mapErrorToAck(ack, ERROR_STATUS.INTERNAL_ERROR, "Unable to subscribe to server");
   }
 };
 
@@ -97,13 +93,13 @@ const buildServerPayload = async (
   return { serverDTO, serverDbId: server.id };
 };
 
-export const handleServerSubscribe: EventControllerWithAck<"server:subscribe"> = async (
-  socket,
-  serverId,
-  ack
-) => {
+export const handleServerSubscribe: EventControllerWithAck<
+  "server:subscribe"
+> = async (socket, serverId, ack) => {
   try {
-    const sanitizedServerId = ensureParam("serverId", serverId, { isObjectId: true });
+    const sanitizedServerId = ensureParam("serverId", serverId, {
+      isObjectId: true,
+    });
     const userId = socket.data.userId as string;
     if (!userId) throw new CustomError(401, "Missing user context");
 
@@ -124,12 +120,13 @@ export const handleServerSubscribe: EventControllerWithAck<"server:subscribe"> =
   }
 };
 
-export const handleServerUnsubscribe: EventControllerWithoutAck<"server:unsubscribe"> = (
-  socket,
-  serverId
-) => {
+export const handleServerUnsubscribe: EventControllerWithoutAck<
+  "server:unsubscribe"
+> = (socket, serverId) => {
   try {
-    const sanitizedServerId = ensureParam("serverId", serverId, { isObjectId: true });
+    const sanitizedServerId = ensureParam("serverId", serverId, {
+      isObjectId: true,
+    });
     socket.leave(serverRoom(sanitizedServerId));
     getSubscribedServers(socket as SocketWithServerData).delete(sanitizedServerId);
   } catch (error) {

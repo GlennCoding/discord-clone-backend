@@ -1,7 +1,7 @@
 import Message from "../models/ChatMessage";
 import Chat from "../models/Chat";
 import { IUser } from "../models/User";
-import { ERROR_STATUS, EVENT_ERROR } from "../types/events";
+import { ERROR_STATUS, EVENT_ERROR } from "../types/sockets";
 import { EventControllerWithAck, EventControllerWithoutAck } from "../types/sockets";
 import { toMessageDTO } from "../utils/dtos/messageDTO";
 

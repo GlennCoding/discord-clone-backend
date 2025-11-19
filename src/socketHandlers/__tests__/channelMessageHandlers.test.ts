@@ -5,7 +5,7 @@ import ChannelMessage from "../../models/ChannelMessage";
 import Member from "../../models/Member";
 import { issueAuthToken } from "../../services/authService";
 import { generateUniqueShortId } from "../../services/serverService";
-import { ERROR_STATUS, EVENT_ERROR } from "../../types/events";
+import { ERROR_STATUS, EVENT_ERROR } from "../../types/sockets";
 import { TypedClientSocket } from "../../types/sockets";
 import { ChannelMessageDTO } from "../../types/dto";
 import {
@@ -163,7 +163,8 @@ describe("channel message socket handlers", () => {
       "channelMessages:unsubscribe",
       channel.id
     );
-    if (unsubscribeAck instanceof EVENT_ERROR) throw new Error(unsubscribeAck.message);
+    if (unsubscribeAck instanceof EVENT_ERROR)
+      throw new Error(unsubscribeAck.message);
 
     const silentPromise = new Promise<void>((resolve, reject) => {
       const timer = setTimeout(resolve, 200);

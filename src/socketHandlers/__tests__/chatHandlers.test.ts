@@ -1,7 +1,7 @@
 import request from "supertest";
 import { app } from "../../app";
 import User, { IUser } from "../../models/User";
-import { ERROR_STATUS, EVENT_ERROR } from "../../types/events";
+import { ERROR_STATUS, EVENT_ERROR } from "../../types/sockets";
 import Message from "../../models/ChatMessage";
 import { issueAuthToken } from "../../services/authService";
 import { TypedClientSocket } from "../../types/sockets";

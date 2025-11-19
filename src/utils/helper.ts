@@ -17,7 +17,7 @@ export const ensureValidObjectId = (value: string, field = "id") => {
 };
 
 export const ensureUser = async (userId: string | undefined) => {
-  if (!userId) throw Error("userId missing");
+  if (!userId) throw new CustomError(500, "userId missing");
   const user = await findUserWithUserId(userId);
   if (!user) throw new UserNotFoundError();
   return user;
