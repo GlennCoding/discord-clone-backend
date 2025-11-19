@@ -6,12 +6,9 @@ import {
   fetchRecentChannelMessages,
 } from "../services/channelMessageService";
 import { channelMessagesRoom } from "../utils/socketRooms";
-import { ERROR_STATUS, EVENT_ERROR } from "../types/events";
+import { ERROR_STATUS, EVENT_ERROR } from "../types/sockets";
 import { ensureParam } from "../utils/helper";
-import {
-  EventControllerWithAck,
-  TypedSocket,
-} from "../types/sockets";
+import { EventControllerWithAck, TypedSocket } from "../types/sockets";
 
 type ChannelAck =
   | Parameters<EventControllerWithAck<"channelMessages:subscribe">>[2]
@@ -69,7 +66,9 @@ export const handleChannelMessagesUnsubscribe: EventControllerWithAck<
 > = async (socket, channelId, ack) => {
   try {
     ensureAuthenticatedSocket(socket);
-    const sanitizedChannelId = ensureParam("channelId", channelId, { isObjectId: true });
+    const sanitizedChannelId = ensureParam("channelId", channelId, {
+      isObjectId: true,
+    });
     socket.leave(channelMessagesRoom(sanitizedChannelId));
     ack({
       status: "OK",
@@ -95,7 +94,9 @@ export const handleIncomingChannelMessage: EventControllerWithAck<
     const channelId = channel.id;
     const message = await createChannelMessage(channelId, member, text);
 
-    socket.nsp.to(channelMessagesRoom(channelId)).emit("channelMessage:new", message);
+    socket.nsp
+      .to(channelMessagesRoom(channelId))
+      .emit("channelMessage:new", message);
 
     ack({
       status: "OK",

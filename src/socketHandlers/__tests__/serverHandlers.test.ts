@@ -7,7 +7,7 @@ import Channel from "../../models/Channel";
 import { issueAuthToken } from "../../services/authService";
 import { buildAccessTokenCookie } from "../../__tests__/helpers/cookies";
 import { generateUniqueShortId } from "../../services/serverService";
-import { ERROR_STATUS, EVENT_ERROR } from "../../types/events";
+import { ERROR_STATUS, EVENT_ERROR } from "../../types/sockets";
 import { TypedClientSocket } from "../../types/sockets";
 import {
   acquireSocketServer,
