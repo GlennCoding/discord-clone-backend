@@ -31,6 +31,11 @@ export const saveUserRefreshToken = async (
   await user.save();
 };
 
+export const removeAllUserRefreshTokens = async (user: IUser): Promise<void> => {
+  user.refreshTokens = [];
+  await user.save();
+};
+
 export const findUserWithRefreshToken = (
   refreshToken: string
 ): Promise<IUser | null | undefined> => {

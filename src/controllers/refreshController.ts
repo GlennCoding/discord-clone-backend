@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import { issueAuthToken, issueRefreshToken } from "../services/authService";
 import {
   findUserWithRefreshToken,
+  removeAllUserRefreshTokens,
   saveUserRefreshToken,
 } from "../services/userService";
 import { env } from "../utils/env";
@@ -39,10 +40,14 @@ export const handleRefreshToken = async (req: Request, res: Response) => {
   jwt.verify(
     refreshToken,
     env.REFRESH_TOKEN_SECRET as string,
-    (err: jwt.VerifyErrors | null, decoded: string | jwt.JwtPayload | undefined) => {
+    async (
+      err: jwt.VerifyErrors | null,
+      decoded: string | jwt.JwtPayload | undefined
+    ) => {
       if (err || decoded === undefined) {
         clearAccessTokenCookie(res);
         clearRefreshTokenCookie(res);
+        await removeAllUserRefreshTokens(user);
         return res.sendStatus(403);
       }
       onSuccessfulVerify();
