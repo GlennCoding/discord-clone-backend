@@ -1,13 +1,24 @@
-<div align="center"><img width="540" height="360" alt="20250918_1327_Futuristic Logo Design_simple_compose_01k5e95ajee9jrc902b0b7pnww" src="./assets/header-logo.png" /></div>
+<div align="center"><img width="540" height="360" alt="Logo" src="./assets/header-logo.png" /></div>
 
 # Discord Clone Backend
 
 A discord like app with servers, channels, role-management and DMs. See live version on https://discordclone.de
 
-The frontend repository of this project can be found here.
+The frontend repository of this project can be found [here](https://github.com/GlennCoding/discord-clone-frontend).
 
 ## Features
 
+<div align="center">
+
+<span padding="1">
+<img width="540" height="360" alt="Screenshot 1" src="./assets/screenshot-1.png" />
+</span>
+<span padding="1">
+<img width="540" height="360" alt="Screenshot 2" src="./assets/screenshot-2.png" />
+</span>
+</div>
+
+</br>
 Users can:
 
 - Register and log-into accounts
