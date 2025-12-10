@@ -1,8 +1,8 @@
 import { Storage, StorageOptions } from "@google-cloud/storage";
 import { env } from "../utils/env";
-import { isProdEnv } from "../utils/helper";
+import { isProdOrProdLocalEnv } from "../utils/helper";
 
-const credentials: StorageOptions = isProdEnv
+const credentials: StorageOptions = isProdOrProdLocalEnv
   ? { keyFilename: env.GOOGLE_APPLICATION_CREDENTIALS }
   : {
       apiEndpoint: "http://localhost:4443",
@@ -16,7 +16,7 @@ const bucket = storage.bucket(env.GCS_BUCKET_NAME);
 const ensureBucket = async (bucketName: string) => {
   const [exists] = await bucket.exists();
   if (!exists) {
-    if (isProdEnv) {
+    if (isProdOrProdLocalEnv) {
       throw Error(`${bucketName} bucket doesn't exist`);
     } else {
       await storage.createBucket(bucketName);
