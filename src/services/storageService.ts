@@ -1,6 +1,6 @@
 import { bucket } from "../config/storage";
 import { env } from "../utils/env";
-import { isProdEnv } from "../utils/helper";
+import { isProdOrProdLocalEnv } from "../utils/helper";
 
 export const getLocalUrl = (bucketName: string, blobName: string): string => {
   const encodedBlobName = encodeURIComponent(blobName);
@@ -36,7 +36,7 @@ export const uploadFileToBucket = async (
     blobStream.on("finish", async () => {
       clearTimeout(timeout);
       let publicUrl;
-      if (isProdEnv) {
+      if (isProdOrProdLocalEnv) {
         publicUrl = await blob.publicUrl();
       } else {
         publicUrl = getLocalUrl(bucket.name, blob.name);
