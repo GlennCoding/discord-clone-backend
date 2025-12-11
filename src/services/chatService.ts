@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import Chat, { IChat } from "../models/Chat";
-import User, { IUser } from "../models/User";
+import { IUser } from "../models/User";
 import Message from "../models/ChatMessage";
 import { ChatDTO } from "../types/dto";
 
@@ -52,7 +52,20 @@ export const checkIfUserIdPartOfChat = (chat: IChat, userId: string) => {
   return chat.participants.includes(userIdAsObjectId);
 };
 
-export const deleteChat = async (chat: IChat) => {
-  await Message.deleteMany({ chat: chat._id });
-  await chat.deleteOne();
+export const deleteChat = async (chatId: string) => {
+  const session = await mongoose.startSession();
+  try {
+    await session.withTransaction(async () => {
+      // 1. Delete messages belonging to the chat
+      await Message.deleteMany({ chat: chatId }, { session });
+
+      // 2. Delete the chat itself
+      await Chat.findByIdAndDelete(chatId, { session });
+    });
+  } catch (err) {
+    console.error("Transaction failed:", err);
+    throw err;
+  } finally {
+    await session.endSession();
+  }
 };

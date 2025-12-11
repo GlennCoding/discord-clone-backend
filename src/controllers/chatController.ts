@@ -65,7 +65,7 @@ export const deleteChat = async (req: UserRequest, res: Response) => {
 
   if (!userIsPartOfChat) throw new UserNotPartOfChatError();
 
-  await deleteChatService(chat);
+  await deleteChatService(chat.id);
 
   res.sendStatus(204);
 };
