@@ -1,11 +1,13 @@
-import { IChannel } from "../models/Channel";
-import { IMember } from "../models/Member";
-import { IRole, RolePermission } from "../models/Role";
+import mongoose, { Types } from "mongoose";
+import Channel, { IChannel } from "../models/Channel";
+import Member, { IMember } from "../models/Member";
+import Role, { IRole, RolePermission } from "../models/Role";
 import Server, { IServer } from "../models/Server";
 import { ServerListItemDTO, ChannelDTO, MemberDTO } from "../types/dto";
-import { CustomError } from "../utils/errors";
+import { CustomError, NotFoundError } from "../utils/errors";
 import { ensureParam } from "../utils/helper";
 import { randomShortId } from "../utils/ids";
+import ChannelMessage from "../models/ChannelMessage";
 
 export const ensureShortId = (shortIdParam: string | undefined) => {
   const shortId = ensureParam("shortId", shortIdParam).toUpperCase();
@@ -83,3 +85,29 @@ export const toMemberDTO = ({ roles, user, nickname }: IMember): MemberDTO => ({
   roles: roles.map((r) => r.name),
   avatarUrl: user.avatar?.url,
 });
+
+export const getAllChannelIdsOfServer = async (serverId: string) =>
+  await Channel.find({ server: serverId }).distinct("_id");
+
+export const deleteServerInDB = async (
+  serverId: string,
+  channelIds: Types.ObjectId[]
+) => {
+  const session = await mongoose.startSession();
+  try {
+    await session.withTransaction(async () => {
+      await Promise.all([
+        ChannelMessage.deleteMany({ channel: { $in: channelIds } }),
+        Channel.deleteMany({ server: serverId }),
+        Role.deleteMany({ server: serverId }),
+        Member.deleteMany({ server: serverId }),
+        Server.deleteOne(),
+      ]);
+    });
+  } catch (err) {
+    console.error("Transaction failed:", err);
+    throw err;
+  } finally {
+    await session.endSession();
+  }
+};
