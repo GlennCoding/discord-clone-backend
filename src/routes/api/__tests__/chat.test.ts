@@ -78,7 +78,6 @@ describe("/chat", () => {
       .set("Cookie", [buildAccessTokenCookie(token)]);
 
     expect(getChatsRes.status).toBe(200);
-    console.log(getChatsRes.body);
     expect(getChatsRes.body).toEqual([
       {
         chatId: chat.id!,
@@ -86,6 +85,22 @@ describe("/chat", () => {
         participantAvatarUrl: user2.avatar!.url,
       },
     ] as ChatDTO[]);
+  });
+
+  it("can delete a chat", async () => {
+    const user1Id = await User.findOne({ userName: user1Data.userName });
+    const user2Id = await User.findOne({ userName: user2Data.userName });
+
+    const chat = await Chat.create({
+      participants: [user1Id?._id, user2Id?._id],
+    });
+
+    // Create chat room
+    const deleteChatres = await request(app)
+      .delete(`/chat/${chat.id}`)
+      .set("Cookie", [buildAccessTokenCookie(token)]);
+
+    expect(deleteChatres.status).toBe(204);
   });
 
   it("throws 400 when a participant doesn't exist", async () => {

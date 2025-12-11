@@ -1,15 +1,14 @@
 services:
   mongodb:
-    image: mongo:latest
+    image: mongo:7
     container_name: mongodb
+    restart: unless-stopped
+    command: ["--replSet", "rs0", "--bind_ip_all"]
     ports:
       - "27017:27017"
     volumes:
       - mongo-data:/data/db
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: example
-      MONGO_INITDB_DATABASE: DiscordCloneDB
+      - ./mongo-init:/docker-entrypoint-initdb.d
 
   gcs-emulator:
     image: fsouza/fake-gcs-server:latest
@@ -28,6 +27,7 @@ services:
       - "4443:4443"
     volumes:
       - gcs_data:/data
+
 volumes:
   mongo-data:
   gcs_data:
