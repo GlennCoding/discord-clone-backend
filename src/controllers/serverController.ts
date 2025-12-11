@@ -15,7 +15,7 @@ import {
 import Server, { IServer } from "../models/Server";
 import { ensureParam, ensureUser } from "../utils/helper";
 import Member from "../models/Member";
-import Role, { RolePermission } from "../models/Role";
+import { RolePermission } from "../models/Role";
 import Channel from "../models/Channel";
 import { CustomError, NoPermissionError, NotFoundError } from "../utils/errors";
 import { isDeepStrictEqual } from "util";
@@ -28,6 +28,8 @@ import {
   filterDisallowedRolesOfChannels,
   toChannelDTO,
   toMemberDTO,
+  getAllChannelIdsOfServer,
+  deleteServerInDB,
 } from "../services/serverService";
 import { io } from "../app";
 import { serverRoom } from "../utils/socketRooms";
@@ -128,12 +130,9 @@ export const deleteServer = async (req: UserRequest, res: Response) => {
 
   if (server.owner.id !== user.id) throw new NoPermissionError();
 
-  await Promise.all([
-    Channel.deleteMany({ server: server._id }),
-    Role.deleteMany({ server: server._id }),
-    Member.deleteMany({ server: server._id }),
-    server.deleteOne(),
-  ]);
+  const channelIds = await getAllChannelIdsOfServer(server.id);
+
+  await deleteServerInDB(server.id, channelIds);
 
   res.sendStatus(204);
 
