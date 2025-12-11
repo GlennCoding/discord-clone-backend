@@ -1,28 +1,30 @@
 import { config } from "dotenv-flow";
-import { MongoMemoryServer } from "mongodb-memory-server";
+import { MongoMemoryReplSet } from "mongodb-memory-server";
 import mongoose from "mongoose";
 import { afterAll, beforeAll } from "vitest";
 
 config({ node_env: "test", path: process.cwd(), silent: true });
 
-let mongod: MongoMemoryServer | null = null;
+let mongoReplSet: MongoMemoryReplSet | null = null;
 
 export const setupMongoDB = async () => {
   if (mongoose.connection.readyState === 1) return;
 
-  if (!mongod) {
-    mongod = await MongoMemoryServer.create();
+  if (!mongoReplSet) {
+    mongoReplSet = await MongoMemoryReplSet.create({
+      replSet: { count: 1, storageEngine: "wiredTiger" },
+    });
   }
-  await mongoose.connect(mongod.getUri());
+  await mongoose.connect(mongoReplSet.getUri());
 };
 
 export const teardownMongoDB = async () => {
   if (mongoose.connection.readyState !== 0) {
     await mongoose.disconnect();
   }
-  if (mongod) {
-    await mongod.stop();
-    mongod = null;
+  if (mongoReplSet) {
+    await mongoReplSet.stop();
+    mongoReplSet = null;
   }
 };
 
