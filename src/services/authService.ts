@@ -2,7 +2,7 @@ import { IUser } from "../models/User";
 import jwt from "jsonwebtoken";
 import { env } from "../utils/env";
 
-export const issueAuthToken = (user: IUser) => {
+export const issueAccessToken = (user: IUser) => {
   return jwt.sign(
     {
       UserInfo: {
@@ -11,13 +11,27 @@ export const issueAuthToken = (user: IUser) => {
     },
     env.ACCESS_TOKEN_SECRET as string,
     {
-      expiresIn: "20min",
+      expiresIn: "15min",
+    }
+  );
+};
+
+export const issueSsrAccessToken = (user: IUser) => {
+  return jwt.sign(
+    {
+      UserInfo: {
+        userId: user._id,
+      },
+    },
+    env.SSR_ACCESS_TOKEN_SECRET as string,
+    {
+      expiresIn: "24hrs",
     }
   );
 };
 
 export const issueRefreshToken = (user: IUser) => {
   return jwt.sign({ userId: user._id }, env.REFRESH_TOKEN_SECRET as string, {
-    expiresIn: "1day",
+    expiresIn: "7days",
   });
 };
