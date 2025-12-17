@@ -9,7 +9,7 @@ Flows:
 - /register 
   - [ ] Issue SSR token
 - /login 
-  - [ ] Issue SSR token 
+  - [x] Issue SSR token 
 - /refresh
   - [ ] Issue SSR token if requested
 - /logout
@@ -25,3 +25,15 @@ SSR token:
 
 - Issue SSR token
   - Where? -> login & register
+    - Add cookie name & cookie options
+    - Add setSsrAccessTokenCookie function
+    - Add clearSsrAccessTokenCookie function
+    - Add issueSsrAccessToken function
+  - authController
+    - Issue SSR token
+  - registerController
+    - Issue SSR token
+  - refreshController?
+    - Issue SSR token if requested
+  - logout
+    - Remove SSR tokens
