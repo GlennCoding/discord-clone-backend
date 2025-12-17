@@ -7,6 +7,7 @@ const envSchema = z.object({
   DATABASE_URI: z.string(),
   DB_NAME: z.string(),
   ACCESS_TOKEN_SECRET: z.string(),
+  SSR_ACCESS_TOKEN_SECRET: z.string(),
   REFRESH_TOKEN_SECRET: z.string(),
   GCS_PUBLIC_URL: z.string(),
   GCS_BUCKET_NAME: z.string(),

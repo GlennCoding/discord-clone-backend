@@ -5,7 +5,7 @@
  */
 import request from "supertest";
 import User, { IUser } from "../../../models/User";
-import { issueAuthToken } from "../../../services/authService";
+import { issueAccessToken } from "../../../services/authService";
 import { app } from "../../../app";
 import { MeDTO } from "../../../types/dto";
 import { buildAccessTokenCookie } from "../../../__tests__/helpers/cookies";
@@ -30,7 +30,7 @@ beforeAll(async () => {
   user = await User.create(userData);
   await user.save();
 
-  token = issueAuthToken(user);
+  token = issueAccessToken(user);
 });
 
 describe("/me", () => {

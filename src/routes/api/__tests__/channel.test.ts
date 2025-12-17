@@ -5,7 +5,7 @@ import User, { IUser } from "../../../models/User";
 import Server, { IServer } from "../../../models/Server";
 import Member from "../../../models/Member";
 import Channel from "../../../models/Channel";
-import { issueAuthToken } from "../../../services/authService";
+import { issueAccessToken } from "../../../services/authService";
 import { buildAccessTokenCookie } from "../../../__tests__/helpers/cookies";
 import {
   expectBadRequest,
@@ -36,7 +36,9 @@ const createServer = async () => {
   });
 };
 
-const makeChannel = async (overrides: Partial<{ name: string; order: number }> = {}) =>
+const makeChannel = async (
+  overrides: Partial<{ name: string; order: number }> = {}
+) =>
   await Channel.create({
     server,
     name: "General",
@@ -49,9 +51,9 @@ beforeAll(async () => {
   moderator = await User.create(moderatorData);
   outsider = await User.create(outsiderData);
 
-  ownerToken = issueAuthToken(owner);
-  moderatorToken = issueAuthToken(moderator);
-  outsiderToken = issueAuthToken(outsider);
+  ownerToken = issueAccessToken(owner);
+  moderatorToken = issueAccessToken(moderator);
+  outsiderToken = issueAccessToken(outsider);
 });
 
 beforeEach(async () => {
@@ -130,7 +132,9 @@ describe("/channel", () => {
 
 describe("/channel errors", () => {
   it("requires authentication to create a channel", async () => {
-    const res = await request(app).post(`/channel/${server.id}`).send({ name: "Guests" });
+    const res = await request(app)
+      .post(`/channel/${server.id}`)
+      .send({ name: "Guests" });
 
     expectUnauthorized(res);
   });

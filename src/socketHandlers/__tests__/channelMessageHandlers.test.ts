@@ -3,7 +3,7 @@ import ServerModel, { IServer } from "../../models/Server";
 import Channel from "../../models/Channel";
 import ChannelMessage from "../../models/ChannelMessage";
 import Member from "../../models/Member";
-import { issueAuthToken } from "../../services/authService";
+import { issueAccessToken } from "../../services/authService";
 import { generateUniqueShortId } from "../../services/serverService";
 import { ERROR_STATUS, EVENT_ERROR } from "../../types/sockets";
 import { TypedClientSocket } from "../../types/sockets";
@@ -19,7 +19,7 @@ const randomName = () => `user-${Math.random().toString(36).slice(-5)}`;
 
 const createUserAndToken = async (userName = randomName()) => {
   const user = await User.create({ userName, password: "password" });
-  const token = issueAuthToken(user);
+  const token = issueAccessToken(user);
   return { user, token };
 };
 

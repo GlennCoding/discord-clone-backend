@@ -1,7 +1,7 @@
 import request from "supertest";
 import { Types } from "mongoose";
 import User, { IUser } from "../../../models/User";
-import { issueAuthToken } from "../../../services/authService";
+import { issueAccessToken } from "../../../services/authService";
 import { app } from "../../../app";
 import {
   CreateServerInput,
@@ -70,8 +70,8 @@ beforeAll(async () => {
   user1 = await User.create(user1Data);
   user2 = await User.create(user2Data);
 
-  ownerToken = issueAuthToken(user1);
-  otherUserToken = issueAuthToken(user2);
+  ownerToken = issueAccessToken(user1);
+  otherUserToken = issueAccessToken(user2);
 });
 
 beforeEach(async () => {
