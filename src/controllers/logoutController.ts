@@ -3,6 +3,7 @@ import {
   REFRESH_TOKEN_COOKIE_NAME,
   clearAccessTokenCookie,
   clearRefreshTokenCookie,
+  clearSsrAccessTokenCookie,
 } from "../config/tokenCookies";
 import {
   findUserWithRefreshToken,
@@ -13,6 +14,7 @@ export const handleLogout = async (req: Request, res: Response) => {
   const refreshToken = req.cookies?.[REFRESH_TOKEN_COOKIE_NAME];
 
   clearAccessTokenCookie(res);
+  clearSsrAccessTokenCookie(res);
   clearRefreshTokenCookie(res);
 
   if (!refreshToken) {
