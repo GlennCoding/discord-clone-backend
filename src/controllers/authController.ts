@@ -1,10 +1,6 @@
 import { Request, Response } from "express";
 import { saveUserRefreshToken, verifyUserPassword } from "../services/userService";
-import {
-  issueAccessToken,
-  issueRefreshToken,
-  issueSsrAccessToken,
-} from "../services/authService";
+import { issueAuthTokens } from "../services/authService";
 import { InputMissingError, RequestBodyIsMissingError } from "../utils/errors";
 import { LoginDTO } from "../types/dto";
 import {
@@ -24,9 +20,7 @@ export const handleLogin = async (req: Request, res: Response<LoginDTO>) => {
 
   const user = await verifyUserPassword(userName, password);
 
-  const accessToken = issueAccessToken(user);
-  const ssrAccessToken = issueSsrAccessToken(user);
-  const refreshToken = issueRefreshToken(user);
+  const { accessToken, ssrAccessToken, refreshToken } = await issueAuthTokens(user);
 
   await saveUserRefreshToken(user, refreshToken);
 

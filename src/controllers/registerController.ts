@@ -4,9 +4,18 @@ import {
   findUserWithUserName,
   saveUserRefreshToken,
 } from "../services/userService";
-import { issueAccessToken, issueRefreshToken } from "../services/authService";
+import {
+  issueAccessToken,
+  issueAuthTokens,
+  issueRefreshToken,
+  issueSsrAccessToken,
+} from "../services/authService";
 import { CustomError, UsernameIsTakenError } from "../utils/errors";
-import { setAccessTokenCookie, setRefreshTokenCookie } from "../config/tokenCookies";
+import {
+  setAccessTokenCookie,
+  setRefreshTokenCookie,
+  setSsrAccessTokenCookie,
+} from "../config/tokenCookies";
 import { RegisterDTO } from "../types/dto";
 
 export const handleRegister = async (req: Request, res: Response<RegisterDTO>) => {
@@ -22,13 +31,12 @@ export const handleRegister = async (req: Request, res: Response<RegisterDTO>) =
 
   const user = await createUser(userName, password);
 
-  const accessToken = issueAccessToken(user);
-
-  const refreshToken = issueRefreshToken(user);
+  const { accessToken, ssrAccessToken, refreshToken } = await issueAuthTokens(user);
 
   await saveUserRefreshToken(user, refreshToken);
 
   setAccessTokenCookie(res, accessToken);
+  setSsrAccessTokenCookie(res, ssrAccessToken);
   setRefreshTokenCookie(res, refreshToken);
 
   return res.status(201).json({

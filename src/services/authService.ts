@@ -2,6 +2,14 @@ import { IUser } from "../models/User";
 import jwt from "jsonwebtoken";
 import { env } from "../utils/env";
 
+export const issueAuthTokens = async (user: IUser) => {
+  const accessToken = issueAccessToken(user);
+  const ssrAccessToken = issueSsrAccessToken(user);
+  const refreshToken = issueRefreshToken(user);
+
+  return { accessToken, ssrAccessToken, refreshToken };
+};
+
 export const issueAccessToken = (user: IUser) => {
   return jwt.sign(
     {
