@@ -4,7 +4,7 @@ import Chat from "../../../models/Chat";
 import User, { IUser } from "../../../models/User";
 import { ChatDTO } from "../../../types/dto";
 import { buildAccessTokenCookie } from "../../../__tests__/helpers/cookies";
-import { issueAuthToken } from "../../../services/authService";
+import { issueAccessToken } from "../../../services/authService";
 
 let token: string;
 const user1Data = { userName: "John", password: "Cena" };
@@ -19,7 +19,7 @@ let user2: IUser;
 beforeAll(async () => {
   user1 = await User.create(user1Data);
   await user1.save();
-  token = issueAuthToken(user1);
+  token = issueAccessToken(user1);
 
   // Create user 2
   user2 = await User.create(user2Data);

@@ -4,7 +4,7 @@ import {
   findUserWithUserName,
   saveUserRefreshToken,
 } from "../services/userService";
-import { issueAuthToken, issueRefreshToken } from "../services/authService";
+import { issueAccessToken, issueRefreshToken } from "../services/authService";
 import { CustomError, UsernameIsTakenError } from "../utils/errors";
 import { setAccessTokenCookie, setRefreshTokenCookie } from "../config/tokenCookies";
 import { RegisterDTO } from "../types/dto";
@@ -22,7 +22,7 @@ export const handleRegister = async (req: Request, res: Response<RegisterDTO>) =
 
   const user = await createUser(userName, password);
 
-  const accessToken = issueAuthToken(user);
+  const accessToken = issueAccessToken(user);
 
   const refreshToken = issueRefreshToken(user);
 

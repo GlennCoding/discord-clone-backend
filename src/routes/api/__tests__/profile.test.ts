@@ -2,7 +2,7 @@ import request from "supertest";
 import User, { IUser } from "../../../models/User";
 import { app } from "../../../app";
 import path from "path";
-import { issueAuthToken } from "../../../services/authService";
+import { issueAccessToken } from "../../../services/authService";
 import { bucket } from "../../../config/storage";
 import { buildAccessTokenCookie } from "../../../__tests__/helpers/cookies";
 
@@ -55,7 +55,7 @@ describe("/profile", () => {
     user.status = status;
     await user.save();
 
-    const token = issueAuthToken(user);
+    const token = issueAccessToken(user);
 
     const res = await request(app)
       .get("/profile")
@@ -68,7 +68,7 @@ describe("/profile", () => {
 
   it("can update user status", async () => {
     if (!user) throw new Error("User not defined");
-    const token = issueAuthToken(user);
+    const token = issueAccessToken(user);
 
     const newStatus = "new status";
 
@@ -84,7 +84,7 @@ describe("/profile", () => {
   it("can set a user status to undefined", async () => {
     if (!user) throw new Error("User not defined");
     user.status = "status";
-    const token = issueAuthToken(user);
+    const token = issueAccessToken(user);
 
     const newStatus = "";
 
@@ -99,7 +99,7 @@ describe("/profile", () => {
 
   it("should throw an error when user status is too long", async () => {
     if (!user) throw new Error("User not defined");
-    const token = issueAuthToken(user);
+    const token = issueAccessToken(user);
 
     const longStatus = "a".repeat(201);
 
@@ -113,7 +113,7 @@ describe("/profile", () => {
 
   it("uploads file", async () => {
     if (!user) throw new Error("User not defined");
-    const token = issueAuthToken(user);
+    const token = issueAccessToken(user);
 
     await request(app)
       .put("/profile/avatar")
@@ -125,7 +125,7 @@ describe("/profile", () => {
 
   it("can upload a user profile image", async () => {
     if (!user) throw new Error("User not defined");
-    const token = issueAuthToken(user);
+    const token = issueAccessToken(user);
 
     const res = await request(app)
       .put("/profile/avatar")
@@ -140,7 +140,7 @@ describe("/profile", () => {
   });
 
   it("should throw an error when image size is too large", async () => {
-    const token = issueAuthToken(user);
+    const token = issueAccessToken(user);
 
     const res = await request(app)
       .put("/profile/avatar")
@@ -151,7 +151,7 @@ describe("/profile", () => {
   });
 
   it("rejects non image files", async () => {
-    const token = issueAuthToken(user);
+    const token = issueAccessToken(user);
 
     const res = await request(app)
       .put("/profile/avatar")
@@ -164,7 +164,7 @@ describe("/profile", () => {
 
   it("can delete a user profile image", async () => {
     if (!user) throw new Error("User not defined");
-    const token = issueAuthToken(user);
+    const token = issueAccessToken(user);
 
     user.avatar = { filePath: "path", url: "url" };
     await user.save();

@@ -4,7 +4,7 @@ import User, { IUser } from "../../models/User";
 import ServerModel, { IServer } from "../../models/Server";
 import Member from "../../models/Member";
 import Channel from "../../models/Channel";
-import { issueAuthToken } from "../../services/authService";
+import { issueAccessToken } from "../../services/authService";
 import { buildAccessTokenCookie } from "../../__tests__/helpers/cookies";
 import { generateUniqueShortId } from "../../services/serverService";
 import { ERROR_STATUS, EVENT_ERROR } from "../../types/sockets";
@@ -20,7 +20,7 @@ const randomServerName = () => `Server-${Math.random().toString(36).slice(-5)}`;
 
 const createOwnerAndServer = async () => {
   const owner = await User.create({ userName: randomServerName(), password: "pwd" });
-  const ownerToken = issueAuthToken(owner);
+  const ownerToken = issueAccessToken(owner);
   const shortId = await generateUniqueShortId();
   const server = await ServerModel.create({
     name: randomServerName(),
@@ -80,7 +80,7 @@ describe("server & channel socket handlers", () => {
   it("rejects server subscriptions for non members", async () => {
     const { server } = await createOwnerAndServer();
     const outsider = await User.create({ userName: "outsider", password: "pwd" });
-    const outsiderToken = issueAuthToken(outsider);
+    const outsiderToken = issueAccessToken(outsider);
 
     clientSocket = await connectSocketWithToken(outsiderToken);
 

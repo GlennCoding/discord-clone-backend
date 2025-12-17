@@ -3,7 +3,7 @@ import { app } from "../../app";
 import User, { IUser } from "../../models/User";
 import { ERROR_STATUS, EVENT_ERROR } from "../../types/sockets";
 import Message from "../../models/ChatMessage";
-import { issueAuthToken } from "../../services/authService";
+import { issueAccessToken } from "../../services/authService";
 import { TypedClientSocket } from "../../types/sockets";
 import { MessageDTO } from "../../types/dto";
 import { buildAccessTokenCookie } from "../../__tests__/helpers/cookies";
@@ -24,7 +24,7 @@ const createUserAndToken = async ({
 }: UserData): Promise<[IUser, string]> => {
   const user = new User({ userName, password });
   await user.save();
-  const token = issueAuthToken(user);
+  const token = issueAccessToken(user);
   return [user, token];
 };
 

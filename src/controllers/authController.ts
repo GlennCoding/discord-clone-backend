@@ -1,9 +1,17 @@
 import { Request, Response } from "express";
 import { saveUserRefreshToken, verifyUserPassword } from "../services/userService";
-import { issueAuthToken, issueRefreshToken } from "../services/authService";
+import {
+  issueAccessToken,
+  issueRefreshToken,
+  issueSsrAccessToken,
+} from "../services/authService";
 import { InputMissingError, RequestBodyIsMissingError } from "../utils/errors";
 import { LoginDTO } from "../types/dto";
-import { setAccessTokenCookie, setRefreshTokenCookie } from "../config/tokenCookies";
+import {
+  setAccessTokenCookie,
+  setRefreshTokenCookie,
+  setSsrAccessTokenCookie,
+} from "../config/tokenCookies";
 
 export const handleLogin = async (req: Request, res: Response<LoginDTO>) => {
   if (!req.body) throw new RequestBodyIsMissingError();
@@ -16,13 +24,14 @@ export const handleLogin = async (req: Request, res: Response<LoginDTO>) => {
 
   const user = await verifyUserPassword(userName, password);
 
-  const accessToken = issueAuthToken(user);
-
+  const accessToken = issueAccessToken(user);
+  const ssrAccessToken = issueSsrAccessToken(user);
   const refreshToken = issueRefreshToken(user);
 
   await saveUserRefreshToken(user, refreshToken);
 
   setAccessTokenCookie(res, accessToken);
+  setSsrAccessTokenCookie(res, ssrAccessToken);
   setRefreshTokenCookie(res, refreshToken);
 
   return res.status(200).json({

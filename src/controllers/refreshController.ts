@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
-import { issueAuthToken, issueRefreshToken } from "../services/authService";
+import { issueAccessToken, issueRefreshToken } from "../services/authService";
 import {
   findUserWithRefreshToken,
   removeAllUserRefreshTokens,
@@ -26,7 +26,7 @@ export const handleRefreshToken = async (req: Request, res: Response) => {
   if (!user) throw new CustomError(404, "Owner of this refreshtoken not found");
 
   const onSuccessfulVerify = async () => {
-    const newAccessToken = issueAuthToken(user);
+    const newAccessToken = issueAccessToken(user);
     const newRefreshToken = issueRefreshToken(user);
 
     await saveUserRefreshToken(user, refreshToken);
