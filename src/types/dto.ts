@@ -5,6 +5,10 @@ export interface LoginDTO {
 
 export type RegisterDTO = LoginDTO;
 
+export interface RefreshInput {
+  issueNewSsrToken?: boolean;
+}
+
 export interface AttachmentDTO {
   downloadUrl: string;
 }

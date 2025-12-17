@@ -1,6 +1,10 @@
 import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
-import { issueAccessToken, issueRefreshToken } from "../services/authService";
+import {
+  issueAccessToken,
+  issueRefreshToken,
+  issueSsrAccessToken,
+} from "../services/authService";
 import {
   findUserWithRefreshToken,
   removeAllUserRefreshTokens,
@@ -14,10 +18,16 @@ import {
   REFRESH_TOKEN_COOKIE_NAME,
   setAccessTokenCookie,
   setRefreshTokenCookie,
+  setSsrAccessTokenCookie,
 } from "../config/tokenCookies";
+import { RefreshInput } from "../types/dto";
 
-export const handleRefreshToken = async (req: Request, res: Response) => {
+export const handleRefreshToken = async (
+  req: Request<RefreshInput>,
+  res: Response
+) => {
   const refreshToken = req.cookies?.[REFRESH_TOKEN_COOKIE_NAME];
+  const { issueNewSsrToken } = req.body;
 
   if (!refreshToken) throw new RefreshtokenNotFoundError();
 
@@ -27,12 +37,16 @@ export const handleRefreshToken = async (req: Request, res: Response) => {
 
   const onSuccessfulVerify = async () => {
     const newAccessToken = issueAccessToken(user);
-    const newRefreshToken = issueRefreshToken(user);
-
-    await saveUserRefreshToken(user, refreshToken);
-
     setAccessTokenCookie(res, newAccessToken);
+
+    const newRefreshToken = issueRefreshToken(user);
+    await saveUserRefreshToken(user, refreshToken);
     setRefreshTokenCookie(res, newRefreshToken);
+
+    if (issueNewSsrToken === true) {
+      const newSsrAccessToken = issueSsrAccessToken(user);
+      setSsrAccessTokenCookie(res, newSsrAccessToken);
+    }
 
     res.status(200).json({ message: "Token refreshed" });
   };
