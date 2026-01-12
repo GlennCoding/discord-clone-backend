@@ -2,7 +2,9 @@
 
 The Discord Clone backend exposes a REST API plus Socket.IO events that allow users to authenticate, manage servers/channels, and exchange chat messages with attachments stored on a GCS-compatible bucket. The following STRIDE analysis captures key assets, abuse scenarios, and current/desired mitigations.
 
-### Trust Boundaries
+### Security Context
+
+#### Trust Boundaries
 
 The system contains several trust boundaries:
 
@@ -14,7 +16,7 @@ The system contains several trust boundaries:
 
 Crossing these boundaries without proper controls introduces security risks.
 
-### Assets Requiring Protection
+#### Assets Requiring Protection
 
 The primary assets requiring protection are:
 
@@ -28,28 +30,40 @@ The primary assets requiring protection are:
 | Stored media | Message attachments and profile images. |
 | System availability | Continuous real-time messaging. |
 
-### Spoofing Identity
+#### Cyber Security Measures Implemented
+
+- Passwords are salted and hashed with bcrypt before storage.
+- JWT access, refresh, and SSR tokens are signed with environment secrets and verified for HTTP routes and Socket.IO connections.
+- Auth tokens are issued in HTTP-only cookies with secure + same-site controls in production and scoped paths for refresh tokens.
+- CORS is restricted to a defined allowlist and credentialed requests are only enabled for approved origins.
+- Role-based access control is enforced for server/channel operations (owner checks, role permissions, channel access checks).
+- Request validation uses zod schemas plus helper guards for required parameters and MongoDB ObjectId formats.
+- File uploads are constrained by size limits and MIME type detection with server-generated, sanitized object keys.
+
+### STRIDE Analysis
+
+#### Spoofing Identity
 
 | Assets / Entry Points | Threats | Current Mitigations | Gaps / Recommendations |
 | --- | --- | --- | --- |
 | Access & refresh tokens, `/login`, `/refresh`, socket handshake (`verifySocketJWT`) | Stolen cookies used from another origin/device; attacker crafts a forged JWT; socket clients skip membership checks to join arbitrary rooms. | HTTP-only cookies, JWT signing with strong secrets, middleware validation for HTTP & sockets. | Enforce rotating refresh tokens with binding to user agent/IP; add short-lived socket session tokens to limit replay; audit socket handlers to re-check membership (e.g., `message:send`). |
 | Invitation short IDs (`/server/:shortId/join`) | Guessing short IDs to join private servers. | Random 6-char alphanumeric short IDs. | Increase entropy or allow owner-controlled expiration; rate-limit join attempts per IP. |
 
-### Tampering
+#### Tampering
 
 | Assets / Entry Points | Threats | Current Mitigations | Gaps / Recommendations |
 | --- | --- | --- | --- |
 | MongoDB documents (Server, Channel, Message, Member) | Authenticated but unauthorized users modify server/channel settings or messages; replayed socket payloads mutate state. | `verifyJWT`, role checks inside controllers, `ensureServerOwner`, `ensureChannelAccess`. | Add optimistic locking or revision tracking for high-value updates; tighten socket handlers to validate payload schemas and authorization before writes. |
 | File uploads (`/profile/avatar`, `/messages/attachment`) | Uploading malicious files or oversized payloads to exhaust storage; tampering with object names to delete other users’ files. | Multer size limits, MIME validation, server-generated object keys, deletion restricted to message sender. | Scan attachments for malware if exposed to clients; sign storage URLs when exposing downloads; log deletion attempts. |
 
-### Repudiation
+#### Repudiation
 
 | Assets / Entry Points | Threats | Current Mitigations | Gaps / Recommendations |
 | --- | --- | --- | --- |
 | API actions (server edits, message posting/deletion) | Users deny creating/deleting servers, channels, or messages; lack of traceability makes incident response difficult. | Minimal logging (console). | Introduce structured audit logs (user id, action, resource, timestamp) persisted centrally; propagate correlation IDs through API and socket flows. |
 | Storage operations (avatar/message attachment deletions) | A user claims a file was removed by someone else. | Not tracked. | Record delete operations (user id, object key) and surface in an admin log. |
 
-### Information Disclosure
+#### Information Disclosure
 
 | Assets / Entry Points | Threats | Current Mitigations | Gaps / Recommendations |
 | --- | --- | --- | --- |
@@ -57,7 +71,7 @@ The primary assets requiring protection are:
 | Stored attachments / avatars on fake GCS | Public bucket URLs accessible without auth could leak private attachments. | Local emulator exposes HTTP endpoints; prod uses signed GCS bucket. | Require signed URLs or proxy downloads through the API; configure bucket ACLs to private and only expose time-limited tokens. |
 | Cookies / tokens | Leakage via non-HTTPS transport or overly permissive `sameSite=false`. | Secure flag + lax same-site set only in production. | Enforce HTTPS locally with self-signed certificate or instruct devs to trust TLS proxies; revisit cookie policy so staging/dev also ship with `sameSite=lax`. |
 
-### Denial of Service
+#### Denial of Service
 
 | Assets / Entry Points | Threats | Current Mitigations | Gaps / Recommendations |
 | --- | --- | --- | --- |
@@ -65,7 +79,7 @@ The primary assets requiring protection are:
 | Socket namespaces | Attackers open many sockets or emit high-frequency events (e.g., `message:send`) to overwhelm the server. | None beyond default Socket.IO backpressure. | Implement authentication throttling and per-namespace rate limits; disconnect abusive clients automatically. |
 | MongoDB / storage | Crafted queries or upload storms exhaust DB connections or disk. | Default driver pool; Docker volumes. | Monitor resource utilization, set quotas, and add auto-scaling alarms; validate query inputs to prevent unbounded scans. |
 
-### Elevation of Privilege
+#### Elevation of Privilege
 
 | Assets / Entry Points | Threats | Current Mitigations | Gaps / Recommendations |
 | --- | --- | --- | --- |
