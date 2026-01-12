@@ -7,15 +7,15 @@ Models
 
 Flows:
 - /register 
-  - [ ] Issue SSR token
+  - [x] Issue SSR token
 - /login 
   - [x] Issue SSR token 
 - /refresh
-  - [ ] Issue SSR token if requested
+  - [x] Issue SSR token if requested
 - /logout
-  - [ ] Remove SSR token from 
+  - [x] Remove SSR token from 
 
-- auth Middleware 
+- [ ] auth Middleware 
   - Behaviour: Have option to add SSR opening
 
 SSR token:
@@ -37,3 +37,10 @@ SSR token:
     - Issue SSR token if requested
   - logout
     - Remove SSR tokens
+
+- verifyJwt Middleware
+  - prop: allowSsr 
+    - if yes -> check for the ssr token, verify it and next()
+    - if no -> check for the access token, verify it and next()
+  - set verifyJWT({isSsr: true}) to all /api/ssr requests
+  - set verifyJWT to all /api requests

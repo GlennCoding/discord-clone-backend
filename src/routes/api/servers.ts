@@ -19,6 +19,7 @@ router.delete("/:id", asyncHandler(deleteServer));
 router.get("/public", asyncHandler(getAllPublicServers));
 router.get("/joined", asyncHandler(getAllJoinedServers));
 router.get("/:shortId", asyncHandler(getServer));
+router.get("/:shortId", asyncHandler(getServer));
 router.post("/:shortId/join", asyncHandler(joinServer));
 
 export default router;
