@@ -1,6 +1,6 @@
-import verifyJWT, { UserRequest } from "../middleware/verifyJWT";
+import { ACCESS_TOKEN_COOKIE_NAME } from "../../config/tokenCookies";
+import verifyJWT, { UserRequest } from "../verifyJWT";
 import jwt from "jsonwebtoken";
-import { ACCESS_TOKEN_COOKIE_NAME } from "../config/tokenCookies";
 
 vi.mock("jsonwebtoken");
 

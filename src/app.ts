@@ -1,5 +1,5 @@
 import "./config/loadEnvironment";
-import express from "express";
+import express, { Router } from "express";
 import cors from "cors";
 import http from "http";
 
@@ -15,12 +15,14 @@ import serverRouter from "./routes/api/servers";
 import chatRouter from "./routes/api/chats";
 import channelRouter from "./routes/api/channels";
 import verifyJWT from "./middleware/verifyJWT";
+import verifySsrJwt from "./middleware/verifySsrJwt";
 import cookieParser from "cookie-parser";
 import credentials from "./middleware/credentials";
 import corsOptions from "./config/corsOptions";
 import { errorMiddleware } from "./middleware/errorMiddleware";
 import { initSocket } from "./sockets";
 import { NotFoundError } from "./utils/errors";
+import ssrServerRouter from "./routes/ssr/server";
 
 // Initialize Express app
 const app = express();
@@ -36,19 +38,24 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
 
-// API routes
 app.use("/", rootRouter);
+
+// Auth routes
 app.use("/register", registerRouter);
 app.use("/login", authRouter);
 app.use("/refresh", refreshRouter);
 app.use("/logout", logoutRouter);
 
+// API routes
 app.use("/me", verifyJWT, meRouter);
 app.use("/chat", verifyJWT, chatRouter);
 app.use("/profile", verifyJWT, profileRouter);
 app.use("/messages", verifyJWT, messagesRouter);
 app.use("/server", verifyJWT, serverRouter);
 app.use("/channel", verifyJWT, channelRouter);
+
+// SSR routes
+app.use("/ssr/server", verifySsrJwt, ssrServerRouter);
 
 app.use((_, res) => {
   throw new NotFoundError("endpoint");
