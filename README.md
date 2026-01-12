@@ -44,6 +44,10 @@ Users can:
 - Socket.io (for managing real time chats)
 - Vitest (for testing)
 
+## Cyber Security
+
+Threat modeling and security considerations live in [`threat-model.md`](./threat-model.md).
+
 ## Run Project Locally
 
 ### Prerequisites
