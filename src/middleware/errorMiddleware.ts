@@ -4,20 +4,45 @@ import { CustomError } from "../utils/errors";
 import multer from "multer";
 
 export const errorMiddleware: ErrorRequestHandler = (
-  error: Error,
-  _: Request,
-  res: Response,
-  next: NextFunction
+  err: Error,
+  req: Request,
+  res: Response
 ) => {
-  if (error instanceof CustomError) {
-    res.status(error.statusCode).json({ error: error.message });
+  const request = req as any;
+
+  if (err instanceof CustomError) {
+    request.log?.error(
+      {
+        err: { name: err?.name, message: err?.message, stack: err?.stack },
+        userId: request.user?.id,
+      },
+      "custom_error"
+    );
+
+    res.status(err.statusCode).json({ error: err.message });
     return;
   }
-  if (error instanceof multer.MulterError) {
-    const status = error.code === "LIMIT_FILE_SIZE" ? 413 : 400;
-    res.status(status).json({ error: error.message });
+  if (err instanceof multer.MulterError) {
+    const status = err.code === "LIMIT_FILE_SIZE" ? 413 : 400;
+
+    request.log?.error(
+      {
+        err: { name: err?.name, message: err?.message, stack: err?.stack },
+        userId: request.user?.id,
+      },
+      "multer_error"
+    );
+
+    res.status(status).json({ error: err.message });
     return;
   }
-  console.error(error);
+
+  request.log?.error(
+    {
+      err: { name: err?.name, message: err?.message, stack: err?.stack },
+      userId: request.user?.id,
+    },
+    "unhandled_error"
+  );
   res.status(500).json({ error: "Internal server error" });
 };
