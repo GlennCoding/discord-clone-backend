@@ -23,6 +23,7 @@ import { errorMiddleware } from "./middleware/errorMiddleware";
 import { initSocket } from "./sockets";
 import { NotFoundError } from "./utils/errors";
 import ssrServerRouter from "./routes/ssr/server";
+import { attachUserIdToHttpLogger, httpLogger } from "./middleware/httpLogging";
 
 // Initialize Express app
 const app = express();
@@ -37,6 +38,10 @@ app.use(credentials);
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
+
+// Logging Middleware
+app.use(httpLogger);
+app.use(attachUserIdToHttpLogger);
 
 app.use("/", rootRouter);
 
