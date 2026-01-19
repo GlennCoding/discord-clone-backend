@@ -40,7 +40,7 @@ export const httpLogger = pinoHttp({
 export const attachUserIdToHttpLogger: RequestHandler = (
   req: Request,
   _: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   if ((req as any).user?.id) {
     (req as any).log = (req as any).log.child({ userId: (req as any).user.id });
