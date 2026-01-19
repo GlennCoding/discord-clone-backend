@@ -58,18 +58,18 @@ describe("/register", () => {
       const cookies = Array.isArray(rawSetCookieHeader)
         ? rawSetCookieHeader
         : rawSetCookieHeader
-        ? [rawSetCookieHeader]
-        : undefined;
+          ? [rawSetCookieHeader]
+          : undefined;
       expect(cookies).toBeDefined();
       expect(cookies).toEqual(
         expect.arrayContaining([
           expect.stringContaining("access_token="),
           expect.stringContaining("refresh_token="),
-        ])
+        ]),
       );
 
       const accessTokenCookie = cookies?.find((cookie) =>
-        cookie.startsWith("access_token=")
+        cookie.startsWith("access_token="),
       );
       expect(accessTokenCookie).toBeDefined();
 

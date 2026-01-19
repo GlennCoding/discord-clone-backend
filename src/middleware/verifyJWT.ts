@@ -5,6 +5,7 @@ import { ACCESS_TOKEN_COOKIE_NAME } from "../config/tokenCookies";
 
 export interface UserRequest<T = any> extends Request {
   userId?: string;
+  requestId?: string;
   body: Partial<T>;
 }
 
@@ -43,7 +44,7 @@ const verifyJWT = (req: UserRequest, res: Response, next: NextFunction) => {
 
       req.userId = payload.UserInfo.userId;
       next();
-    }
+    },
   );
 };
 

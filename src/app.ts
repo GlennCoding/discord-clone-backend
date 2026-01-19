@@ -24,6 +24,7 @@ import { initSocket } from "./sockets";
 import { NotFoundError } from "./utils/errors";
 import ssrServerRouter from "./routes/ssr/server";
 import { attachUserIdToHttpLogger, httpLogger } from "./middleware/httpLogging";
+import { env } from "./utils/env";
 
 // Initialize Express app
 const app = express();
@@ -40,8 +41,10 @@ app.use(express.json());
 app.use(cookieParser());
 
 // Logging Middleware
-app.use(httpLogger);
-app.use(attachUserIdToHttpLogger);
+if (env.NODE_ENV !== "test") {
+  app.use(httpLogger);
+  app.use(attachUserIdToHttpLogger);
+}
 
 app.use("/", rootRouter);
 

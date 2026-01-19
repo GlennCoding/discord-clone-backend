@@ -6,7 +6,8 @@ import multer from "multer";
 export const errorMiddleware: ErrorRequestHandler = (
   err: Error,
   req: Request,
-  res: Response
+  res: Response,
+  _next: NextFunction,
 ) => {
   const request = req as any;
 
@@ -16,7 +17,7 @@ export const errorMiddleware: ErrorRequestHandler = (
         err: { name: err?.name, message: err?.message, stack: err?.stack },
         userId: request.user?.id,
       },
-      "custom_error"
+      "custom_error",
     );
 
     res.status(err.statusCode).json({ error: err.message });
@@ -30,7 +31,7 @@ export const errorMiddleware: ErrorRequestHandler = (
         err: { name: err?.name, message: err?.message, stack: err?.stack },
         userId: request.user?.id,
       },
-      "multer_error"
+      "multer_error",
     );
 
     res.status(status).json({ error: err.message });
@@ -42,7 +43,7 @@ export const errorMiddleware: ErrorRequestHandler = (
       err: { name: err?.name, message: err?.message, stack: err?.stack },
       userId: request.user?.id,
     },
-    "unhandled_error"
+    "unhandled_error",
   );
   res.status(500).json({ error: "Internal server error" });
 };
