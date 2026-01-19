@@ -2,10 +2,7 @@ import { CookieOptions, Response } from "express";
 import { isProdEnv } from "../utils/helper";
 
 export const ACCESS_TOKEN_COOKIE_NAME = "access_token";
-// Backwards-compatible: kept for existing imports.
-export const SRR_ACCESS_TOKEN_COOKIE_NAME = "ssr_access_token";
-// Preferred export name.
-export const SSR_ACCESS_TOKEN_COOKIE_NAME = SRR_ACCESS_TOKEN_COOKIE_NAME;
+export const SSR_ACCESS_TOKEN_COOKIE_NAME = "ssr_access_token";
 export const REFRESH_TOKEN_COOKIE_NAME = "refresh_token";
 
 const FIFTEEN_MINUTES_MS = 15 * 60 * 1000;
