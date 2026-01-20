@@ -2,6 +2,14 @@ import { Request, Response, NextFunction } from "express";
 import jwt, { JwtPayload, VerifyErrors } from "jsonwebtoken";
 import { env } from "../utils/env";
 import { ACCESS_TOKEN_COOKIE_NAME } from "../config/tokenCookies";
+import { audit } from "../utils/audit";
+import {
+  CouldNotVerifyToken,
+  InvalidToken,
+  MissingUserInfoInToken,
+  TokenExpiredError,
+  TokenMissingError,
+} from "../utils/errors";
 
 export interface UserRequest<T = any> extends Request {
   userId?: string;
@@ -23,24 +31,33 @@ const verifyJWT = (req: UserRequest, res: Response, next: NextFunction) => {
       : undefined;
   const token = req.cookies?.[ACCESS_TOKEN_COOKIE_NAME] ?? tokenFromHeader;
 
-  if (!token) return res.status(401).json({ error: "Missing token" });
+  if (!token) {
+    audit(req, "TOKEN_MISSING");
+    return next(new TokenMissingError());
+  }
 
   jwt.verify(
     token,
     env.ACCESS_TOKEN_SECRET as string,
     (err: VerifyErrors | null, decoded: string | JwtPayload | undefined) => {
-      if (err && err instanceof jwt.TokenExpiredError)
-        return res.status(401).json({ error: "Token expired" });
-
-      if (err) return res.status(403).json({ error: "Invalid token" });
-
-      if (decoded === undefined)
-        return res.status(403).json({ error: "Could not verify token" });
+      if (err instanceof jwt.TokenExpiredError) {
+        audit(req, "INVALID_TOKEN_USED", { metadata: { reason: err.name } });
+        return next(new TokenExpiredError());
+      } else if (err) {
+        audit(req, "INVALID_TOKEN_USED", { metadata: { reason: err.name } });
+        return next(new InvalidToken());
+      } else if (decoded === undefined) {
+        audit(req, "INVALID_TOKEN_USED", {
+          metadata: { reason: "Could not verify token" },
+        });
+        return next(new CouldNotVerifyToken());
+      }
 
       const payload = decoded as AccessTokenBody;
 
-      if (payload.UserInfo?.userId === undefined)
-        return res.status(403).json({ error: "Missing user info in token" });
+      if (payload.UserInfo?.userId === undefined) {
+        return next(new MissingUserInfoInToken());
+      }
 
       req.userId = payload.UserInfo.userId;
       next();

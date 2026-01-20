@@ -20,7 +20,7 @@ export const issueAccessToken = (user: IUser) => {
     env.ACCESS_TOKEN_SECRET as string,
     {
       expiresIn: "15min",
-    }
+    },
   );
 };
 
@@ -34,7 +34,7 @@ export const issueSsrAccessToken = (user: IUser) => {
     env.SSR_ACCESS_TOKEN_SECRET as string,
     {
       expiresIn: "24hrs",
-    }
+    },
   );
 };
 

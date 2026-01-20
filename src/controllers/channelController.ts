@@ -7,26 +7,32 @@ import { ensureParam, ensureUser } from "../utils/helper";
 import Server from "../models/Server";
 import Member from "../models/Member";
 import Channel from "../models/Channel";
-import { CustomError, NoPermissionError, NotFoundError } from "../utils/errors";
+import { NoAccessError, NoPermissionError, NotFoundError } from "../utils/errors";
 import { toChannelDTO } from "../services/serverService";
 import { serverRoom } from "../utils/socketRooms";
 import { io } from "../app";
+import { audit } from "../utils/audit";
 
 const channelPayloadSchema = z.object({
   name: z.string().trim().min(1, "Name is required"),
 });
 
-const ensureServerOwner = async (serverIdParam: string | undefined, userId?: string) => {
-  const serverId = ensureParam("serverId", serverIdParam, { isObjectId: true });
+const ensureServerOwner = async (req: UserRequest) => {
+  const { params, userId } = req;
+  ensureParam("serverId", params.serverId, { isObjectId: true });
+
   const [user, server] = await Promise.all([
     ensureUser(userId),
-    Server.findById(serverId).populate("owner"),
+    Server.findById(params.serverId).populate("owner"),
   ]);
 
   if (!server) throw new NotFoundError("Server");
 
   const member = await Member.findOne({ server, user });
-  if (!member) throw new CustomError(403, "You are no member of this server");
+  if (!member) {
+    audit(req, "ACCESS_DENIED");
+    throw new NoAccessError(`server: ${server.name}`);
+  }
 
   if (server.owner.id !== user.id) throw new NoPermissionError();
 
@@ -35,9 +41,9 @@ const ensureServerOwner = async (serverIdParam: string | undefined, userId?: str
 
 export const createChannel = async (
   req: UserRequest<{ name: string }>,
-  res: Response<ChannelDTO>
+  res: Response<ChannelDTO>,
 ) => {
-  const { server } = await ensureServerOwner(req.params.serverId, req.userId);
+  const { server } = await ensureServerOwner(req);
   const payload = parseWithSchema(channelPayloadSchema, req.body);
 
   const lastChannel = await Channel.findOne({ server }).sort("-order");
@@ -50,17 +56,20 @@ export const createChannel = async (
   });
 
   const channelDTO = toChannelDTO(channel);
-  io.to(serverRoom(server.id)).emit("channel:created", channelDTO);
 
+  audit(req, "CHANNEL_CREATED", { channelId: channel.id });
   res.status(201).json(channelDTO);
+  io.to(serverRoom(server.id)).emit("channel:created", channelDTO);
 };
 
 export const updateChannel = async (
   req: UserRequest<{ name: string }>,
-  res: Response<ChannelDTO>
+  res: Response<ChannelDTO>,
 ) => {
-  const { server } = await ensureServerOwner(req.params.serverId, req.userId);
-  const channelId = ensureParam("channelId", req.params.channelId, { isObjectId: true });
+  const { server } = await ensureServerOwner(req);
+  const channelId = ensureParam("channelId", req.params.channelId, {
+    isObjectId: true,
+  });
   const payload = parseWithSchema(channelPayloadSchema, req.body);
 
   const channel = await Channel.findOne({ _id: channelId, server });
@@ -70,19 +79,21 @@ export const updateChannel = async (
   const updatedChannel = await channel.save();
   const updatedDTO = toChannelDTO(updatedChannel);
 
-  io.to(serverRoom(server.id)).emit("channel:updated", updatedDTO);
-
+  audit(req, "CHANNEL_UPDATED", { channelId });
   res.status(200).json(updatedDTO);
+  io.to(serverRoom(server.id)).emit("channel:updated", updatedDTO);
 };
 
 export const deleteChannel = async (req: UserRequest, res: Response) => {
-  const { server } = await ensureServerOwner(req.params.serverId, req.userId);
-  const channelId = ensureParam("channelId", req.params.channelId, { isObjectId: true });
+  const { server } = await ensureServerOwner(req);
+  const channelId = ensureParam("channelId", req.params.channelId, {
+    isObjectId: true,
+  });
 
   const deleted = await Channel.findOneAndDelete({ _id: channelId, server });
   if (!deleted) throw new NotFoundError("Channel");
 
+  audit(req, "CHANNEL_DELETED", { channelId });
   io.to(serverRoom(server.id)).emit("channel:deleted", deleted.id);
-
   res.sendStatus(204);
 };
