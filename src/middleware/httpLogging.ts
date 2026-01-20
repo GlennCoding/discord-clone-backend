@@ -2,9 +2,11 @@ import pinoHttp from "pino-http";
 import { randomUUID } from "crypto";
 import { logger } from "../config/logger";
 import { NextFunction, RequestHandler, Request, Response } from "express";
+import { isProdOrProdLocalEnv } from "../utils/helper";
 
 export const httpLogger = pinoHttp({
   logger,
+  enabled: isProdOrProdLocalEnv,
   // genReqId reuses x-request-id from incoming headers if present, otherwise generates a UUID
   genReqId: (req, res) => {
     const existing = req.headers["x-request-id"];
