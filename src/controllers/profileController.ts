@@ -15,6 +15,7 @@ import {
 } from "../config/upload";
 import { validateUploadedFile } from "../utils/fileValidation";
 import { buildObjectKey } from "../utils/storagePaths";
+import { audit } from "../utils/audit";
 
 export const getProfile = async (req: UserRequest, res: Response) => {
   const user = await findUserWithUserId(req.userId as string);
@@ -38,6 +39,8 @@ export const updateProfile = async (req: UserRequest, res: Response) => {
   user.status = status;
   await user.save();
 
+  audit(req, "PROFILE_UPDATED");
+
   res.status(200).json({
     userName: user.userName,
     status: user.status,
@@ -49,7 +52,7 @@ export const updateProfile = async (req: UserRequest, res: Response) => {
 export const updateProfileImg = async (
   req: UserRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   const { file } = req;
 
@@ -69,7 +72,7 @@ export const updateProfileImg = async (
   const publicUrl = await uploadProfileImgToBucket(
     file,
     fileName,
-    validatedFile.mime
+    validatedFile.mime,
   );
 
   user.avatar = { filePath: fileName, url: publicUrl };
@@ -89,6 +92,8 @@ export const updateProfileImg = async (
     }
   }
 
+  audit(req, "PROFILE_IMGAGE_UPLOADED");
+
   res.status(200).json({
     userName: user.userName,
     status: user.status,
@@ -105,6 +110,8 @@ export const deleteProfileImg = async (req: UserRequest, res: Response) => {
     user.avatar = undefined;
     await user.save();
   }
+
+  audit(req, "PROFILE_IMGAGE_DELETED");
 
   res.sendStatus(204);
 };

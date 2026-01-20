@@ -2,20 +2,26 @@
 import { ErrorRequestHandler, Request, Response, NextFunction } from "express";
 import { CustomError } from "../utils/errors";
 import multer from "multer";
+import { UserRequest } from "./verifyJWT";
+
+const getRequestContext = (request: Request | UserRequest) => ({
+  userId: "userId" in request ? request.userId : undefined,
+  requestId: "requestId" in request ? request.requestId : undefined,
+});
 
 export const errorMiddleware: ErrorRequestHandler = (
   err: Error,
-  req: Request,
+  req: Request | UserRequest,
   res: Response,
   _next: NextFunction,
 ) => {
-  const request = req as any;
+  const requestContext = getRequestContext(req);
 
   if (err instanceof CustomError) {
-    request.log?.error(
+    req.log.error(
       {
         err: { name: err?.name, message: err?.message, stack: err?.stack },
-        userId: request.user?.id,
+        ...requestContext,
       },
       "custom_error",
     );
@@ -26,10 +32,10 @@ export const errorMiddleware: ErrorRequestHandler = (
   if (err instanceof multer.MulterError) {
     const status = err.code === "LIMIT_FILE_SIZE" ? 413 : 400;
 
-    request.log?.error(
+    req.log?.error(
       {
         err: { name: err?.name, message: err?.message, stack: err?.stack },
-        userId: request.user?.id,
+        ...requestContext,
       },
       "multer_error",
     );
@@ -38,10 +44,10 @@ export const errorMiddleware: ErrorRequestHandler = (
     return;
   }
 
-  request.log?.error(
+  req.log.error(
     {
       err: { name: err?.name, message: err?.message, stack: err?.stack },
-      userId: request.user?.id,
+      ...requestContext,
     },
     "unhandled_error",
   );

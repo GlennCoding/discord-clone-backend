@@ -1,5 +1,8 @@
 export class CustomError extends Error {
-  constructor(public readonly statusCode: number, message: string) {
+  constructor(
+    public readonly statusCode: number,
+    message: string,
+  ) {
     super(message);
     this.name = this.constructor.name;
   }
@@ -9,7 +12,7 @@ export class UserNotFoundError extends CustomError {
   constructor(userName?: string) {
     super(
       404,
-      userName ? `User with username "${userName}" not found` : "User not found"
+      userName ? `User with username "${userName}" not found` : "User not found",
     );
   }
 }
@@ -77,5 +80,41 @@ export class UsernameIsTakenError extends CustomError {
 export class NoPermissionError extends CustomError {
   constructor() {
     super(403, "You don't have permission for this action");
+  }
+}
+
+export class NoAccessError extends CustomError {
+  constructor(resource: string) {
+    super(403, `You don't have access to ${resource}`);
+  }
+}
+
+export class TokenMissingError extends CustomError {
+  constructor() {
+    super(401, `Token is missing`);
+  }
+}
+
+export class TokenExpiredError extends CustomError {
+  constructor() {
+    super(401, `Token expired`);
+  }
+}
+
+export class InvalidToken extends CustomError {
+  constructor() {
+    super(403, `Invalid token`);
+  }
+}
+
+export class CouldNotVerifyToken extends CustomError {
+  constructor() {
+    super(403, `Could not verify token`);
+  }
+}
+
+export class MissingUserInfoInToken extends CustomError {
+  constructor() {
+    super(403, `Could not verify token`);
   }
 }

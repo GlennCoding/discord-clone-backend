@@ -1,12 +1,7 @@
 import { Response } from "express";
 import { saveUserRefreshToken, verifyUserPassword } from "../services/userService";
 import { issueAuthTokens } from "../services/authService";
-import {
-  InputMissingError,
-  InvalidCredentialsError,
-  RequestBodyIsMissingError,
-  UserNotFoundError,
-} from "../utils/errors";
+import { CustomError, InputMissingError } from "../utils/errors";
 import { LoginDTO } from "../types/dto";
 import {
   setAccessTokenCookie,
@@ -18,16 +13,14 @@ import { UserRequest } from "../middleware/verifyJWT";
 import { IUser } from "../models/User";
 
 export const handleLogin = async (req: UserRequest, res: Response<LoginDTO>) => {
-  if (!req.body) throw new RequestBodyIsMissingError();
-
   const { userName, password } = req.body;
 
-  if (!userName) throw new InputMissingError("Username");
-
-  if (!password) throw new InputMissingError("Password");
-
-  let user: IUser | undefined;
   try {
+    if (!userName) throw new InputMissingError("Username");
+
+    if (!password) throw new InputMissingError("Password");
+
+    let user: IUser | undefined;
     user = await verifyUserPassword(userName, password);
     const { accessToken, ssrAccessToken, refreshToken } =
       await issueAuthTokens(user);
@@ -38,12 +31,8 @@ export const handleLogin = async (req: UserRequest, res: Response<LoginDTO>) => 
     setSsrAccessTokenCookie(res, ssrAccessToken);
     setRefreshTokenCookie(res, refreshToken);
 
-    audit({
-      action: "AUTH_LOGIN_SUCCESS",
-      actorUserId: user.id,
-      ip: req.ip,
-      requestId: req.requestId,
-    });
+    audit(req, "AUTH_LOGIN_SUCCESS");
+
     return res.status(200).json({
       message: "Login successful",
       userData: {
@@ -53,19 +42,13 @@ export const handleLogin = async (req: UserRequest, res: Response<LoginDTO>) => 
       },
     });
   } catch (err) {
-    const isCredError =
-      err instanceof InvalidCredentialsError || err instanceof UserNotFoundError;
-
-    audit({
-      action: "AUTH_LOGIN_FAIL",
-      actorUserId: user?.id,
-      ip: req.ip,
-      requestId: req.requestId,
+    audit(req, "AUTH_LOGIN_FAIL", {
       metadata: {
         userName,
-        reason: isCredError ? "invalid_credentials" : "unexpected_error",
+        reason: err instanceof CustomError ? err.name : "unexpected_error",
       },
     });
+
     throw err;
   }
 };

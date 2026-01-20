@@ -33,6 +33,7 @@ import {
 } from "../services/serverService";
 import { io } from "../app";
 import { serverRoom } from "../utils/socketRooms";
+import { audit } from "../utils/audit";
 
 const baseServerSchema = z.object({
   name: z.string().trim().min(1, "Name is required"),
@@ -45,7 +46,7 @@ export const updateServerSchema = baseServerSchema;
 
 export const createServer = async (
   req: UserRequest<CreateServerInput>,
-  res: Response<CreateServerDTO>
+  res: Response<CreateServerDTO>,
 ) => {
   const payload = parseWithSchema(createServerSchema, req.body);
   const owner = await ensureUser(req.userId);
@@ -55,12 +56,14 @@ export const createServer = async (
   const server = await Server.create({ ...payload, owner, shortId });
   await Member.create({ user: owner._id, server: server._id });
 
+  audit(req, "SERVER_CREATED", { serverId: server.id });
+
   res.status(201).json({ shortId } satisfies CreateServerDTO);
 };
 
 export const updateServer = async (
   req: UserRequest<UpdateServerInput>,
-  res: Response<UpdateServerDTO>
+  res: Response<UpdateServerDTO>,
 ) => {
   const serverId = ensureParam("id", req.params.id, { isObjectId: true });
   const payload = parseWithSchema(updateServerSchema, req.body);
@@ -73,7 +76,7 @@ export const updateServer = async (
   // check if user has permission
   const foundMember = await Member.findOne({ user, server: foundServer }).populate(
     "roles",
-    "permissions"
+    "permissions",
   );
   if (!foundMember) throw new CustomError(403, "You are no member of this server");
 
@@ -81,7 +84,7 @@ export const updateServer = async (
 
   const hasServerAdminPermission = checkPermissionInRoles(
     foundMember.roles,
-    RolePermission.ServerAdmin
+    RolePermission.ServerAdmin,
   );
 
   if (!isOwner && !hasServerAdminPermission) throw new NoPermissionError();
@@ -109,6 +112,8 @@ export const updateServer = async (
     description: updatedServer.description,
   };
 
+  audit(req, "SERVER_UPDATED", { serverId: foundServer.id });
+
   res.status(200).json(responseBody);
 
   const updatedServerDTO: UpdatedServerDTO = {
@@ -134,6 +139,8 @@ export const deleteServer = async (req: UserRequest, res: Response) => {
 
   await deleteServerInDB(server.id, channelIds);
 
+  audit(req, "SERVER_DELETED", { serverId: server.id });
+
   res.sendStatus(204);
 
   io.to(serverRoom(server.id)).emit("server:deleted", server.id);
@@ -141,7 +148,7 @@ export const deleteServer = async (req: UserRequest, res: Response) => {
 
 export const getAllPublicServers = async (
   _: UserRequest,
-  res: Response<ServerListDTO>
+  res: Response<ServerListDTO>,
 ) => {
   const servers = await Server.find({ isPublic: true });
   const serverDTOs: ServerListItemDTO[] = toServerListItemDTO(servers);
@@ -151,7 +158,7 @@ export const getAllPublicServers = async (
 
 export const getAllJoinedServers = async (
   req: UserRequest,
-  res: Response<ServerListDTO>
+  res: Response<ServerListDTO>,
 ) => {
   const user = await ensureUser(req.userId);
   const members = await Member.find({ user }).populate("server");
@@ -180,7 +187,7 @@ export const getServer = async (req: UserRequest, res: Response<ServerDTO>) => {
 
   const allowedChannels = filterDisallowedRolesOfChannels(
     channels,
-    currentMember.roles
+    currentMember.roles,
   );
 
   res.status(200).json({
