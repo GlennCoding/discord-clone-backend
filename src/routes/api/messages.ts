@@ -6,6 +6,7 @@ import {
 } from "../../controllers/messageController";
 import multer from "multer";
 import { MAX_MESSAGE_ATTACHMENT_FILE_SIZE_BYTES } from "../../config/upload";
+import { uploadMessageAttachmentLimiter } from "../../middleware/rateLimit";
 
 const router = Router();
 
@@ -18,8 +19,9 @@ const upload = multer({
 
 router.post(
   "/attachment",
+  uploadMessageAttachmentLimiter,
   upload.single("attachment"),
-  asyncHandler(saveMessageAttachment)
+  asyncHandler(saveMessageAttachment),
 );
 
 router.delete("/attachment", asyncHandler(deleteMessageAttachement));
