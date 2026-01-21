@@ -8,6 +8,7 @@ import {
 } from "../../controllers/profileController";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { MAX_PROFILE_IMAGE_FILE_SIZE_BYTES } from "../../config/upload";
+import { uploadProfileImgLimiter } from "../../middleware/rateLimit";
 
 const router = Router();
 
@@ -22,8 +23,9 @@ router.get("/", asyncHandler(getProfile));
 router.put("/", asyncHandler(updateProfile));
 router.put(
   "/avatar",
+  uploadProfileImgLimiter,
   upload.single("profilePicture"),
-  asyncHandler(updateProfileImg)
+  asyncHandler(updateProfileImg),
 );
 router.delete("/avatar", asyncHandler(deleteProfileImg));
 
