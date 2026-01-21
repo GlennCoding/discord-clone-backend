@@ -18,7 +18,7 @@ import {
   UserNotFoundError,
   ParamsMissingError,
 } from "../utils/errors";
-import { audit } from "../utils/audit";
+import { auditHttp } from "../utils/audit";
 
 export const getAllChatsForUser = async (req: UserRequest, res: Response) => {
   const userId = req.userId;
@@ -68,7 +68,7 @@ export const deleteChat = async (req: UserRequest, res: Response) => {
 
   await deleteChatService(chat.id);
 
-  audit(req, "CHAT_DELETED", { directChatId: chatId });
+  auditHttp(req, "CHAT_DELETED", { directChatId: chatId });
 
   res.sendStatus(204);
 };

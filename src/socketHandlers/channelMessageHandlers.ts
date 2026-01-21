@@ -33,7 +33,7 @@ const handleAckError = (ack: ChannelAck, error: unknown) => {
   sendAckError(
     ack,
     ERROR_STATUS.INTERNAL_ERROR,
-    "Unable to process channel message event"
+    "Unable to process channel message event",
   );
 };
 

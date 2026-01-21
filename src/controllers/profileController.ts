@@ -15,7 +15,7 @@ import {
 } from "../config/upload";
 import { validateUploadedFile } from "../utils/fileValidation";
 import { buildObjectKey } from "../utils/storagePaths";
-import { audit } from "../utils/audit";
+import { auditHttp } from "../utils/audit";
 
 export const getProfile = async (req: UserRequest, res: Response) => {
   const user = await findUserWithUserId(req.userId as string);
@@ -39,7 +39,7 @@ export const updateProfile = async (req: UserRequest, res: Response) => {
   user.status = status;
   await user.save();
 
-  audit(req, "PROFILE_UPDATED");
+  auditHttp(req, "PROFILE_UPDATED");
 
   res.status(200).json({
     userName: user.userName,
@@ -92,7 +92,7 @@ export const updateProfileImg = async (
     }
   }
 
-  audit(req, "PROFILE_IMGAGE_UPLOADED");
+  auditHttp(req, "PROFILE_IMGAGE_UPLOADED");
 
   res.status(200).json({
     userName: user.userName,
@@ -111,7 +111,7 @@ export const deleteProfileImg = async (req: UserRequest, res: Response) => {
     await user.save();
   }
 
-  audit(req, "PROFILE_IMGAGE_DELETED");
+  auditHttp(req, "PROFILE_IMGAGE_DELETED");
 
   res.sendStatus(204);
 };

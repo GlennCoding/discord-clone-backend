@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import jwt, { JwtPayload, VerifyErrors } from "jsonwebtoken";
 import { env } from "../utils/env";
 import { ACCESS_TOKEN_COOKIE_NAME } from "../config/tokenCookies";
-import { audit } from "../utils/audit";
+import { auditHttp } from "../utils/audit";
 import {
   CouldNotVerifyToken,
   InvalidToken,
@@ -32,7 +32,7 @@ const verifyJWT = (req: UserRequest, res: Response, next: NextFunction) => {
   const token = req.cookies?.[ACCESS_TOKEN_COOKIE_NAME] ?? tokenFromHeader;
 
   if (!token) {
-    audit(req, "TOKEN_MISSING");
+    auditHttp(req, "TOKEN_MISSING");
     return next(new TokenMissingError());
   }
 
@@ -41,13 +41,13 @@ const verifyJWT = (req: UserRequest, res: Response, next: NextFunction) => {
     env.ACCESS_TOKEN_SECRET as string,
     (err: VerifyErrors | null, decoded: string | JwtPayload | undefined) => {
       if (err instanceof jwt.TokenExpiredError) {
-        audit(req, "INVALID_TOKEN_USED", { metadata: { reason: err.name } });
+        auditHttp(req, "INVALID_TOKEN_USED", { metadata: { reason: err.name } });
         return next(new TokenExpiredError());
       } else if (err) {
-        audit(req, "INVALID_TOKEN_USED", { metadata: { reason: err.name } });
+        auditHttp(req, "INVALID_TOKEN_USED", { metadata: { reason: err.name } });
         return next(new InvalidToken());
       } else if (decoded === undefined) {
-        audit(req, "INVALID_TOKEN_USED", {
+        auditHttp(req, "INVALID_TOKEN_USED", {
           metadata: { reason: "Could not verify token" },
         });
         return next(new CouldNotVerifyToken());
