@@ -9,7 +9,7 @@ import {
   findUserWithRefreshToken,
   removeUserRefreshToken,
 } from "../services/userService";
-import { audit } from "../utils/audit";
+import { auditHttp } from "../utils/audit";
 
 export const handleLogout = async (req: Request, res: Response) => {
   const refreshToken = req.cookies?.[REFRESH_TOKEN_COOKIE_NAME];
@@ -28,7 +28,7 @@ export const handleLogout = async (req: Request, res: Response) => {
     await removeUserRefreshToken(user, refreshToken);
   }
 
-  audit(req, "AUTH_LOGOUT");
+  auditHttp(req, "AUTH_LOGOUT");
 
   return res.sendStatus(204);
 };

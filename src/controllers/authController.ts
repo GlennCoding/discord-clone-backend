@@ -8,7 +8,7 @@ import {
   setRefreshTokenCookie,
   setSsrAccessTokenCookie,
 } from "../config/tokenCookies";
-import { audit } from "../utils/audit";
+import { auditHttp } from "../utils/audit";
 import { UserRequest } from "../middleware/verifyJWT";
 import { IUser } from "../models/User";
 
@@ -31,7 +31,7 @@ export const handleLogin = async (req: UserRequest, res: Response<LoginDTO>) => 
     setSsrAccessTokenCookie(res, ssrAccessToken);
     setRefreshTokenCookie(res, refreshToken);
 
-    audit(req, "AUTH_LOGIN_SUCCESS");
+    auditHttp(req, "AUTH_LOGIN_SUCCESS");
 
     return res.status(200).json({
       message: "Login successful",
@@ -42,7 +42,7 @@ export const handleLogin = async (req: UserRequest, res: Response<LoginDTO>) => 
       },
     });
   } catch (err) {
-    audit(req, "AUTH_LOGIN_FAIL", {
+    auditHttp(req, "AUTH_LOGIN_FAIL", {
       metadata: {
         userName,
         reason: err instanceof CustomError ? err.name : "unexpected_error",

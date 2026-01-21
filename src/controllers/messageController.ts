@@ -28,6 +28,7 @@ import {
 } from "../config/upload";
 import { validateUploadedFile } from "../utils/fileValidation";
 import { buildObjectKey } from "../utils/storagePaths";
+import { auditHttp } from "../utils/audit";
 
 const getChat = async (chatId: string | undefined, userId: string) => {
   // is user part of chat? -> Chat.find()
@@ -35,7 +36,7 @@ const getChat = async (chatId: string | undefined, userId: string) => {
   if (!foundChat) throw new CustomError(400, "Chat doesn't exist");
 
   const userIsParticipant = foundChat.participants.some((participant) =>
-    idsEqual(participant, new mongoose.Types.ObjectId(userId))
+    idsEqual(participant, new mongoose.Types.ObjectId(userId)),
   );
 
   if (!userIsParticipant) {
@@ -52,7 +53,7 @@ const verifyText = (text?: string) => {
 
 export const saveMessageAttachment = async (
   req: UserRequest<SaveMessageAttachmentInput>,
-  res: Response
+  res: Response,
 ) => {
   const { file, body, userId } = req;
   const { chatId, text } = body;
@@ -77,7 +78,7 @@ export const saveMessageAttachment = async (
   const fileName = buildObjectKey(
     "message-attachment",
     user.id ?? user._id.toString(),
-    validatedFile.ext
+    validatedFile.ext,
   );
   const downloadUrl = await uploadFileToBucket(file, fileName, validatedFile.mime);
 
@@ -98,12 +99,11 @@ export const saveMessageAttachment = async (
 
   const messageDTO = toMessageDTO(newMessage);
 
-  // emit new message to chatroom
+  auditHttp(req, "MESSAGE_ATTACHMENT_UPLOADED", { messageId: newMessage.id });
+
   io.to(chat.id).emit("message:new", {
     message: messageDTO,
   });
-
-  // Send back Message DTO
   res.status(200).json({ message: messageDTO });
 };
 
@@ -113,7 +113,7 @@ const getMessage = async (messageId: string) => {
 
 export const deleteMessageAttachement = async (
   req: UserRequest<DeleteMessageAttachmentInput>,
-  res: Response
+  res: Response,
 ) => {
   // verify request
   const { messageId, attachmentPath } = req.body;
@@ -143,7 +143,7 @@ export const deleteMessageAttachement = async (
   }
 
   const newAttachments = message.attachments.filter(
-    (a) => a.path !== attachmentPath
+    (a) => a.path !== attachmentPath,
   );
   if (!message.text && newAttachments.length === 0) {
     await Message.deleteOne({ _id: messageId });
@@ -151,6 +151,8 @@ export const deleteMessageAttachement = async (
     message.attachments = newAttachments;
     await message.save();
   }
+
+  auditHttp(req, "MESSAGE_ATTACHMENT_DELETED", { messageId: message.id });
 
   res.sendStatus(204);
 };

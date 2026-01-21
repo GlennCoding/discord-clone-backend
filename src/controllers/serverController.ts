@@ -33,7 +33,7 @@ import {
 } from "../services/serverService";
 import { io } from "../app";
 import { serverRoom } from "../utils/socketRooms";
-import { audit } from "../utils/audit";
+import { auditHttp } from "../utils/audit";
 
 const baseServerSchema = z.object({
   name: z.string().trim().min(1, "Name is required"),
@@ -56,7 +56,7 @@ export const createServer = async (
   const server = await Server.create({ ...payload, owner, shortId });
   await Member.create({ user: owner._id, server: server._id });
 
-  audit(req, "SERVER_CREATED", { serverId: server.id });
+  auditHttp(req, "SERVER_CREATED", { serverId: server.id });
 
   res.status(201).json({ shortId } satisfies CreateServerDTO);
 };
@@ -112,7 +112,7 @@ export const updateServer = async (
     description: updatedServer.description,
   };
 
-  audit(req, "SERVER_UPDATED", { serverId: foundServer.id });
+  auditHttp(req, "SERVER_UPDATED", { serverId: foundServer.id });
 
   res.status(200).json(responseBody);
 
@@ -139,7 +139,7 @@ export const deleteServer = async (req: UserRequest, res: Response) => {
 
   await deleteServerInDB(server.id, channelIds);
 
-  audit(req, "SERVER_DELETED", { serverId: server.id });
+  auditHttp(req, "SERVER_DELETED", { serverId: server.id });
 
   res.sendStatus(204);
 

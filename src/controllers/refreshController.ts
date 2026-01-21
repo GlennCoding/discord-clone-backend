@@ -21,7 +21,7 @@ import {
   setSsrAccessTokenCookie,
 } from "../config/tokenCookies";
 import { RefreshInput } from "../types/dto";
-import { audit } from "../utils/audit";
+import { auditHttp } from "../utils/audit";
 import { UserRequest } from "../middleware/verifyJWT";
 
 export const handleRefreshToken = async (
@@ -32,7 +32,7 @@ export const handleRefreshToken = async (
   const { issueNewSsrToken } = req.body;
 
   if (!refreshToken) {
-    audit(req, "AUTH_REFRESH_FAIL", {
+    auditHttp(req, "AUTH_REFRESH_FAIL", {
       metadata: { reason: "missing_refresh_token" },
     });
     throw new RefreshtokenNotFoundError();
@@ -41,7 +41,7 @@ export const handleRefreshToken = async (
   const user = await findUserWithRefreshToken(refreshToken);
 
   if (!user) {
-    audit(req, "AUTH_REFRESH_FAIL", {
+    auditHttp(req, "AUTH_REFRESH_FAIL", {
       metadata: { reason: "refresh_token_owner_not_found" },
     });
     throw new CustomError(404, "Owner of this refreshtoken not found");
@@ -55,7 +55,7 @@ export const handleRefreshToken = async (
       decoded: string | jwt.JwtPayload | undefined,
     ) => {
       if (err || decoded === undefined) {
-        audit(req, "AUTH_REFRESH_FAIL", {
+        auditHttp(req, "AUTH_REFRESH_FAIL", {
           metadata: {
             reason: err ? err.name : "jwt_verify_failed",
           },
@@ -72,7 +72,7 @@ export const handleRefreshToken = async (
       try {
         await saveUserRefreshToken(user, newRefreshToken);
       } catch (err) {
-        audit(req, "AUTH_REFRESH_FAIL", {
+        auditHttp(req, "AUTH_REFRESH_FAIL", {
           metadata: { reason: "jwt_verify_failed" },
         });
         throw err;
@@ -86,7 +86,7 @@ export const handleRefreshToken = async (
         setSsrAccessTokenCookie(res, newSsrAccessToken);
       }
 
-      audit(req, "AUTH_REFRESH_SUCCESS");
+      auditHttp(req, "AUTH_REFRESH_SUCCESS");
 
       res.status(200).json({ message: "Token refreshed" });
     },

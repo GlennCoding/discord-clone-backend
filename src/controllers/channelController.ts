@@ -11,7 +11,7 @@ import { NoAccessError, NoPermissionError, NotFoundError } from "../utils/errors
 import { toChannelDTO } from "../services/serverService";
 import { serverRoom } from "../utils/socketRooms";
 import { io } from "../app";
-import { audit } from "../utils/audit";
+import { auditHttp } from "../utils/audit";
 
 const channelPayloadSchema = z.object({
   name: z.string().trim().min(1, "Name is required"),
@@ -30,7 +30,7 @@ const ensureServerOwner = async (req: UserRequest) => {
 
   const member = await Member.findOne({ server, user });
   if (!member) {
-    audit(req, "ACCESS_DENIED");
+    auditHttp(req, "ACCESS_DENIED");
     throw new NoAccessError(`server: ${server.name}`);
   }
 
@@ -57,7 +57,7 @@ export const createChannel = async (
 
   const channelDTO = toChannelDTO(channel);
 
-  audit(req, "CHANNEL_CREATED", { channelId: channel.id });
+  auditHttp(req, "CHANNEL_CREATED", { channelId: channel.id });
   res.status(201).json(channelDTO);
   io.to(serverRoom(server.id)).emit("channel:created", channelDTO);
 };
@@ -79,7 +79,7 @@ export const updateChannel = async (
   const updatedChannel = await channel.save();
   const updatedDTO = toChannelDTO(updatedChannel);
 
-  audit(req, "CHANNEL_UPDATED", { channelId });
+  auditHttp(req, "CHANNEL_UPDATED", { channelId });
   res.status(200).json(updatedDTO);
   io.to(serverRoom(server.id)).emit("channel:updated", updatedDTO);
 };
@@ -93,7 +93,7 @@ export const deleteChannel = async (req: UserRequest, res: Response) => {
   const deleted = await Channel.findOneAndDelete({ _id: channelId, server });
   if (!deleted) throw new NotFoundError("Channel");
 
-  audit(req, "CHANNEL_DELETED", { channelId });
+  auditHttp(req, "CHANNEL_DELETED", { channelId });
   io.to(serverRoom(server.id)).emit("channel:deleted", deleted.id);
   res.sendStatus(204);
 };
