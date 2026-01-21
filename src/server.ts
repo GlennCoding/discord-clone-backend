@@ -9,6 +9,7 @@ import {
   registerProcessHandlers,
   registerServerHandlers,
 } from "./config/opsLogging";
+import { connectRedis } from "./config/redis";
 
 registerProcessHandlers(logger);
 registerMongooseHandlers(logger);
@@ -20,11 +21,12 @@ logger.info(
     pid: process.pid,
     node: process.version,
   },
-  "service_start"
+  "service_start",
 );
 
 const start = async () => {
   await connectDB();
+  await connectRedis();
 
   server.listen(env.PORT, () => {
     console.log(`🚀 Server (HTTP + Socket.IO) is running on port ${env.PORT}`);

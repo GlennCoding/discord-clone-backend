@@ -27,7 +27,15 @@ services:
       - "4443:4443"
     volumes:
       - gcs_data:/data
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
 
 volumes:
   mongo-data:
   gcs_data:
+  redis_data:
