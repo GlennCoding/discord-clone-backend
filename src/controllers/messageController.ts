@@ -125,8 +125,6 @@ export const deleteMessageAttachment = async (
   const message = await getMessage(messageId);
   if (!message) throw new NotFoundError("Message");
 
-  console.log({ sender: message.sender._id, user: user._id });
-
   const userIsSender = idsEqual(message.sender._id, user._id);
 
   if (!userIsSender)
