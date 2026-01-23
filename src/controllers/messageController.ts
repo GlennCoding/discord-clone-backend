@@ -29,6 +29,8 @@ import {
 import { validateUploadedFile } from "../utils/fileValidation";
 import { buildObjectKey } from "../utils/storagePaths";
 import { auditHttp } from "../utils/audit";
+import z from "zod";
+import { parseWithSchema } from "../utils/validators";
 
 const getChat = async (chatId: string | undefined, userId: string) => {
   // is user part of chat? -> Chat.find()
@@ -111,17 +113,24 @@ const getMessage = async (messageId: string) => {
   return await Message.findOne({ _id: messageId });
 };
 
+const deleteMessageAttachmentPayloadSchema = z.object({
+  messageId: z.string(),
+  attachmentPath: z.string(),
+});
+
 export const deleteMessageAttachment = async (
   req: UserRequest<DeleteMessageAttachmentInput>,
   res: Response,
 ) => {
   // verify request
-  const { messageId, attachmentPath } = req.body;
+  const { messageId, attachmentPath } = parseWithSchema(
+    deleteMessageAttachmentPayloadSchema,
+    req.body,
+  );
 
   const user = await findUserWithUserId(req.userId as string);
   if (!user) throw new UserNotFoundError();
 
-  if (!messageId) throw new InputMissingError("messageId");
   const message = await getMessage(messageId);
   if (!message) throw new NotFoundError("Message");
 
@@ -129,8 +138,6 @@ export const deleteMessageAttachment = async (
 
   if (!userIsSender)
     throw new CustomError(403, "User is not the sender of this message");
-
-  if (!attachmentPath) throw new InputMissingError("attachmentPath");
 
   // delete file from bucket & remove attachment from message
   await deleteFileFromBucket(attachmentPath);
