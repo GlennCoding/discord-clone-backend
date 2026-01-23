@@ -111,7 +111,7 @@ const getMessage = async (messageId: string) => {
   return await Message.findOne({ _id: messageId });
 };
 
-export const deleteMessageAttachement = async (
+export const deleteMessageAttachment = async (
   req: UserRequest<DeleteMessageAttachmentInput>,
   res: Response,
 ) => {

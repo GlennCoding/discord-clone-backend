@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { asyncHandler } from "../../utils/asyncHandler";
 import {
-  deleteMessageAttachement,
+  deleteMessageAttachment,
   saveMessageAttachment,
 } from "../../controllers/messageController";
 import multer from "multer";
@@ -24,6 +24,6 @@ router.post(
   asyncHandler(saveMessageAttachment),
 );
 
-router.delete("/attachment", asyncHandler(deleteMessageAttachement));
+router.delete("/attachment", asyncHandler(deleteMessageAttachment));
 
 export default router;

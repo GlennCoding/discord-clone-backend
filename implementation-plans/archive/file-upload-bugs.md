@@ -25,7 +25,7 @@
 - [ ] BE: Add validation that you didn't upload multiple files (at this point)
 - [ ] FE improvements
   - For now, only allow images
-  - Add proper styling for messages with attachements
+  - Add proper styling for messages with attachments
   - Add image preview
   - Add FE validator for too big file size -> Make a toast pop up when file is too big
 
