@@ -1,6 +1,6 @@
 import rateLimit, { type RateLimitRequestHandler } from "express-rate-limit";
 import { RedisStore } from "rate-limit-redis";
-import { redis } from "../config/redis";
+import { connectRedis, redis } from "../config/redis";
 import { auditHttp } from "../utils/audit";
 import { UserRequest } from "./verifyJWT";
 
@@ -18,6 +18,8 @@ function getClientIp(req: any): string {
 }
 
 export function createLimiter(opts: CreateLimiterOptions): RateLimitRequestHandler {
+  const shouldUseRedis = process.env.NODE_ENV !== "test";
+
   return rateLimit({
     windowMs: opts.windowMs,
     max: opts.max,
@@ -26,11 +28,16 @@ export function createLimiter(opts: CreateLimiterOptions): RateLimitRequestHandl
     standardHeaders: true,
     legacyHeaders: false,
 
-    // Store counters in Redis (shared across instances)
-    store: new RedisStore({
-      sendCommand: (...args: string[]) => redis.sendCommand(args),
-      prefix: opts.prefix,
-    }),
+    // Store counters in Redis (shared across instances). In tests, default MemoryStore is fine.
+    store: shouldUseRedis
+      ? new RedisStore({
+          sendCommand: async (...args: string[]) => {
+            await connectRedis();
+            return redis.sendCommand(args);
+          },
+          prefix: opts.prefix,
+        })
+      : undefined,
 
     keyGenerator: (req) => {
       return (req as UserRequest).userId ?? getClientIp(req);
@@ -82,5 +89,3 @@ export const uploadProfileImgLimiter = createLimiter({
   max: 10,
   prefix: "rl:auth:refresh:",
 });
-
-// What else to rate limit? -> message attachement upload, profile pic upload
