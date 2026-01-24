@@ -1,7 +1,7 @@
 import { bucket } from "../config/storage";
-import { FileStore } from "./FileStore";
+import { FileStorage } from "./FileStorage";
 
-export class GcsFileStore implements FileStore {
+export class GcsFileStorage implements FileStorage {
   async delete(path: string): Promise<void> {
     await bucket.file(path).delete({ ignoreNotFound: true });
   }
