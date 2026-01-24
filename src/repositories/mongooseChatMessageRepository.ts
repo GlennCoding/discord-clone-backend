@@ -38,3 +38,5 @@ class MongooseChatMessageRepository implements ChatMessageRepository {
     await ChatMessage.updateOne({ _id: id }, { $set: { attachments } });
   }
 }
+
+export default MongooseChatMessageRepository;

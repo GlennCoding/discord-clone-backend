@@ -3,7 +3,6 @@ import { Response } from "express";
 import {
   CustomError,
   InputMissingError,
-  NotFoundError,
   ParamsMissingError,
   UserNotFoundError,
 } from "../utils/errors";
@@ -31,6 +30,7 @@ import { buildObjectKey } from "../utils/storagePaths";
 import { auditHttp } from "../utils/audit";
 import z from "zod";
 import { parseWithSchema } from "../utils/validators";
+import { chatMessageService } from "../container";
 
 const getChat = async (chatId: string | undefined, userId: string) => {
   // is user part of chat? -> Chat.find()
@@ -109,10 +109,6 @@ export const saveMessageAttachment = async (
   res.status(200).json({ message: messageDTO });
 };
 
-const getMessage = async (messageId: string) => {
-  return await Message.findOne({ _id: messageId });
-};
-
 const deleteMessageAttachmentPayloadSchema = z.object({
   messageId: z.string(),
   attachmentPath: z.string(),
@@ -122,42 +118,17 @@ export const deleteMessageAttachment = async (
   req: UserRequest<DeleteMessageAttachmentInput>,
   res: Response,
 ) => {
-  // verify request
   const { messageId, attachmentPath } = parseWithSchema(
     deleteMessageAttachmentPayloadSchema,
     req.body,
   );
 
-  const user = await findUserWithUserId(req.userId as string);
-  if (!user) throw new UserNotFoundError();
+  await chatMessageService.deleteChatMessageAttachment({
+    userId: req.userId as string,
+    messageId,
+    attachmentPath,
+  });
 
-  const message = await getMessage(messageId);
-  if (!message) throw new NotFoundError("Message");
-
-  const userIsSender = idsEqual(message.sender._id, user._id);
-
-  if (!userIsSender)
-    throw new CustomError(403, "User is not the sender of this message");
-
-  // delete file from bucket & remove attachment from message
-  await deleteFileFromBucket(attachmentPath);
-
-  if (!message.attachments) {
-    res.sendStatus(204);
-    return;
-  }
-
-  const newAttachments = message.attachments.filter(
-    (a) => a.path !== attachmentPath,
-  );
-  if (!message.text && newAttachments.length === 0) {
-    await Message.deleteOne({ _id: messageId });
-  } else {
-    message.attachments = newAttachments;
-    await message.save();
-  }
-
-  auditHttp(req, "MESSAGE_ATTACHMENT_DELETED", { messageId: message.id });
-
-  res.sendStatus(204);
+  (auditHttp(req, "MESSAGE_ATTACHMENT_DELETED", { messageId: messageId }),
+    res.sendStatus(204));
 };
