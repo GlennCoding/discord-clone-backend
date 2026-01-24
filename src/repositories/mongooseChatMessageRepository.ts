@@ -23,7 +23,7 @@ const mapMessageDocToEntity = (
 
 class MongooseChatMessageRepository implements ChatMessageRepository {
   async findById(id: string) {
-    const doc = await ChatMessage.findById(id).lean(); // or not lean if you want methods
+    const doc = await ChatMessage.findById(id).lean();
     return doc ? mapMessageDocToEntity(doc) : null;
   }
 
