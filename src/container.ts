@@ -5,7 +5,10 @@ import ChatMessageService from "./services/chatMessageService";
 
 const userRepo = new MongooseUserRepository();
 const chatMessageRepo = new MongooseChatMessageRepository();
-
 const fileStore = new GcsFileStore();
 
-export const chatMessageService = new ChatMessageService(userRepo, chatMessageRepo);
+export const chatMessageService = new ChatMessageService(
+  userRepo,
+  chatMessageRepo,
+  fileStore,
+);

@@ -1,8 +1,8 @@
+import { FileStore } from "../infrastructure/FileStore";
 import { ChatMessageRepository } from "../repositories/chatMessageRepository";
 import { UserRepository } from "../repositories/userRepository";
 import { UserNotFoundError, NotFoundError, ForbiddenError } from "../utils/errors";
 import { idsEqual } from "../utils/helper";
-import { deleteFileFromBucket } from "./storageService";
 
 interface IChatMessageService {
   deleteChatMessageAttachment: (input: {
@@ -16,6 +16,7 @@ class ChatMessageService implements IChatMessageService {
   constructor(
     private user: UserRepository,
     private chatMessages: ChatMessageRepository,
+    private fileStore: FileStore,
   ) {}
 
   async deleteChatMessageAttachment(input: {
@@ -41,7 +42,7 @@ class ChatMessageService implements IChatMessageService {
     );
     if (!attachmentExists) return;
 
-    await deleteFileFromBucket(attachmentPath);
+    await this.fileStore.delete(attachmentPath);
 
     const newAttachments = message.attachments.filter(
       (a) => a.path !== attachmentPath,
