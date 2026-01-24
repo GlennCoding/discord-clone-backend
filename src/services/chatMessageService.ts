@@ -1,8 +1,8 @@
 import { ChatMessageRepository } from "../repositories/chatMessageRepository";
+import { UserRepository } from "../repositories/userRepository";
 import { UserNotFoundError, NotFoundError, ForbiddenError } from "../utils/errors";
 import { idsEqual } from "../utils/helper";
 import { deleteFileFromBucket } from "./storageService";
-import { findUserWithUserId } from "./userService";
 
 interface IChatMessageService {
   deleteChatMessageAttachment: (input: {
@@ -13,7 +13,10 @@ interface IChatMessageService {
 }
 
 class ChatMessageService implements IChatMessageService {
-  constructor(private chatMessages: ChatMessageRepository) {}
+  constructor(
+    private user: UserRepository,
+    private chatMessages: ChatMessageRepository,
+  ) {}
 
   async deleteChatMessageAttachment(input: {
     userId: string;
@@ -22,7 +25,7 @@ class ChatMessageService implements IChatMessageService {
   }) {
     const { userId, messageId, attachmentPath } = input;
 
-    const user = await findUserWithUserId(userId as string);
+    const user = this.user.findById(userId);
     if (!user) throw new UserNotFoundError();
 
     const message = await this.chatMessages.findById(messageId);
