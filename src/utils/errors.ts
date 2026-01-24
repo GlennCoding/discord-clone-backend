@@ -89,6 +89,12 @@ export class NoAccessError extends CustomError {
   }
 }
 
+export class ForbiddenError extends CustomError {
+  constructor(message: string) {
+    super(403, message);
+  }
+}
+
 export class TokenMissingError extends CustomError {
   constructor() {
     super(401, `Token is missing`);
