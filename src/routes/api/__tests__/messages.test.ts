@@ -52,7 +52,6 @@ describe("/messages/attachment", () => {
     expect(response.status).toBe(200);
     expect(saveMessageAttachment).toHaveBeenCalledTimes(1);
     const [reqArg] = (saveMessageAttachment as any).mock.calls[0];
-    console.log(reqArg);
     expect(reqArg.file?.originalname).toBe("hello.txt");
     expect(reqArg.body.chatId).toBe("chat-1");
     expect(reqArg.body.text).toBe("hi");
