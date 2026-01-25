@@ -136,6 +136,6 @@ export const deleteMessageAttachment = async (
     attachmentPath,
   });
 
-  (auditHttp(req, "MESSAGE_ATTACHMENT_DELETED", { messageId: messageId }),
-    res.sendStatus(204));
+  auditHttp(req, "MESSAGE_ATTACHMENT_DELETED", { messageId: messageId });
+  res.sendStatus(204);
 };
