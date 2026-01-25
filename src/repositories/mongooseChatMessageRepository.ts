@@ -4,7 +4,7 @@ import { ChatMessageEntity } from "../types/entities";
 import { FlattenMaps } from "mongoose";
 
 const mapMessageDocToEntity = (
-  doc: FlattenMaps<IChatMessage>,
+  doc: IChatMessage | FlattenMaps<IChatMessage>,
 ): ChatMessageEntity => {
   return {
     id: doc._id.toString(),
@@ -29,6 +29,22 @@ class MongooseChatMessageRepository implements ChatMessageRepository {
 
   async deleteById(id: string) {
     await ChatMessage.deleteOne({ _id: id });
+  }
+
+  async create(newMessage: {
+    chatId: string;
+    senderId: string;
+    text: string | undefined;
+    attachments: Array<{ path: string; downloadUrl: string }>;
+  }) {
+    const { chatId, senderId, text, attachments } = newMessage;
+    const message = await new ChatMessage({
+      chat: chatId,
+      sender: senderId,
+      text: text,
+      attachments,
+    }).save();
+    return mapMessageDocToEntity(message);
   }
 
   async updateAttachments(
