@@ -1,8 +1,12 @@
-import pinoHttp from "pino-http";
 import { randomUUID } from "crypto";
+
+import pinoHttp from "pino-http";
+
 import { logger } from "../config/logger";
-import { NextFunction, RequestHandler, Request, Response } from "express";
 import { isProdOrProdLocalEnv } from "../utils/helper";
+
+import type { NextFunction, RequestHandler, Request, Response } from "express";
+
 
 export const httpLogger = pinoHttp({
   logger,

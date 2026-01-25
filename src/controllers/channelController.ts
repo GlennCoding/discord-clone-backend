@@ -1,17 +1,19 @@
-import { Response } from "express";
 import z from "zod";
-import { UserRequest } from "../middleware/verifyJWT";
-import { ChannelDTO } from "../types/dto";
-import { parseWithSchema } from "../utils/validators";
-import { ensureParam, ensureUser } from "../utils/helper";
-import Server from "../models/Server";
-import Member from "../models/Member";
-import Channel from "../models/Channel";
-import { NoAccessError, NoPermissionError, NotFoundError } from "../utils/errors";
-import { toChannelDTO } from "../services/serverService";
-import { serverRoom } from "../utils/socketRooms";
+
 import { io } from "../app";
+import Channel from "../models/Channel";
+import Member from "../models/Member";
+import Server from "../models/Server";
+import { toChannelDTO } from "../services/serverService";
 import { auditHttp } from "../utils/audit";
+import { NoAccessError, NoPermissionError, NotFoundError } from "../utils/errors";
+import { ensureParam, ensureUser } from "../utils/helper";
+import { serverRoom } from "../utils/socketRooms";
+import { parseWithSchema } from "../utils/validators";
+
+import type { UserRequest } from "../middleware/verifyJWT";
+import type { ChannelDTO } from "../types/dto";
+import type { Response } from "express";
 
 const channelPayloadSchema = z.object({
   name: z.string().trim().min(1, "Name is required"),

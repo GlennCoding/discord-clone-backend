@@ -1,4 +1,4 @@
-import {
+import type {
   SendMessageInput,
   MessageDTO,
   JoinChatDTO,
@@ -9,7 +9,7 @@ import {
   ChannelMessageDTO,
   SendChannelMessageInput,
 } from "./dto";
-import { Ack } from "./sockets";
+import type { Ack } from "./sockets";
 
 export interface ClientToServerEvents {
   "message:send": (

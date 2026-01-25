@@ -1,8 +1,11 @@
-import { Response, NextFunction } from "express";
-import jwt, { JwtPayload, VerifyErrors } from "jsonwebtoken";
-import { env } from "../utils/env";
+import jwt from "jsonwebtoken";
+
 import { SSR_ACCESS_TOKEN_COOKIE_NAME } from "../config/tokenCookies";
-import { UserRequest } from "./verifyJWT";
+import { env } from "../utils/env";
+
+import type { UserRequest } from "./verifyJWT";
+import type { Response, NextFunction } from "express";
+import type { JwtPayload, VerifyErrors } from "jsonwebtoken";
 
 interface AccessTokenBody extends JwtPayload {
   UserInfo?: {

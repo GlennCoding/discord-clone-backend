@@ -1,12 +1,16 @@
-import Channel, { ChannelDocument } from "../models/Channel";
+import Channel from "../models/Channel";
 import ChannelMessage from "../models/ChannelMessage";
-import Member, { MemberDocument } from "../models/Member";
-import { ChannelMessageDTO, ChannelSubscribeDTO } from "../types/dto";
-import { PopulatedChannelMessage } from "../types/misc";
+import Member from "../models/Member";
+import { toChannelMessageDTO } from "../utils/dtos/channelMessageDTO";
 import { CustomError, NotFoundError } from "../utils/errors";
 import { ensureParam, ensureUser } from "../utils/helper";
+
 import { toChannelDTO } from "./serverService";
-import { toChannelMessageDTO } from "../utils/dtos/channelMessageDTO";
+
+import type { ChannelDocument } from "../models/Channel";
+import type { MemberDocument } from "../models/Member";
+import type { ChannelMessageDTO, ChannelSubscribeDTO } from "../types/dto";
+import type { PopulatedChannelMessage } from "../types/misc";
 
 const CHANNEL_MESSAGE_HISTORY_LIMIT = 50;
 

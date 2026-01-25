@@ -1,10 +1,14 @@
-import request from "supertest";
-import User, { IUser } from "../../../models/User";
-import { app } from "../../../app";
 import path from "path";
-import { issueAccessToken } from "../../../services/authService";
-import { bucket } from "../../../config/storage";
+
+import request from "supertest";
+
 import { buildAccessTokenCookie } from "../../../__tests__/helpers/cookies";
+import { app } from "../../../app";
+import { bucket } from "../../../config/storage";
+import User from "../../../models/User";
+import { issueAccessToken } from "../../../services/authService";
+
+import type { IUser } from "../../../models/User";
 
 const userData = { userName: "user", password: "pwd" };
 let user: IUser;

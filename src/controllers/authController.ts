@@ -1,16 +1,17 @@
-import { Response } from "express";
-import { saveUserRefreshToken, verifyUserPassword } from "../services/userService";
-import { issueAuthTokens } from "../services/authService";
-import { CustomError, InputMissingError } from "../utils/errors";
-import { LoginDTO } from "../types/dto";
 import {
   setAccessTokenCookie,
   setRefreshTokenCookie,
   setSsrAccessTokenCookie,
 } from "../config/tokenCookies";
+import { issueAuthTokens } from "../services/authService";
+import { saveUserRefreshToken, verifyUserPassword } from "../services/userService";
 import { auditHttp } from "../utils/audit";
-import { UserRequest } from "../middleware/verifyJWT";
-import { IUser } from "../models/User";
+import { CustomError, InputMissingError } from "../utils/errors";
+
+import type { UserRequest } from "../middleware/verifyJWT";
+import type { IUser } from "../models/User";
+import type { LoginDTO } from "../types/dto";
+import type { Response } from "express";
 
 export const handleLogin = async (req: UserRequest, res: Response<LoginDTO>) => {
   const { userName, password } = req.body;
@@ -22,8 +23,7 @@ export const handleLogin = async (req: UserRequest, res: Response<LoginDTO>) => 
 
     let user: IUser | undefined;
     user = await verifyUserPassword(userName, password);
-    const { accessToken, ssrAccessToken, refreshToken } =
-      await issueAuthTokens(user);
+    const { accessToken, ssrAccessToken, refreshToken } = await issueAuthTokens(user);
 
     await saveUserRefreshToken(user, refreshToken);
 

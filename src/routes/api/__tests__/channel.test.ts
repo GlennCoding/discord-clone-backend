@@ -1,18 +1,22 @@
-import request from "supertest";
 import { Types } from "mongoose";
-import { app } from "../../../app";
-import User, { IUser } from "../../../models/User";
-import Server, { IServer } from "../../../models/Server";
-import Member from "../../../models/Member";
-import Channel from "../../../models/Channel";
-import { issueAccessToken } from "../../../services/authService";
-import { buildAccessTokenCookie } from "../../../__tests__/helpers/cookies";
+import request from "supertest";
+
 import {
   expectBadRequest,
   expectForbidden,
   expectNotFound,
   expectUnauthorized,
 } from "../../../__tests__/helpers/assertions";
+import { buildAccessTokenCookie } from "../../../__tests__/helpers/cookies";
+import { app } from "../../../app";
+import Channel from "../../../models/Channel";
+import Member from "../../../models/Member";
+import Server from "../../../models/Server";
+import User from "../../../models/User";
+import { issueAccessToken } from "../../../services/authService";
+
+import type { IServer } from "../../../models/Server";
+import type { IUser } from "../../../models/User";
 
 let owner: IUser;
 let moderator: IUser;

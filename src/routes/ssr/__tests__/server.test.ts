@@ -1,17 +1,20 @@
 import request from "supertest";
-import User, { IUser } from "../../../models/User";
-import Server, { IServer } from "../../../models/Server";
-import Member from "../../../models/Member";
-import Channel from "../../../models/Channel";
-import Role from "../../../models/Role";
-import ChannelMessage from "../../../models/ChannelMessage";
-import { issueSsrAccessToken } from "../../../services/authService";
-import { app } from "../../../app";
+
 import {
   expectForbidden,
   expectUnauthorized,
 } from "../../../__tests__/helpers/assertions";
 import { buildSsrAccessTokenCookie } from "../../../__tests__/helpers/cookies";
+import { app } from "../../../app";
+import Channel from "../../../models/Channel";
+import ChannelMessage from "../../../models/ChannelMessage";
+import Member from "../../../models/Member";
+import Role from "../../../models/Role";
+import Server, { IServer } from "../../../models/Server";
+import User from "../../../models/User";
+import { issueSsrAccessToken } from "../../../services/authService";
+
+import type { IUser } from "../../../models/User";
 
 let user1: IUser;
 let user2: IUser;

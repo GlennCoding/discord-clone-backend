@@ -1,20 +1,24 @@
 import request from "supertest";
-import { app } from "../../app";
-import User, { IUser } from "../../models/User";
-import ServerModel, { IServer } from "../../models/Server";
-import Member from "../../models/Member";
-import Channel from "../../models/Channel";
-import { issueAccessToken } from "../../services/authService";
+
 import { buildAccessTokenCookie } from "../../__tests__/helpers/cookies";
+import { app } from "../../app";
+import Channel from "../../models/Channel";
+import Member from "../../models/Member";
+import ServerModel, { IServer } from "../../models/Server";
+import User, { IUser } from "../../models/User";
+import { issueAccessToken } from "../../services/authService";
 import { generateUniqueShortId } from "../../services/serverService";
 import { ERROR_STATUS, EVENT_ERROR } from "../../types/sockets";
-import { TypedClientSocket } from "../../types/sockets";
+
 import {
   acquireSocketServer,
   releaseSocketServer,
   connectSocketWithToken,
   waitForEvent,
 } from "./helpers/socketTestUtils";
+
+import type { TypedClientSocket } from "../../types/sockets";
+
 
 const randomServerName = () => `Server-${Math.random().toString(36).slice(-5)}`;
 

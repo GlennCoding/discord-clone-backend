@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+
 import {
   REFRESH_TOKEN_COOKIE_NAME,
   clearAccessTokenCookie,
@@ -10,6 +10,8 @@ import {
   removeUserRefreshToken,
 } from "../services/userService";
 import { auditHttp } from "../utils/audit";
+
+import type { Request, Response } from "express";
 
 export const handleLogout = async (req: Request, res: Response) => {
   const refreshToken = req.cookies?.[REFRESH_TOKEN_COOKIE_NAME];

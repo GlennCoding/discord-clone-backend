@@ -1,11 +1,12 @@
-import { FileStorage } from "../infrastructure/FileStorage";
-import { ChatMessageRepository } from "../repositories/chatMessageRepository";
-import { UserRepository } from "../repositories/userRepository";
 import { UserNotFoundError, NotFoundError, ForbiddenError } from "../utils/errors";
 import { idsEqual } from "../utils/helper";
-import { ChatMessageEntity } from "../types/entities";
 import { buildObjectKey } from "../utils/storage";
-import { ChatRepository } from "../repositories/chatRepository";
+
+import type { FileStorage } from "../infrastructure/FileStorage";
+import type { ChatMessageRepository } from "../repositories/chatMessageRepository";
+import type { ChatRepository } from "../repositories/chatRepository";
+import type { UserRepository } from "../repositories/userRepository";
+import type { ChatMessageEntity } from "../types/entities";
 
 interface IChatMessageAttachmentService {
   saveMessageAttachment: (input: {
@@ -44,8 +45,7 @@ class ChatMessageAttachmentService implements IChatMessageAttachmentService {
     if (!chat) throw new NotFoundError("Chat");
 
     const userIsParticipant = chat.participantIds.some((id) => idsEqual(id, userId));
-    if (!userIsParticipant)
-      throw new ForbiddenError("User is not part of this chat");
+    if (!userIsParticipant) throw new ForbiddenError("User is not part of this chat");
 
     const fileKey = buildObjectKey("message-attachment", user.id, file.mimetype);
     const downloadUrl = await this.fileStorage.upload(file, fileKey, file.mimetype);
@@ -60,7 +60,7 @@ class ChatMessageAttachmentService implements IChatMessageAttachmentService {
         attachments: [{ path: fileKey, downloadUrl }],
       });
     } catch (err) {
-      this.fileStorage.deleteObject(fileKey);
+      void this.fileStorage.deleteObject(fileKey);
       throw err;
     }
 
@@ -85,16 +85,12 @@ class ChatMessageAttachmentService implements IChatMessageAttachmentService {
 
     if (!message.attachments?.length) return;
 
-    const attachmentExists = message.attachments?.some(
-      (a) => a.path === attachmentPath,
-    );
+    const attachmentExists = message.attachments?.some((a) => a.path === attachmentPath);
     if (!attachmentExists) return;
 
     await this.fileStorage.deleteObject(attachmentPath);
 
-    const newAttachments = message.attachments.filter(
-      (a) => a.path !== attachmentPath,
-    );
+    const newAttachments = message.attachments.filter((a) => a.path !== attachmentPath);
 
     if (!message.text && newAttachments.length === 0) {
       await this.chatMessage.deleteById(messageId);

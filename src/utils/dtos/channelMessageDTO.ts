@@ -1,5 +1,5 @@
-import { ChannelMessageDTO } from "../../types/dto";
-import { PopulatedChannelMessage } from "../../types/misc";
+import type { ChannelMessageDTO } from "../../types/dto";
+import type { PopulatedChannelMessage } from "../../types/misc";
 
 export const toChannelMessageDTO = (
   message: PopulatedChannelMessage

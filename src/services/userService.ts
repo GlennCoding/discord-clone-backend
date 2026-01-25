@@ -1,6 +1,9 @@
 import bcrypt from "bcrypt";
-import User, { IUser } from "../models/User";
+
+import User from "../models/User";
 import { InvalidCredentialsError, UserNotFoundError } from "../utils/errors";
+
+import type { IUser } from "../models/User";
 
 const SALT_ROUNDS = 10;
 

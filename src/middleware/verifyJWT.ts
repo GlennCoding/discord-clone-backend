@@ -1,8 +1,8 @@
-import { Request, Response, NextFunction } from "express";
-import jwt, { JwtPayload, VerifyErrors } from "jsonwebtoken";
-import { env } from "../utils/env";
+import jwt from "jsonwebtoken";
+
 import { ACCESS_TOKEN_COOKIE_NAME } from "../config/tokenCookies";
 import { auditHttp } from "../utils/audit";
+import { env } from "../utils/env";
 import {
   CouldNotVerifyToken,
   InvalidToken,
@@ -10,6 +10,9 @@ import {
   TokenExpiredError,
   TokenMissingError,
 } from "../utils/errors";
+
+import type { Request, Response, NextFunction } from "express";
+import type { JwtPayload, VerifyErrors } from "jsonwebtoken";
 
 export interface UserRequest<T = any> extends Request {
   userId?: string;

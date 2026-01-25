@@ -1,5 +1,7 @@
-import { model, Schema, Document, Types } from "mongoose";
-import { IUser } from "./User";
+import { model, Schema } from "mongoose";
+
+import type { IUser } from "./User";
+import type { Document, Types } from "mongoose";
 
 export interface IChat extends Document {
   _id: Types.ObjectId;

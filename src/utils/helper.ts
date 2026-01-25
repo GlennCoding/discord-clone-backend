@@ -1,7 +1,9 @@
 import { Types } from "mongoose";
+
+import { findUserWithUserId } from "../services/userService";
+
 import { env } from "./env";
 import { CustomError, ParamsMissingError, UserNotFoundError } from "./errors";
-import { findUserWithUserId } from "../services/userService";
 
 export const idsEqual = (a: any, b: any): boolean => {
   return a?.toString() === b?.toString();
@@ -28,7 +30,7 @@ export const ensureUser = async (userId: string | undefined) => {
 export const ensureParam = (
   paramName: string,
   param: string | undefined,
-  options?: { isObjectId?: boolean }
+  options?: { isObjectId?: boolean },
 ): string => {
   if (!param) throw new ParamsMissingError(paramName);
   const trimmed = param.trim();

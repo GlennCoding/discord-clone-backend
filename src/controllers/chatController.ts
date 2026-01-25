@@ -1,5 +1,4 @@
-import { Response } from "express";
-import { UserRequest } from "../middleware/verifyJWT";
+
 import {
   findChatBetweenTwoUsers,
   formatUserChats,
@@ -10,6 +9,7 @@ import {
   deleteChat as deleteChatService,
 } from "../services/chatService";
 import { findUserWithUserName } from "../services/userService";
+import { auditHttp } from "../utils/audit";
 import {
   CantStartChatWithOneselfError,
   ChatNotFoundError,
@@ -18,7 +18,9 @@ import {
   UserNotFoundError,
   ParamsMissingError,
 } from "../utils/errors";
-import { auditHttp } from "../utils/audit";
+
+import type { UserRequest } from "../middleware/verifyJWT";
+import type { Response } from "express";
 
 export const getAllChatsForUser = async (req: UserRequest, res: Response) => {
   const userId = req.userId;

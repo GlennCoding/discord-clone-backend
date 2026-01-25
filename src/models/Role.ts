@@ -1,5 +1,7 @@
-import { model, Schema, Document, Types } from "mongoose";
-import { IServer } from "./Server";
+import { model, Schema } from "mongoose";
+
+import type { IServer } from "./Server";
+import type { Document, Types } from "mongoose";
 
 export enum RolePermission {
   ChannelAdmin = "CHANNEL_ADMIN",

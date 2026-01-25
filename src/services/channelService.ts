@@ -1,7 +1,8 @@
 import mongoose from "mongoose";
-import { NotFoundError } from "../utils/errors";
+
 import Channel from "../models/Channel";
 import ChannelMessage from "../models/ChannelMessage";
+import { NotFoundError } from "../utils/errors";
 
 export const deleteChannel = async (channelId: string) => {
   const session = await mongoose.startSession();

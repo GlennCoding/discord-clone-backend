@@ -1,8 +1,11 @@
 import mongoose from "mongoose";
-import Chat, { IChat } from "../models/Chat";
-import { IUser } from "../models/User";
+
+import Chat from "../models/Chat";
 import Message from "../models/ChatMessage";
-import { ChatDTO } from "../types/dto";
+
+import type { IChat } from "../models/Chat";
+import type { IUser } from "../models/User";
+import type { ChatDTO } from "../types/dto";
 
 export const getUserChats = async (userId: string) => {
   const chats = await Chat.find({ participants: userId })

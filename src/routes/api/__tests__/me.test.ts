@@ -4,11 +4,15 @@
  * 2. returns 401 on unauthorized request
  */
 import request from "supertest";
-import User, { IUser } from "../../../models/User";
-import { issueAccessToken } from "../../../services/authService";
-import { app } from "../../../app";
-import { MeDTO } from "../../../types/dto";
+
 import { buildAccessTokenCookie } from "../../../__tests__/helpers/cookies";
+import { app } from "../../../app";
+import User from "../../../models/User";
+import { issueAccessToken } from "../../../services/authService";
+
+import type { IUser } from "../../../models/User";
+import type { MeDTO } from "../../../types/dto";
+
 
 /**
  * Before all -> Setup mongo, create user, get token

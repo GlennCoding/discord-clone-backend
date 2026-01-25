@@ -1,6 +1,7 @@
+import mongoose from "mongoose";
+
 import type { Server } from "http";
 import type { Logger } from "pino";
-import mongoose from "mongoose";
 
 let processHandlersRegistered = false;
 let mongooseHandlersRegistered = false;

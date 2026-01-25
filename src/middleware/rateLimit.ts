@@ -1,8 +1,10 @@
 import rateLimit, { type RateLimitRequestHandler } from "express-rate-limit";
 import { RedisStore } from "rate-limit-redis";
+
 import { connectRedis, redis } from "../config/redis";
 import { auditHttp } from "../utils/audit";
-import { UserRequest } from "./verifyJWT";
+
+import type { UserRequest } from "./verifyJWT";
 
 type CreateLimiterOptions = {
   windowMs: number;

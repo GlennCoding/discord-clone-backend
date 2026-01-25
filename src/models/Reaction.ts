@@ -1,6 +1,8 @@
-import { Types, Document, model, Schema } from "mongoose";
-import { IUser } from "./User";
-import { IChatMessage } from "./ChatMessage";
+import { model, Schema } from "mongoose";
+
+import type { IChatMessage } from "./ChatMessage";
+import type { IUser } from "./User";
+import type { Types, Document} from "mongoose";
 
 export interface IReaction extends Document {
   _id: Types.ObjectId;

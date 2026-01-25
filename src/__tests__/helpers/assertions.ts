@@ -1,4 +1,4 @@
-import { Response } from "supertest";
+import type { Response } from "supertest";
 
 export const expectNotFound = ({ status, body }: Response) => {
   expect(status).toBe(404);

@@ -1,6 +1,8 @@
-import { model, Schema, Types } from "mongoose";
-import { IUser } from "./User";
-import { IChat } from "./Chat";
+import { model, Schema } from "mongoose";
+
+import type { IChat } from "./Chat";
+import type { IUser } from "./User";
+import type { Types } from "mongoose";
 
 interface IAttachment extends Document {
   path: string;

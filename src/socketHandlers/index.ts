@@ -1,4 +1,9 @@
-import { TypedServer, TypedSocket } from "../types/sockets";
+
+import {
+  handleChannelMessagesSubscribe,
+  handleChannelMessagesUnsubscribe,
+  handleIncomingChannelMessage,
+} from "./channelMessageHandlers";
 import {
   handleJoinChat,
   handleLeaveChat,
@@ -8,11 +13,8 @@ import {
   handleServerSubscribe,
   handleServerUnsubscribe,
 } from "./serverHandlers";
-import {
-  handleChannelMessagesSubscribe,
-  handleChannelMessagesUnsubscribe,
-  handleIncomingChannelMessage,
-} from "./channelMessageHandlers";
+
+import type { TypedServer, TypedSocket } from "../types/sockets";
 
 const onConnection = (_: TypedServer, socket: TypedSocket) => {
   socket.on("chat:join", (chatId: string, ack: any) =>

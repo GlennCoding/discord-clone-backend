@@ -1,8 +1,11 @@
 // src/middleware/errorMiddleware.ts
-import { ErrorRequestHandler, Request, Response, NextFunction } from "express";
-import { CustomError } from "../utils/errors";
+
 import multer from "multer";
-import { UserRequest } from "./verifyJWT";
+
+import { CustomError } from "../utils/errors";
+
+import type { UserRequest } from "./verifyJWT";
+import type { ErrorRequestHandler, Request, Response, NextFunction } from "express";
 
 const getRequestContext = (request: Request | UserRequest) => ({
   userId: "userId" in request ? request.userId : undefined,
