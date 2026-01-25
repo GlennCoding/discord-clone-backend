@@ -30,7 +30,7 @@ import { buildObjectKey } from "../utils/storage";
 import { auditHttp } from "../utils/audit";
 import z from "zod";
 import { parseWithSchema } from "../utils/validators";
-import { chatMessageService } from "../container";
+import { chatMessageAttachmentService } from "../container";
 
 const getChat = async (chatId: string | undefined, userId: string) => {
   // is user part of chat? -> Chat.find()
@@ -130,7 +130,7 @@ export const deleteMessageAttachment = async (
     req.body,
   );
 
-  await chatMessageService.deleteChatMessageAttachment({
+  await chatMessageAttachmentService.deleteChatMessageAttachment({
     userId: req.userId as string,
     messageId,
     attachmentPath,

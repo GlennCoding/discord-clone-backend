@@ -7,7 +7,7 @@ import { ChatMessageEntity } from "../types/entities";
 import { buildObjectKey } from "../utils/storage";
 import { ChatRepository } from "../repositories/chatRepository";
 
-interface IChatMessageService {
+interface IChatMessageAttachmentService {
   saveMessageAttachment: (input: {
     userId: string;
     file: Express.Multer.File;
@@ -21,7 +21,7 @@ interface IChatMessageService {
   }) => Promise<void>;
 }
 
-class ChatMessageService implements IChatMessageService {
+class ChatMessageAttachmentService implements IChatMessageAttachmentService {
   constructor(
     private user: UserRepository,
     private chat: ChatRepository,
@@ -104,4 +104,4 @@ class ChatMessageService implements IChatMessageService {
   }
 }
 
-export default ChatMessageService;
+export default ChatMessageAttachmentService;
