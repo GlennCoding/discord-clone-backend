@@ -39,7 +39,7 @@
     "file-type": "^21.0.0",
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.20.0",
-    "mongoose": "^8.18.1",
+    "mongoose": "^8.21.1",
     "multer": "^2.0.2",
     "pino": "^10.2.0",
     "pino-http": "^11.0.0",
