@@ -53,14 +53,21 @@ const verifyText = (text?: string) => {
   if (typeof text !== "string") throw new CustomError(400, "text must be string");
 };
 
+const saveMessageAttachmentPayloadSchema = z.object({
+  chatId: z.string(),
+  text: z.string().optional(),
+});
+
 export const saveMessageAttachment = async (
   req: UserRequest<SaveMessageAttachmentInput>,
   res: Response,
 ) => {
-  const { file, body, userId } = req;
-  const { chatId, text } = body;
+  const { file, userId } = req;
 
-  // verify request
+  const { chatId, text } = parseWithSchema(
+    saveMessageAttachmentPayloadSchema,
+    req.body,
+  );
   if (!file) throw new InputMissingError("File");
 
   const user = await findUserWithUserId(req.userId as string);
