@@ -4,8 +4,7 @@ import { UserRepository } from "../repositories/userRepository";
 import { UserNotFoundError, NotFoundError, ForbiddenError } from "../utils/errors";
 import { idsEqual } from "../utils/helper";
 import { ChatMessageEntity } from "../types/entities";
-import { buildObjectKey } from "../utils/storagePaths";
-import { uploadFileToBucket, deleteFileFromBucket } from "./storageService";
+import { buildObjectKey } from "../utils/storage";
 import { ChatRepository } from "../repositories/chatRepository";
 
 interface IChatMessageService {
@@ -48,8 +47,8 @@ class ChatMessageService implements IChatMessageService {
     if (!userIsParticipant)
       throw new ForbiddenError("User is not part of this chat");
 
-    const fileName = buildObjectKey("message-attachment", user.id, file.mimetype);
-    const downloadUrl = await uploadFileToBucket(file, fileName, file.mimetype);
+    const fileKey = buildObjectKey("message-attachment", user.id, file.mimetype);
+    const downloadUrl = await this.fileStorage.upload(file, fileKey, file.mimetype);
 
     let newMessage: ChatMessageEntity;
 
@@ -58,10 +57,10 @@ class ChatMessageService implements IChatMessageService {
         chatId: chat.id,
         senderId: userId,
         text,
-        attachments: [{ path: fileName, downloadUrl }],
+        attachments: [{ path: fileKey, downloadUrl }],
       });
     } catch (err) {
-      deleteFileFromBucket(fileName);
+      this.fileStorage.deleteObject(fileKey);
       throw err;
     }
 
@@ -91,7 +90,7 @@ class ChatMessageService implements IChatMessageService {
     );
     if (!attachmentExists) return;
 
-    await this.fileStorage.delete(attachmentPath);
+    await this.fileStorage.deleteObject(attachmentPath);
 
     const newAttachments = message.attachments.filter(
       (a) => a.path !== attachmentPath,
