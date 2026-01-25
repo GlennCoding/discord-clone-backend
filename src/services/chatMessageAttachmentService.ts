@@ -80,7 +80,7 @@ class ChatMessageAttachmentService implements IChatMessageAttachmentService {
     const message = await this.chatMessage.findById(messageId);
     if (!message) throw new NotFoundError("Message");
 
-    if (!idsEqual(message.senderId, userId))
+    if (!idsEqual(message.sender.id, userId))
       throw new ForbiddenError("User is not the sender of this message");
 
     if (!message.attachments?.length) return;

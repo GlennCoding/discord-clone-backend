@@ -20,9 +20,13 @@ export type ChatEntity = {
 export type ChatMessageEntity = {
   id: string;
   chatId: string;
-  senderId: string;
+  sender: {
+    id: string;
+    username: string;
+    avatarUrl: string | undefined;
+  };
   createdAt: Date;
   updatedAt?: Date;
   text: string;
-  attachments?: { path: string; downloadUrl: string }[];
+  attachments: { path: string; downloadUrl: string }[] | undefined;
 };

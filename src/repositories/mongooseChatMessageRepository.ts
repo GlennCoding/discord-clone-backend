@@ -1,15 +1,17 @@
 import { ChatMessageRepository } from "./chatMessageRepository";
-import ChatMessage, { IChatMessage } from "../models/ChatMessage";
+import ChatMessage from "../models/ChatMessage";
 import { ChatMessageEntity } from "../types/entities";
-import { FlattenMaps } from "mongoose";
+import { PopulatedChatMessage } from "../types/misc";
 
-const mapMessageDocToEntity = (
-  doc: IChatMessage | FlattenMaps<IChatMessage>,
-): ChatMessageEntity => {
+const map = (doc: PopulatedChatMessage): ChatMessageEntity => {
   return {
     id: doc._id.toString(),
     chatId: doc.chat._id.toString(),
-    senderId: doc.sender._id.toString(),
+    sender: {
+      id: doc.sender._id.toString(),
+      username: doc.sender.userName,
+      avatarUrl: doc.sender.avatar?.url,
+    },
     text: doc.text ?? undefined,
     attachments:
       doc.attachments?.map((a) => ({
@@ -23,8 +25,10 @@ const mapMessageDocToEntity = (
 
 class MongooseChatMessageRepository implements ChatMessageRepository {
   async findById(id: string) {
-    const doc = await ChatMessage.findById(id).lean();
-    return doc ? mapMessageDocToEntity(doc) : null;
+    const doc = await ChatMessage.findById(id)
+      .populate("sender", "userName avatar")
+      .lean<PopulatedChatMessage | null>();
+    return doc ? map(doc) : null;
   }
 
   async deleteById(id: string) {
@@ -38,13 +42,19 @@ class MongooseChatMessageRepository implements ChatMessageRepository {
     attachments: Array<{ path: string; downloadUrl: string }>;
   }) {
     const { chatId, senderId, text, attachments } = newMessage;
-    const message = await new ChatMessage({
+    const saved = await new ChatMessage({
       chat: chatId,
       sender: senderId,
       text: text,
       attachments,
     }).save();
-    return mapMessageDocToEntity(message);
+    const doc = await ChatMessage.findById(saved._id)
+      .populate("sender", "userName avatar")
+      .lean<PopulatedChatMessage | null>();
+
+    if (!doc) throw new Error("Created message not found after save");
+
+    return map(doc);
   }
 
   async updateAttachments(
