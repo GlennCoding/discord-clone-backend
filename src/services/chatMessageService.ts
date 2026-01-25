@@ -1,19 +1,12 @@
 import { FileStorage } from "../infrastructure/FileStorage";
 import { ChatMessageRepository } from "../repositories/chatMessageRepository";
 import { UserRepository } from "../repositories/userRepository";
-import {
-  UserNotFoundError,
-  NotFoundError,
-  ForbiddenError,
-  CustomError,
-} from "../utils/errors";
+import { UserNotFoundError, NotFoundError, ForbiddenError } from "../utils/errors";
 import { idsEqual } from "../utils/helper";
 import { ChatMessageEntity } from "../types/entities";
 import { buildObjectKey } from "../utils/storagePaths";
-import Message from "../models/ChatMessage";
-import mongoose from "mongoose";
-import Chat from "../models/Chat";
 import { uploadFileToBucket, deleteFileFromBucket } from "./storageService";
+import { ChatRepository } from "../repositories/chatRepository";
 
 interface IChatMessageService {
   saveMessageAttachment: (input: {
@@ -29,25 +22,10 @@ interface IChatMessageService {
   }) => Promise<void>;
 }
 
-const getChat = async (chatId: string | undefined, userId: string) => {
-  // is user part of chat? -> Chat.find()
-  const foundChat = await Chat.findOne({ _id: chatId });
-  if (!foundChat) throw new CustomError(400, "Chat doesn't exist");
-
-  const userIsParticipant = foundChat.participants.some((participant) =>
-    idsEqual(participant, new mongoose.Types.ObjectId(userId)),
-  );
-
-  if (!userIsParticipant) {
-    throw new CustomError(403, "User is not part of this chat");
-  }
-
-  return foundChat;
-};
-
 class ChatMessageService implements IChatMessageService {
   constructor(
     private user: UserRepository,
+    private chat: ChatRepository,
     private chatMessage: ChatMessageRepository,
     private fileStorage: FileStorage,
   ) {}
@@ -63,9 +41,13 @@ class ChatMessageService implements IChatMessageService {
     const user = await this.user.findById(userId);
     if (!user) throw new UserNotFoundError();
 
-    const chat = await getChat(chatId, userId);
+    const chat = await this.chat.findById(chatId);
+    if (!chat) throw new NotFoundError("Chat");
 
-    // upload file
+    const userIsParticipant = chat.participantIds.some((id) => idsEqual(id, userId));
+    if (!userIsParticipant)
+      throw new ForbiddenError("User is not part of this chat");
+
     const fileName = buildObjectKey("message-attachment", user.id, file.mimetype);
     const downloadUrl = await uploadFileToBucket(file, fileName, file.mimetype);
 
@@ -73,7 +55,7 @@ class ChatMessageService implements IChatMessageService {
 
     try {
       newMessage = await this.chatMessage.create({
-        chatId: chat._id.toString(),
+        chatId: chat.id,
         senderId: userId,
         text,
         attachments: [{ path: fileName, downloadUrl }],
