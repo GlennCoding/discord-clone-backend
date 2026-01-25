@@ -26,7 +26,7 @@ import {
   MAX_MESSAGE_ATTACHMENT_FILE_SIZE_BYTES,
 } from "../config/upload";
 import { validateUploadedFile } from "../utils/fileValidation";
-import { buildObjectKey } from "../utils/storagePaths";
+import { buildObjectKey } from "../utils/storage";
 import { auditHttp } from "../utils/audit";
 import z from "zod";
 import { parseWithSchema } from "../utils/validators";
