@@ -1,18 +1,13 @@
 import { bucket } from "../config/storage";
-import { env } from "../utils/env";
 import { isProdOrProdLocalEnv } from "../utils/helper";
-
-export const getLocalUrl = (bucketName: string, blobName: string): string => {
-  const encodedBlobName = encodeURIComponent(blobName);
-  return `${env.GCS_PUBLIC_URL}/storage/v1/b/${bucketName}/o/${encodedBlobName}?alt=media`;
-};
+import { getLocalUrl } from "../utils/storage";
 
 const UPLOAD_TIMEOUT_MS = 15_000; // 15 seconds
 
 export const uploadFileToBucket = async (
   file: Express.Multer.File,
   fileName: string,
-  contentType: string
+  contentType: string,
 ): Promise<string> => {
   const blob = bucket.file(fileName);
   const blobStream = blob.createWriteStream({

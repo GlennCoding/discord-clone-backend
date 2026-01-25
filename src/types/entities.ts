@@ -10,12 +10,23 @@ export type UserEntity = {
   refreshTokens?: string[];
 };
 
+export type ChatEntity = {
+  id: string;
+  participantIds: string[];
+  createdAt: Date;
+  updatedAt?: Date;
+};
+
 export type ChatMessageEntity = {
   id: string;
   chatId: string;
-  senderId: string;
+  sender: {
+    id: string;
+    username: string;
+    avatarUrl: string | undefined;
+  };
   createdAt: Date;
   updatedAt?: Date;
   text: string;
-  attachments?: { path: string; downloadUrl: string }[];
+  attachments: { path: string; downloadUrl: string }[] | undefined;
 };

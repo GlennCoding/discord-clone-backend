@@ -4,9 +4,8 @@ import { IChannel } from "../models/Channel";
 import { IMember } from "../models/Member";
 import { IUser } from "../models/User";
 
-export type PopulatedMessage = IChatMessage & {
+export type PopulatedChatMessage = IChatMessage & {
   sender: IUser;
-  chat: { _id: string | object };
 };
 
 export type PopulatedChannelMessage = IChannelMessage & {

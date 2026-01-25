@@ -14,7 +14,7 @@ import {
   MAX_PROFILE_IMAGE_FILE_SIZE_BYTES,
 } from "../config/upload";
 import { validateUploadedFile } from "../utils/fileValidation";
-import { buildObjectKey } from "../utils/storagePaths";
+import { buildObjectKey } from "../utils/storage";
 import { auditHttp } from "../utils/audit";
 
 export const getProfile = async (req: UserRequest, res: Response) => {
