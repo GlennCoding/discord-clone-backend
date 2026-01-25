@@ -3,6 +3,7 @@ const tsParser = require("@typescript-eslint/parser");
 const tsPlugin = require("@typescript-eslint/eslint-plugin");
 const globals = require("globals");
 const eslintConfigPrettier = require("eslint-config-prettier");
+const importPlugin = require("eslint-plugin-import");
 
 module.exports = [
   {
@@ -25,6 +26,7 @@ module.exports = [
     },
     plugins: {
       "@typescript-eslint": tsPlugin,
+      import: importPlugin,
     },
     rules: {
       "@typescript-eslint/consistent-type-imports": [
@@ -33,6 +35,31 @@ module.exports = [
       ],
       "@typescript-eslint/no-floating-promises": "warn",
       "@typescript-eslint/require-await": "warn",
+      "import/order": [
+        "warn",
+        {
+          groups: [
+            "builtin",
+            "external",
+            "internal",
+            "parent",
+            "sibling",
+            "index",
+            "object",
+            "type",
+          ],
+          pathGroups: [
+            {
+              pattern: "src/**",
+              group: "internal",
+              position: "before",
+            },
+          ],
+          pathGroupsExcludedImportTypes: ["builtin"],
+          "newlines-between": "always",
+          alphabetize: { order: "asc", caseInsensitive: true },
+        },
+      ],
     },
   },
   {
