@@ -2,6 +2,7 @@ const path = require("path");
 const tsParser = require("@typescript-eslint/parser");
 const tsPlugin = require("@typescript-eslint/eslint-plugin");
 const globals = require("globals");
+const eslintConfigPrettier = require("eslint-config-prettier");
 
 module.exports = [
   {
@@ -64,5 +65,9 @@ module.exports = [
       "@typescript-eslint/no-unsafe-member-access": "off",
       "@typescript-eslint/no-unsafe-call": "off",
     },
+  },
+  // Disable formatting-related rules so Prettier owns formatting concerns
+  {
+    ...eslintConfigPrettier,
   },
 ];

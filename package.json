@@ -12,7 +12,9 @@
     "start": "node dist/server.js",
     "start:prod": "NODE_ENV=production.local ts-node-dev --respawn --transpile-only src/server.ts",
     "lint": "eslint \"src/**/*.{ts,tsx}\"",
-    "lint:fix": "pnpm lint -- --fix"
+    "lint:fix": "pnpm lint -- --fix",
+    "format": "prettier --check \"**/*.{ts,tsx,js,json,md}\"",
+    "format:fix": "prettier --write \"**/*.{ts,tsx,js,json,md}\""
   },
   "repository": {
     "type": "git",
