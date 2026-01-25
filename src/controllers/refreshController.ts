@@ -1,5 +1,13 @@
-import { Response } from "express";
 import jwt from "jsonwebtoken";
+
+import {
+  clearAccessTokenCookie,
+  clearRefreshTokenCookie,
+  REFRESH_TOKEN_COOKIE_NAME,
+  setAccessTokenCookie,
+  setRefreshTokenCookie,
+  setSsrAccessTokenCookie,
+} from "../config/tokenCookies";
 import {
   issueAccessToken,
   issueRefreshToken,
@@ -10,19 +18,13 @@ import {
   removeAllUserRefreshTokens,
   saveUserRefreshToken,
 } from "../services/userService";
+import { auditHttp } from "../utils/audit";
 import { env } from "../utils/env";
 import { CustomError, RefreshtokenNotFoundError } from "../utils/errors";
-import {
-  clearAccessTokenCookie,
-  clearRefreshTokenCookie,
-  REFRESH_TOKEN_COOKIE_NAME,
-  setAccessTokenCookie,
-  setRefreshTokenCookie,
-  setSsrAccessTokenCookie,
-} from "../config/tokenCookies";
-import { RefreshInput } from "../types/dto";
-import { auditHttp } from "../utils/audit";
-import { UserRequest } from "../middleware/verifyJWT";
+
+import type { UserRequest } from "../middleware/verifyJWT";
+import type { RefreshInput } from "../types/dto";
+import type { Response } from "express";
 
 export const handleRefreshToken = async (
   req: UserRequest<RefreshInput>,

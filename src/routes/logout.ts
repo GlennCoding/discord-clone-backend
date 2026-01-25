@@ -1,4 +1,5 @@
 import { Router } from "express";
+
 import { handleLogout } from "../controllers/logoutController";
 import { asyncHandler } from "../utils/asyncHandler";
 

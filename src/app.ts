@@ -1,30 +1,31 @@
 import "./config/loadEnvironment";
-import express, { Router } from "express";
-import cors from "cors";
 import http from "http";
 
-import rootRouter from "./routes/root";
-import authRouter from "./routes/auth";
-import refreshRouter from "./routes/refresh";
-import logoutRouter from "./routes/logout";
-import registerRouter from "./routes/register";
-import profileRouter from "./routes/api/profile";
-import meRouter from "./routes/api/me";
-import messagesRouter from "./routes/api/messages";
-import serverRouter from "./routes/api/servers";
-import chatRouter from "./routes/api/chats";
-import channelRouter from "./routes/api/channels";
-import verifyJWT from "./middleware/verifyJWT";
-import verifySsrJwt from "./middleware/verifySsrJwt";
 import cookieParser from "cookie-parser";
-import credentials from "./middleware/credentials";
+import cors from "cors";
+import express from "express";
+
 import corsOptions from "./config/corsOptions";
+import credentials from "./middleware/credentials";
 import { errorMiddleware } from "./middleware/errorMiddleware";
-import { initSocket } from "./sockets";
-import { NotFoundError } from "./utils/errors";
-import ssrServerRouter from "./routes/ssr/server";
 import { attachUserIdToHttpLogger, httpLogger } from "./middleware/httpLogging";
 import { globalLimiter } from "./middleware/rateLimit";
+import verifyJWT from "./middleware/verifyJWT";
+import verifySsrJwt from "./middleware/verifySsrJwt";
+import channelRouter from "./routes/api/channels";
+import chatRouter from "./routes/api/chats";
+import meRouter from "./routes/api/me";
+import messagesRouter from "./routes/api/messages";
+import profileRouter from "./routes/api/profile";
+import serverRouter from "./routes/api/servers";
+import authRouter from "./routes/auth";
+import logoutRouter from "./routes/logout";
+import refreshRouter from "./routes/refresh";
+import registerRouter from "./routes/register";
+import rootRouter from "./routes/root";
+import ssrServerRouter from "./routes/ssr/server";
+import { initSocket } from "./sockets";
+import { NotFoundError } from "./utils/errors";
 
 // Initialize Express app
 const app = express();

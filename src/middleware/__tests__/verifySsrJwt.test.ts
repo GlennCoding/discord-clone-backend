@@ -1,6 +1,7 @@
+import jwt from "jsonwebtoken";
+
 import { SSR_ACCESS_TOKEN_COOKIE_NAME } from "../../config/tokenCookies";
 import verifySsrJwt from "../verifySsrJwt";
-import jwt from "jsonwebtoken";
 
 vi.mock("jsonwebtoken");
 

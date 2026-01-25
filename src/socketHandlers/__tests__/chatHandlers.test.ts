@@ -1,17 +1,22 @@
 import request from "supertest";
-import { app } from "../../app";
-import User, { IUser } from "../../models/User";
-import { ERROR_STATUS, EVENT_ERROR } from "../../types/sockets";
-import Message from "../../models/ChatMessage";
-import { issueAccessToken } from "../../services/authService";
-import { TypedClientSocket } from "../../types/sockets";
-import { MessageDTO } from "../../types/dto";
+
 import { buildAccessTokenCookie } from "../../__tests__/helpers/cookies";
+import { app } from "../../app";
+import Message from "../../models/ChatMessage";
+import User from "../../models/User";
+import { issueAccessToken } from "../../services/authService";
+import { ERROR_STATUS, EVENT_ERROR } from "../../types/sockets";
+
 import {
   acquireSocketServer,
   releaseSocketServer,
   connectSocketWithToken,
 } from "./helpers/socketTestUtils";
+
+import type { IUser } from "../../models/User";
+import type { MessageDTO } from "../../types/dto";
+import type { TypedClientSocket } from "../../types/sockets";
+
 
 type UserData = {
   userName: string;

@@ -1,22 +1,24 @@
-import { Request, Response } from "express";
+
 import {
-  createUser,
-  findUserWithUserName,
-  saveUserRefreshToken,
-} from "../services/userService";
+  setAccessTokenCookie,
+  setRefreshTokenCookie,
+  setSsrAccessTokenCookie,
+} from "../config/tokenCookies";
 import {
   issueAccessToken,
   issueAuthTokens,
   issueRefreshToken,
   issueSsrAccessToken,
 } from "../services/authService";
-import { CustomError, UsernameIsTakenError } from "../utils/errors";
 import {
-  setAccessTokenCookie,
-  setRefreshTokenCookie,
-  setSsrAccessTokenCookie,
-} from "../config/tokenCookies";
-import { RegisterDTO } from "../types/dto";
+  createUser,
+  findUserWithUserName,
+  saveUserRefreshToken,
+} from "../services/userService";
+import { CustomError, UsernameIsTakenError } from "../utils/errors";
+
+import type { RegisterDTO } from "../types/dto";
+import type { Request, Response } from "express";
 
 export const handleRegister = async (req: Request, res: Response<RegisterDTO>) => {
   const { userName, password } = req.body;

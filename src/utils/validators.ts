@@ -1,5 +1,7 @@
 import { CustomError } from "./errors";
-import { ZodSchema } from "zod";
+
+import type { ZodSchema } from "zod";
+
 
 export function validateStatus(status: any) {
   const MAX_STATUS_LENGTH = 200;

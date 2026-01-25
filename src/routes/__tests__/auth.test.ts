@@ -1,7 +1,8 @@
+import jwt from "jsonwebtoken";
 import request from "supertest";
+
 import { app } from "../../app";
 import User from "../../models/User";
-import jwt from "jsonwebtoken";
 
 describe("/register", () => {
   beforeEach(async () => {

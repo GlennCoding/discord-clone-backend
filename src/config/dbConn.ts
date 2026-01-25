@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+
 import { env } from "../utils/env";
 
 const connectDB = async () => {

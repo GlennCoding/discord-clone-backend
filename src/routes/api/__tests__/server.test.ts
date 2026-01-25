@@ -1,20 +1,6 @@
-import request from "supertest";
 import { Types } from "mongoose";
-import User, { IUser } from "../../../models/User";
-import { issueAccessToken } from "../../../services/authService";
-import { app } from "../../../app";
-import {
-  CreateServerInput,
-  ServerDTO,
-  ServerListDTO,
-  UpdateServerInput,
-  JoinServerDTO,
-} from "../../../types/dto";
-import Server, { IServer } from "../../../models/Server";
-import Member, { IMember } from "../../../models/Member";
-import Role, { IRole } from "../../../models/Role";
-import Channel from "../../../models/Channel";
-import ChannelMessage from "../../../models/ChannelMessage";
+import request from "supertest";
+
 import {
   expectBadRequest,
   expectNotFound,
@@ -22,7 +8,27 @@ import {
   expectUnauthorized,
 } from "../../../__tests__/helpers/assertions";
 import { buildAccessTokenCookie } from "../../../__tests__/helpers/cookies";
+import { app } from "../../../app";
+import Channel from "../../../models/Channel";
+import ChannelMessage from "../../../models/ChannelMessage";
+import Member from "../../../models/Member";
+import Role from "../../../models/Role";
+import Server from "../../../models/Server";
+import User from "../../../models/User";
+import { issueAccessToken } from "../../../services/authService";
 import { generateUniqueShortId } from "../../../services/serverService";
+
+import type { IMember } from "../../../models/Member";
+import type { IRole } from "../../../models/Role";
+import type { IServer } from "../../../models/Server";
+import type { IUser } from "../../../models/User";
+import type {
+  CreateServerInput,
+  ServerDTO,
+  ServerListDTO,
+  UpdateServerInput,
+  JoinServerDTO,
+} from "../../../types/dto";
 
 let ownerToken: string;
 let otherUserToken: string;
@@ -39,13 +45,7 @@ const server1Data = {
   description: "Server description",
 };
 
-const createServer = async ({
-  owner,
-  isPublic = true,
-}: {
-  owner: IUser;
-  isPublic?: boolean;
-}) => {
+const createServer = async ({ owner, isPublic = true }: { owner: IUser; isPublic?: boolean }) => {
   const shortId = await generateUniqueShortId();
   const newServer = await Server.create({
     name: shortId,
@@ -61,7 +61,7 @@ const createServer = async ({
 const addMemberToServer = async (
   server: IServer,
   user: IUser,
-  roles?: IRole[]
+  roles?: IRole[],
 ): Promise<IMember> => {
   return await Member.create({ user, server, roles });
 };
@@ -188,9 +188,7 @@ describe("/server", () => {
     expect(data.servers).toHaveLength(2);
 
     const returnedShortIds = data.servers.map((server) => server.shortId);
-    expect(returnedShortIds).toEqual(
-      expect.arrayContaining([server1.shortId, server2.shortId])
-    );
+    expect(returnedShortIds).toEqual(expect.arrayContaining([server1.shortId, server2.shortId]));
   });
 
   it("lists all servers the user has joined", async () => {
@@ -207,9 +205,7 @@ describe("/server", () => {
     expect(data.servers).toHaveLength(2);
 
     const returnedShortIds = data.servers.map((server) => server.shortId);
-    expect(returnedShortIds).toEqual(
-      expect.arrayContaining([server1.shortId, server2.shortId])
-    );
+    expect(returnedShortIds).toEqual(expect.arrayContaining([server1.shortId, server2.shortId]));
   });
 
   it("returns detailed data for a server the user has joined", async () => {
@@ -225,7 +221,7 @@ describe("/server", () => {
       name: "Channel 2",
       order: 2,
     });
-    addMemberToServer(server2, user1, [role]);
+    await addMemberToServer(server2, user1, [role]);
 
     const { status, body } = await request(app)
       .get(`/server/${server2.shortId}`)
@@ -246,7 +242,7 @@ describe("/server", () => {
       expect.arrayContaining([
         { name: user1.userName, roles: [role.name] },
         { name: user2.userName, roles: [] },
-      ])
+      ]),
     );
   });
 
@@ -264,7 +260,7 @@ describe("/server", () => {
       order: 2,
       disallowedRoles: [role],
     });
-    addMemberToServer(server2, user1, [role]);
+    await addMemberToServer(server2, user1, [role]);
 
     const { status, body } = await request(app)
       .get(`/server/${server2.shortId}`)
@@ -273,9 +269,7 @@ describe("/server", () => {
     expect(status).toBe(200);
 
     const data = body as ServerDTO;
-    expect(data.channels).toEqual([
-      { id: channel.id, name: channel.name, order: channel.order },
-    ]);
+    expect(data.channels).toEqual([{ id: channel.id, name: channel.name, order: channel.order }]);
   });
 
   it("joins a public server and creates a membership", async () => {

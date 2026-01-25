@@ -1,13 +1,20 @@
-import mongoose, { Types } from "mongoose";
-import Channel, { IChannel } from "../models/Channel";
-import Member, { IMember } from "../models/Member";
-import Role, { IRole, RolePermission } from "../models/Role";
-import Server, { IServer } from "../models/Server";
-import { ServerListItemDTO, ChannelDTO, MemberDTO } from "../types/dto";
-import { CustomError, NotFoundError } from "../utils/errors";
+import mongoose from "mongoose";
+
+import Channel from "../models/Channel";
+import ChannelMessage from "../models/ChannelMessage";
+import Member from "../models/Member";
+import Role from "../models/Role";
+import Server from "../models/Server";
+import { CustomError } from "../utils/errors";
 import { ensureParam } from "../utils/helper";
 import { randomShortId } from "../utils/ids";
-import ChannelMessage from "../models/ChannelMessage";
+
+import type { IChannel } from "../models/Channel";
+import type { IMember } from "../models/Member";
+import type { IRole, RolePermission } from "../models/Role";
+import type { IServer } from "../models/Server";
+import type { ServerListItemDTO, ChannelDTO, MemberDTO } from "../types/dto";
+import type { Types } from "mongoose";
 
 export const ensureShortId = (shortIdParam: string | undefined) => {
   const shortId = ensureParam("shortId", shortIdParam).toUpperCase();
@@ -26,10 +33,7 @@ export const generateUniqueShortId = async (): Promise<string> => {
   return shortId;
 };
 
-export const checkPermissionInRoles = (
-  roles: IRole[],
-  permission: RolePermission
-) => {
+export const checkPermissionInRoles = (roles: IRole[], permission: RolePermission) => {
   for (const role of roles) {
     const hasPermission = role.permissions.some((p) => p === permission);
     if (hasPermission) return true;
@@ -48,24 +52,20 @@ export const toServerListItemDTO = (servers: IServer[]): ServerListItemDTO[] => 
 
 const checkIfMemberRolesIncludedInDisallowedRoles = (
   disAllowedRoles: IRole[],
-  memberRoles: IRole[]
+  memberRoles: IRole[],
 ) => {
   for (const disallowedRole of disAllowedRoles) {
-    if (memberRoles.some((memberRole) => memberRole.id === disallowedRole.id))
-      return true;
+    if (memberRoles.some((memberRole) => memberRole.id === disallowedRole.id)) return true;
   }
   return false;
 };
 
-export const filterDisallowedRolesOfChannels = (
-  channels: IChannel[],
-  memberRoles: IRole[]
-) => {
+export const filterDisallowedRolesOfChannels = (channels: IChannel[], memberRoles: IRole[]) => {
   const allowedChannels: IChannel[] = [];
   for (const c of channels) {
     const memberHasNoAccessToChannel = checkIfMemberRolesIncludedInDisallowedRoles(
       c.disallowedRoles,
-      memberRoles
+      memberRoles,
     );
     if (memberHasNoAccessToChannel) continue;
 
@@ -89,10 +89,7 @@ export const toMemberDTO = ({ roles, user, nickname }: IMember): MemberDTO => ({
 export const getAllChannelIdsOfServer = async (serverId: string) =>
   await Channel.find({ server: serverId }).distinct("_id");
 
-export const deleteServerInDB = async (
-  serverId: string,
-  channelIds: Types.ObjectId[]
-) => {
+export const deleteServerInDB = async (serverId: string, channelIds: Types.ObjectId[]) => {
   const session = await mongoose.startSession();
   try {
     await session.withTransaction(async () => {

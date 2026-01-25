@@ -1,13 +1,16 @@
-import Message from "../models/ChatMessage";
 import Chat from "../models/Chat";
-import { IUser } from "../models/User";
+import Message from "../models/ChatMessage";
 import { ERROR_STATUS, EVENT_ERROR } from "../types/sockets";
-import { EventControllerWithAck, EventControllerWithoutAck } from "../types/sockets";
 import { toMessageDTO } from "../utils/dtos/messageDTO";
 
-export const handleIncomingNewMessage: EventControllerWithAck<
-  "message:send"
-> = async (socket, payload, ack) => {
+import type { IUser } from "../models/User";
+import type { EventControllerWithAck, EventControllerWithoutAck } from "../types/sockets";
+
+export const handleIncomingNewMessage: EventControllerWithAck<"message:send"> = async (
+  socket,
+  payload,
+  ack,
+) => {
   const currentUserId = socket.data.userId as string;
 
   const { chatId, text } = payload;
@@ -17,7 +20,7 @@ export const handleIncomingNewMessage: EventControllerWithAck<
         new EVENT_ERROR({
           error: ERROR_STATUS["BAD_REQUEST"],
           message: "Text input is missing",
-        })
+        }),
       );
       return;
     }
@@ -25,9 +28,7 @@ export const handleIncomingNewMessage: EventControllerWithAck<
     const chat = await Chat.findOne({ _id: chatId }).populate<{
       participants: IUser[];
     }>("participants", "userName");
-    const participant = chat?.participants.find(
-      (p) => p.id.toString() !== socket.data.userId
-    );
+    const participant = chat?.participants.find((p) => p.id.toString() !== socket.data.userId);
 
     if (!participant) {
       ack({
@@ -72,11 +73,7 @@ export const handleIncomingNewMessage: EventControllerWithAck<
   }
 };
 
-export const handleJoinChat: EventControllerWithAck<"chat:join"> = async (
-  socket,
-  chatId,
-  ack
-) => {
+export const handleJoinChat: EventControllerWithAck<"chat:join"> = async (socket, chatId, ack) => {
   const currentUserId = socket.data.userId as string;
   try {
     const chat = await Chat.findOne({ _id: chatId }).populate<{
@@ -112,7 +109,7 @@ export const handleJoinChat: EventControllerWithAck<"chat:join"> = async (
       return;
     }
 
-    socket.join(chatId);
+    void socket.join(chatId);
 
     const messages = await Message.find({ chat: chatId })
       .populate<{ sender: IUser }>("sender", "userName avatar")
@@ -137,9 +134,6 @@ export const handleJoinChat: EventControllerWithAck<"chat:join"> = async (
   }
 };
 
-export const handleLeaveChat: EventControllerWithoutAck<"chat:leave"> = (
-  socket,
-  chatId
-) => {
-  socket.leave(chatId);
+export const handleLeaveChat: EventControllerWithoutAck<"chat:leave"> = (socket, chatId) => {
+  void socket.leave(chatId);
 };

@@ -1,12 +1,13 @@
 import { Router } from "express";
-import { asyncHandler } from "../../utils/asyncHandler";
+import multer from "multer";
+
+import { MAX_MESSAGE_ATTACHMENT_FILE_SIZE_BYTES } from "../../config/upload";
 import {
   deleteMessageAttachment,
   saveMessageAttachment,
 } from "../../controllers/messageController";
-import multer from "multer";
-import { MAX_MESSAGE_ATTACHMENT_FILE_SIZE_BYTES } from "../../config/upload";
 import { uploadMessageAttachmentLimiter } from "../../middleware/rateLimit";
+import { asyncHandler } from "../../utils/asyncHandler";
 
 const router = Router();
 

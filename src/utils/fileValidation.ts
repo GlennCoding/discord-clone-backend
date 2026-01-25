@@ -1,4 +1,5 @@
 import { fileTypeFromBuffer } from "file-type";
+
 import { CustomError } from "./errors";
 
 interface FileValidationOptions {

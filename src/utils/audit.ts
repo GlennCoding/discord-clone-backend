@@ -1,6 +1,7 @@
 import { logger } from "../config/logger";
-import { UserRequest } from "../middleware/verifyJWT";
-import { TypedSocket } from "../types/sockets";
+
+import type { UserRequest } from "../middleware/verifyJWT";
+import type { TypedSocket } from "../types/sockets";
 
 export type AuditAction =
   | "AUTH_LOGIN_SUCCESS"

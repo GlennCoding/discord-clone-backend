@@ -1,10 +1,11 @@
 import { Router } from "express";
-import { asyncHandler } from "../../utils/asyncHandler";
+
 import {
   createChannel,
   updateChannel,
   deleteChannel,
 } from "../../controllers/channelController";
+import { asyncHandler } from "../../utils/asyncHandler";
 
 const router = Router();
 

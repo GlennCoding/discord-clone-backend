@@ -1,7 +1,8 @@
-import { describe, expect, it, vi } from "vitest";
 import multer from "multer";
-import { errorMiddleware } from "../errorMiddleware";
+import { describe, expect, it, vi } from "vitest";
+
 import { CustomError } from "../../utils/errors";
+import { errorMiddleware } from "../errorMiddleware";
 
 const createMockRes = () => {
   const res: any = {};

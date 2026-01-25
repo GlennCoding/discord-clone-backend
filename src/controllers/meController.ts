@@ -1,8 +1,10 @@
-import { Response } from "express";
-import { UserRequest } from "../middleware/verifyJWT";
+
 import { findUserWithUserId } from "../services/userService";
 import { UserNotFoundError } from "../utils/errors";
-import { MeDTO } from "../types/dto";
+
+import type { UserRequest } from "../middleware/verifyJWT";
+import type { MeDTO } from "../types/dto";
+import type { Response } from "express";
 
 export const getMe = async (req: UserRequest, res: Response) => {
   const { userId } = req;

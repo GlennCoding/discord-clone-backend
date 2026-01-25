@@ -1,7 +1,9 @@
-import { ChatMessageRepository } from "./chatMessageRepository";
 import ChatMessage from "../models/ChatMessage";
-import { ChatMessageEntity } from "../types/entities";
-import { PopulatedChatMessage } from "../types/misc";
+
+import type { ChatMessageRepository } from "./chatMessageRepository";
+import type { ChatMessageEntity } from "../types/entities";
+import type { PopulatedChatMessage } from "../types/misc";
+
 
 const map = (doc: PopulatedChatMessage): ChatMessageEntity => {
   return {

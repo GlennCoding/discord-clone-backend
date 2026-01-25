@@ -1,7 +1,6 @@
 import { server } from "./app";
 import { connectDB } from "./config/dbConn";
 import "./config/loadEnvironment";
-import { env } from "./utils/env";
 import "./config/storage";
 import { logger } from "./config/logger";
 import {
@@ -10,6 +9,7 @@ import {
   registerServerHandlers,
 } from "./config/opsLogging";
 import { connectRedis } from "./config/redis";
+import { env } from "./utils/env";
 
 registerProcessHandlers(logger);
 registerMongooseHandlers(logger);
@@ -33,4 +33,4 @@ const start = async () => {
   });
 };
 
-start();
+void start();

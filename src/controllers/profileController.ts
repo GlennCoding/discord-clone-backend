@@ -1,21 +1,23 @@
-import { NextFunction, Response } from "express";
-import { UserRequest } from "../middleware/verifyJWT";
-import { UserNotFoundError, CustomError, InputMissingError } from "../utils/errors";
+
+import {
+  ALLOWED_IMAGE_MIME_TYPES,
+  MAX_PROFILE_IMAGE_FILE_SIZE_BYTES,
+} from "../config/upload";
 import User from "../models/User";
-import { ProfileDTO } from "../types/dto";
-import { validateStatus } from "../utils/validators";
 import {
   deleteProfileImgFromBucket,
   uploadProfileImgToBucket,
 } from "../services/profileService";
 import { findUserWithUserId } from "../services/userService";
-import {
-  ALLOWED_IMAGE_MIME_TYPES,
-  MAX_PROFILE_IMAGE_FILE_SIZE_BYTES,
-} from "../config/upload";
+import { auditHttp } from "../utils/audit";
+import { UserNotFoundError, CustomError, InputMissingError } from "../utils/errors";
 import { validateUploadedFile } from "../utils/fileValidation";
 import { buildObjectKey } from "../utils/storage";
-import { auditHttp } from "../utils/audit";
+import { validateStatus } from "../utils/validators";
+
+import type { UserRequest } from "../middleware/verifyJWT";
+import type { ProfileDTO } from "../types/dto";
+import type { NextFunction, Response } from "express";
 
 export const getProfile = async (req: UserRequest, res: Response) => {
   const user = await findUserWithUserId(req.userId as string);

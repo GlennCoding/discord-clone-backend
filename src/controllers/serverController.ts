@@ -1,25 +1,12 @@
-import { Response } from "express";
-import { UserRequest } from "../middleware/verifyJWT";
+import { isDeepStrictEqual } from "util";
+
 import z from "zod";
-import {
-  CreateServerDTO,
-  CreateServerInput,
-  JoinServerDTO,
-  ServerDTO,
-  ServerListDTO,
-  ServerListItemDTO,
-  UpdateServerDTO,
-  UpdateServerInput,
-  UpdatedServerDTO,
-} from "../types/dto";
-import Server, { IServer } from "../models/Server";
-import { ensureParam, ensureUser } from "../utils/helper";
+
+import { io } from "../app";
+import Channel from "../models/Channel";
 import Member from "../models/Member";
 import { RolePermission } from "../models/Role";
-import Channel from "../models/Channel";
-import { CustomError, NoPermissionError, NotFoundError } from "../utils/errors";
-import { isDeepStrictEqual } from "util";
-import { parseWithSchema } from "../utils/validators";
+import Server from "../models/Server";
 import {
   generateUniqueShortId,
   checkPermissionInRoles,
@@ -31,9 +18,26 @@ import {
   getAllChannelIdsOfServer,
   deleteServerInDB,
 } from "../services/serverService";
-import { io } from "../app";
-import { serverRoom } from "../utils/socketRooms";
 import { auditHttp } from "../utils/audit";
+import { CustomError, NoPermissionError, NotFoundError } from "../utils/errors";
+import { ensureParam, ensureUser } from "../utils/helper";
+import { serverRoom } from "../utils/socketRooms";
+import { parseWithSchema } from "../utils/validators";
+
+import type { UserRequest } from "../middleware/verifyJWT";
+import type { IServer } from "../models/Server";
+import type {
+  CreateServerDTO,
+  CreateServerInput,
+  JoinServerDTO,
+  ServerDTO,
+  ServerListDTO,
+  ServerListItemDTO,
+  UpdateServerDTO,
+  UpdateServerInput,
+  UpdatedServerDTO,
+} from "../types/dto";
+import type { Response } from "express";
 
 const baseServerSchema = z.object({
   name: z.string().trim().min(1, "Name is required"),
@@ -146,20 +150,14 @@ export const deleteServer = async (req: UserRequest, res: Response) => {
   io.to(serverRoom(server.id)).emit("server:deleted", server.id);
 };
 
-export const getAllPublicServers = async (
-  _: UserRequest,
-  res: Response<ServerListDTO>,
-) => {
+export const getAllPublicServers = async (_: UserRequest, res: Response<ServerListDTO>) => {
   const servers = await Server.find({ isPublic: true });
   const serverDTOs: ServerListItemDTO[] = toServerListItemDTO(servers);
 
   res.status(200).json({ servers: serverDTOs });
 };
 
-export const getAllJoinedServers = async (
-  req: UserRequest,
-  res: Response<ServerListDTO>,
-) => {
+export const getAllJoinedServers = async (req: UserRequest, res: Response<ServerListDTO>) => {
   const user = await ensureUser(req.userId);
   const members = await Member.find({ user }).populate("server");
 
@@ -185,10 +183,7 @@ export const getServer = async (req: UserRequest, res: Response<ServerDTO>) => {
 
   const channels = await Channel.find({ server }).populate("disallowedRoles", "_id");
 
-  const allowedChannels = filterDisallowedRolesOfChannels(
-    channels,
-    currentMember.roles,
-  );
+  const allowedChannels = filterDisallowedRolesOfChannels(channels, currentMember.roles);
 
   res.status(200).json({
     id: server.id,

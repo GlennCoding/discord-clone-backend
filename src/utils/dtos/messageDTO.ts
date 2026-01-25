@@ -1,5 +1,5 @@
-import { MessageDTO } from "../../types/dto";
-import { ChatMessageEntity } from "../../types/entities";
+import type { MessageDTO } from "../../types/dto";
+import type { ChatMessageEntity } from "../../types/entities";
 
 export const toMessageDTO = (message: ChatMessageEntity): MessageDTO => {
   const { id, chatId, sender, text, attachments, createdAt, updatedAt } = message;

@@ -1,7 +1,11 @@
-import { ExtendedError, Socket } from "socket.io";
-import jwt, { JwtPayload, VerifyErrors } from "jsonwebtoken";
-import { env } from "../utils/env";
+import jwt from "jsonwebtoken";
+
+
 import { ACCESS_TOKEN_COOKIE_NAME } from "../config/tokenCookies";
+import { env } from "../utils/env";
+
+import type { JwtPayload, VerifyErrors } from "jsonwebtoken";
+import type { ExtendedError, Socket } from "socket.io";
 
 const getCookieValue = (cookieHeader: string | undefined, name: string) => {
   if (!cookieHeader) return undefined;

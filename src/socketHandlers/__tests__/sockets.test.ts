@@ -1,7 +1,8 @@
 import { createServer } from "node:http";
 import { type AddressInfo } from "node:net";
-import { io as ioc, type Socket as ClientSocket } from "socket.io-client";
+
 import { Server, type Socket as ServerSocket } from "socket.io";
+import { io as ioc, type Socket as ClientSocket } from "socket.io-client";
 
 describe("web sockets", () => {
   let io: Server, serverSocket: ServerSocket, clientSocket: ClientSocket;
@@ -11,7 +12,7 @@ describe("web sockets", () => {
       new Promise((resolve, reject) => {
         const httpServer = createServer();
         io = new Server(httpServer);
-        httpServer.listen(async () => {
+        httpServer.listen(() => {
           const port = (httpServer.address() as AddressInfo).port;
           clientSocket = ioc(`http://localhost:${port}`);
 
@@ -27,7 +28,7 @@ describe("web sockets", () => {
             reject(e);
           });
         });
-      })
+      }),
   );
 
   afterAll(async () => {

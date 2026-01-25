@@ -1,5 +1,7 @@
-import { CookieOptions, Response } from "express";
 import { isProdEnv } from "../utils/helper";
+
+import type { CookieOptions, Response } from "express";
+
 
 export const ACCESS_TOKEN_COOKIE_NAME = "access_token";
 export const SSR_ACCESS_TOKEN_COOKIE_NAME = "ssr_access_token";

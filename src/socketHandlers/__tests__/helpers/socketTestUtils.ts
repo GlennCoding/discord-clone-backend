@@ -1,9 +1,12 @@
-import { io as ioc } from "socket.io-client";
 import { type AddressInfo } from "node:net";
 import { promisify } from "node:util";
-import { io, server } from "../../../app";
+
+import { io as ioc } from "socket.io-client";
+
 import { buildAccessTokenCookie } from "../../../__tests__/helpers/cookies";
-import { TypedClientSocket } from "../../../types/sockets";
+import { io, server } from "../../../app";
+
+import type { TypedClientSocket } from "../../../types/sockets";
 
 let startPromise: Promise<void> | null = null;
 let activeSuites = 0;

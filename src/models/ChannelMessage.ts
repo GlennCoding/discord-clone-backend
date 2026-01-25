@@ -1,6 +1,8 @@
-import { model, Schema, Document, Types } from "mongoose";
-import { IChannel } from "./Channel";
-import { IMember } from "./Member";
+import { model, Schema } from "mongoose";
+
+import type { IChannel } from "./Channel";
+import type { IMember } from "./Member";
+import type { Document, Types } from "mongoose";
 
 interface IAttachment extends Document {
   path: string;

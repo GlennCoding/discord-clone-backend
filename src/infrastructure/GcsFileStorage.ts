@@ -1,7 +1,9 @@
-import { Bucket as GcsBucket } from "@google-cloud/storage";
+
 import { isProdOrProdLocalEnv } from "../utils/helper";
 import { getLocalUrl } from "../utils/storage";
-import { FileStorage } from "./FileStorage";
+
+import type { FileStorage } from "./FileStorage";
+import type { Bucket as GcsBucket } from "@google-cloud/storage";
 
 export class GcsFileStorage implements FileStorage {
   private readonly uploadTimeoutMs = 15_000;

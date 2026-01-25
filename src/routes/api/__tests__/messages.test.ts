@@ -1,12 +1,13 @@
 import express from "express";
 import request from "supertest";
-import { errorMiddleware } from "../../../middleware/errorMiddleware";
-import messagesRouter from "../messages";
+
 import { MAX_MESSAGE_ATTACHMENT_FILE_SIZE_BYTES } from "../../../config/upload";
 import {
   deleteMessageAttachment,
   saveMessageAttachment,
 } from "../../../controllers/messageController";
+import { errorMiddleware } from "../../../middleware/errorMiddleware";
+import messagesRouter from "../messages";
 
 vi.mock("../../../controllers/messageController", () => ({
   saveMessageAttachment: vi.fn((req, res) => res.status(200).json({ ok: true })),

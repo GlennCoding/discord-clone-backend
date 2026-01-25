@@ -1,10 +1,14 @@
-import { app } from "../../../app";
 import request from "supertest";
-import Chat from "../../../models/Chat";
-import User, { IUser } from "../../../models/User";
-import { ChatDTO } from "../../../types/dto";
+
 import { buildAccessTokenCookie } from "../../../__tests__/helpers/cookies";
+import { app } from "../../../app";
+import Chat from "../../../models/Chat";
+import User from "../../../models/User";
 import { issueAccessToken } from "../../../services/authService";
+
+import type { IUser } from "../../../models/User";
+import type { ChatDTO } from "../../../types/dto";
+
 
 let token: string;
 const user1Data = { userName: "John", password: "Cena" };

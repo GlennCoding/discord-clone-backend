@@ -1,11 +1,12 @@
 import "./config/loadEnvironment";
 import { Server } from "socket.io";
 
+import { server } from "./app";
 import corsOptions from "./config/corsOptions";
 import verifySocketJWT from "./middleware/verifySocketJWT";
 import { onConnection } from "./socketHandlers";
-import { TypedServer } from "./types/sockets";
-import { server } from "./app";
+
+import type { TypedServer } from "./types/sockets";
 
 let io: TypedServer;
 

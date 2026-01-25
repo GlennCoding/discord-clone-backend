@@ -1,6 +1,7 @@
-import { Server, Socket } from "socket.io";
-import { Socket as ClientSocket } from "socket.io-client";
-import { ClientToServerEvents, ServerToClientEvents } from "./events";
+import type { ClientToServerEvents, ServerToClientEvents } from "./events";
+import type { Server, Socket } from "socket.io";
+import type { Socket as ClientSocket } from "socket.io-client";
+
 
 export type TypedServer = Server<ClientToServerEvents, ServerToClientEvents>;
 

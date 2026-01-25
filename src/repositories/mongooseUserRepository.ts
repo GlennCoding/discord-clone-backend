@@ -1,7 +1,10 @@
-import { FlattenMaps } from "mongoose";
-import User, { IUser } from "../models/User";
-import { UserEntity } from "../types/entities";
-import { UserRepository } from "./userRepository";
+
+import User from "../models/User";
+
+import type { UserRepository } from "./userRepository";
+import type { IUser } from "../models/User";
+import type { UserEntity } from "../types/entities";
+import type { FlattenMaps } from "mongoose";
 
 const mapMessageDocToEntity = (doc: FlattenMaps<IUser>): UserEntity => {
   const { _id, userName, password, status, avatar, refreshTokens } = doc;

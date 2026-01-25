@@ -1,19 +1,22 @@
-import User from "../../models/User";
-import ServerModel, { IServer } from "../../models/Server";
 import Channel from "../../models/Channel";
 import ChannelMessage from "../../models/ChannelMessage";
 import Member from "../../models/Member";
+import ServerModel from "../../models/Server";
+import User from "../../models/User";
 import { issueAccessToken } from "../../services/authService";
 import { generateUniqueShortId } from "../../services/serverService";
 import { ERROR_STATUS, EVENT_ERROR } from "../../types/sockets";
-import { TypedClientSocket } from "../../types/sockets";
-import { ChannelMessageDTO } from "../../types/dto";
+
 import {
   acquireSocketServer,
   releaseSocketServer,
   connectSocketWithToken,
   waitForEvent,
 } from "./helpers/socketTestUtils";
+
+import type { IServer } from "../../models/Server";
+import type { ChannelMessageDTO } from "../../types/dto";
+import type { TypedClientSocket } from "../../types/sockets";
 
 const randomName = () => `user-${Math.random().toString(36).slice(-5)}`;
 

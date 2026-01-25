@@ -1,7 +1,9 @@
-import { HydratedDocument, model, Schema } from "mongoose";
-import { IUser } from "./User";
-import { IRole } from "./Role";
-import { IServer } from "./Server";
+import { model, Schema } from "mongoose";
+
+import type { IRole } from "./Role";
+import type { IServer } from "./Server";
+import type { IUser } from "./User";
+import type { HydratedDocument} from "mongoose";
 
 export interface IMember {
   user: IUser;

@@ -1,7 +1,10 @@
-import { ChatEntity } from "../types/entities";
-import { FlattenMaps } from "mongoose";
-import Chat, { IChat } from "../models/Chat";
-import { ChatRepository } from "./chatRepository";
+
+import Chat from "../models/Chat";
+
+import type { ChatRepository } from "./chatRepository";
+import type { IChat } from "../models/Chat";
+import type { ChatEntity } from "../types/entities";
+import type { FlattenMaps } from "mongoose";
 
 const mapChatDocToEntity = (doc: FlattenMaps<IChat>): ChatEntity => {
   return {

@@ -224,7 +224,6 @@ describe("deleteMessage", () => {
 
 * Small, focused commits
 * Imperative mood
-* Use prefixes like `feat:`, `fix:`, `ref:`, `chore:`
 
 Examples:
 

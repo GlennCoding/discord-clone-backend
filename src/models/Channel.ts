@@ -1,6 +1,8 @@
-import { model, Schema, HydratedDocument, Types } from "mongoose";
-import { IRole } from "./Role";
-import { IServer } from "./Server";
+import { model, Schema } from "mongoose";
+
+import type { IRole } from "./Role";
+import type { IServer } from "./Server";
+import type { HydratedDocument, Types } from "mongoose";
 
 // TODO: Look into if I can define the types without extending the Document
 export interface IChannel extends Document {

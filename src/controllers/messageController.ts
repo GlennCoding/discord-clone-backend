@@ -1,21 +1,20 @@
-import { UserRequest } from "../middleware/verifyJWT";
-import { Response } from "express";
-import { InputMissingError } from "../utils/errors";
-import {
-  DeleteMessageAttachmentInput,
-  SaveMessageAttachmentInput,
-} from "../types/dto";
+import z from "zod";
+
 import { io } from "../app";
-import { toMessageDTO } from "../utils/dtos/messageDTO";
 import {
   ALLOWED_MESSAGE_ATTACHMENT_MIME_TYPES,
   MAX_MESSAGE_ATTACHMENT_FILE_SIZE_BYTES,
 } from "../config/upload";
-import { validateUploadedFile } from "../utils/fileValidation";
-import { auditHttp } from "../utils/audit";
-import z from "zod";
-import { parseWithSchema } from "../utils/validators";
 import { chatMessageAttachmentService } from "../container";
+import { auditHttp } from "../utils/audit";
+import { toMessageDTO } from "../utils/dtos/messageDTO";
+import { InputMissingError } from "../utils/errors";
+import { validateUploadedFile } from "../utils/fileValidation";
+import { parseWithSchema } from "../utils/validators";
+
+import type { UserRequest } from "../middleware/verifyJWT";
+import type { DeleteMessageAttachmentInput, SaveMessageAttachmentInput } from "../types/dto";
+import type { Response } from "express";
 
 const saveMessageAttachmentPayloadSchema = z.object({
   chatId: z.string(),
@@ -26,10 +25,7 @@ export const saveMessageAttachment = async (
   req: UserRequest<SaveMessageAttachmentInput>,
   res: Response,
 ) => {
-  const { chatId, text } = parseWithSchema(
-    saveMessageAttachmentPayloadSchema,
-    req.body,
-  );
+  const { chatId, text } = parseWithSchema(saveMessageAttachmentPayloadSchema, req.body);
 
   if (!req.file) throw new InputMissingError("File");
   await validateUploadedFile(req.file, {

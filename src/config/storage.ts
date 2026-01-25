@@ -1,6 +1,9 @@
-import { Storage, StorageOptions } from "@google-cloud/storage";
+import { Storage } from "@google-cloud/storage";
+
 import { env } from "../utils/env";
 import { isProdOrProdLocalEnv } from "../utils/helper";
+
+import type { StorageOptions } from "@google-cloud/storage";
 
 const credentials: StorageOptions = isProdOrProdLocalEnv
   ? { keyFilename: env.GOOGLE_APPLICATION_CREDENTIALS }
