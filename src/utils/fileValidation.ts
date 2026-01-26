@@ -2,12 +2,12 @@ import { fileTypeFromBuffer } from "file-type";
 
 import { CustomError } from "./errors";
 
-interface FileValidationOptions {
+type FileValidationOptions = {
   allowedMimeTypes: readonly string[];
   maxFileSizeBytes: number;
 }
 
-export interface FileValidationResult {
+export type FileValidationResult = {
   ext: string;
   mime: string;
 }

@@ -51,7 +51,7 @@ export const handleRefreshToken = async (
 
   jwt.verify(
     refreshToken,
-    env.REFRESH_TOKEN_SECRET as string,
+    env.REFRESH_TOKEN_SECRET,
     async (
       err: jwt.VerifyErrors | null,
       decoded: string | jwt.JwtPayload | undefined,

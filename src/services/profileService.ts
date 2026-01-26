@@ -40,7 +40,7 @@ export const uploadProfileImgToBucket = async (
 
     blobStream.on("finish", () => {
       clearTimeout(timeout);
-      resolve(getPublicProfileImgUrl(bucket.name, blob.name) as string);
+      resolve(getPublicProfileImgUrl(bucket.name, blob.name));
     });
 
     blobStream.end(file.buffer);

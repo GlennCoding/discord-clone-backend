@@ -19,7 +19,7 @@ export const issueAccessToken = (user: IUser) => {
         userId: user._id,
       },
     },
-    env.ACCESS_TOKEN_SECRET as string,
+    env.ACCESS_TOKEN_SECRET,
     {
       expiresIn: "15min",
     },
@@ -33,7 +33,7 @@ export const issueSsrAccessToken = (user: IUser) => {
         userId: user._id,
       },
     },
-    env.SSR_ACCESS_TOKEN_SECRET as string,
+    env.SSR_ACCESS_TOKEN_SECRET,
     {
       expiresIn: "24hrs",
     },
@@ -41,7 +41,7 @@ export const issueSsrAccessToken = (user: IUser) => {
 };
 
 export const issueRefreshToken = (user: IUser) => {
-  return jwt.sign({ userId: user._id }, env.REFRESH_TOKEN_SECRET as string, {
+  return jwt.sign({ userId: user._id }, env.REFRESH_TOKEN_SECRET, {
     expiresIn: "7days",
   });
 };

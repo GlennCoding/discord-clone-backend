@@ -11,7 +11,7 @@ import type {
 } from "./dto";
 import type { Ack } from "./sockets";
 
-export interface ClientToServerEvents {
+export type ClientToServerEvents = {
   "message:send": (
     payload: SendMessageInput,
     ack: Ack<{ message: MessageDTO }>

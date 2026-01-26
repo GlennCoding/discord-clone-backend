@@ -7,16 +7,16 @@ import type { UserRequest } from "./verifyJWT";
 import type { Response, NextFunction } from "express";
 import type { JwtPayload, VerifyErrors } from "jsonwebtoken";
 
-interface AccessTokenBody extends JwtPayload {
+type AccessTokenBody = {
   UserInfo?: {
     userId?: string;
   };
-}
+} & JwtPayload
 
 const verifySsrJwt = (req: UserRequest, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
   const tokenFromHeader =
-    authHeader && authHeader.startsWith("Bearer ")
+    authHeader?.startsWith("Bearer ")
       ? authHeader.split(" ")[1]
       : undefined;
   const token = req.cookies?.[SSR_ACCESS_TOKEN_COOKIE_NAME] ?? tokenFromHeader;
@@ -25,7 +25,7 @@ const verifySsrJwt = (req: UserRequest, res: Response, next: NextFunction) => {
 
   jwt.verify(
     token,
-    env.SSR_ACCESS_TOKEN_SECRET as string,
+    env.SSR_ACCESS_TOKEN_SECRET,
     (err: VerifyErrors | null, decoded: string | JwtPayload | undefined) => {
       if (err && err instanceof jwt.TokenExpiredError)
         return res.status(401).json({ error: "Token expired" });

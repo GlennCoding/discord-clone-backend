@@ -3,12 +3,12 @@ import { model, Schema } from "mongoose";
 import type { IUser } from "./User";
 import type { Document, Types } from "mongoose";
 
-export interface IChat extends Document {
+export type IChat = {
   _id: Types.ObjectId;
   participants: (Types.ObjectId | IUser)[];
   createdAt: Date;
   updatedAt?: Date;
-}
+} & Document
 
 const arrayLimit = (val: String[]) => {
   return val.length === 2;

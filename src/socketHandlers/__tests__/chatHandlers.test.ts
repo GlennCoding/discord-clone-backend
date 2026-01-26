@@ -17,26 +17,19 @@ import type { IUser } from "../../models/User";
 import type { MessageDTO } from "../../types/dto";
 import type { TypedClientSocket } from "../../types/sockets";
 
-
 type UserData = {
   userName: string;
   password: string;
 };
 
-const createUserAndToken = async ({
-  userName,
-  password,
-}: UserData): Promise<[IUser, string]> => {
+const createUserAndToken = async ({ userName, password }: UserData): Promise<[IUser, string]> => {
   const user = new User({ userName, password });
   await user.save();
   const token = issueAccessToken(user);
   return [user, token];
 };
 
-const createChat = async (
-  userToken: string,
-  participant: string
-): Promise<string> => {
+const createChat = async (userToken: string, participant: string): Promise<string> => {
   const res = await request(app)
     .post("/chat")
     .send({ participant })
@@ -180,40 +173,32 @@ describe("chat socket handlers", () => {
   });
 
   it("makes user2 receive messages from user1", async () => {
-    await new Promise(async (resolve) => {
+    await user1Socket.emitWithAck("chat:join", user1User2chatId);
+    await user2Socket.emitWithAck("chat:join", user1User2chatId);
+
+    await new Promise<void>((resolve) => {
       user2Socket.once("message:new", ({ message }: { message: MessageDTO }) => {
         expect(message.text).toBe("Hello User2");
         expect(message.sender.id).toEqual(user1.id);
-        resolve({});
+        resolve();
       });
 
-      await user1Socket.emitWithAck("chat:join", user1User2chatId);
-      await user2Socket.emitWithAck("chat:join", user1User2chatId);
-
-      user1Socket.emit(
-        "message:send",
-        { chatId: user1User2chatId, text: "Hello User2" },
-        () => {}
-      );
+      user1Socket.emit("message:send", { chatId: user1User2chatId, text: "Hello User2" }, () => {});
     });
   });
 
   it("makes user1 receive messages from user2", async () => {
-    await new Promise(async (resolve) => {
+    await user1Socket.emitWithAck("chat:join", user1User2chatId);
+    await user2Socket.emitWithAck("chat:join", user1User2chatId);
+
+    await new Promise<void>((resolve) => {
       user1Socket.once("message:new", ({ message }: { message: MessageDTO }) => {
         expect(message.text).toBe("Hello User1");
         expect(message.sender.id).toEqual(user2.id);
-        resolve({});
+        resolve();
       });
 
-      await user1Socket.emitWithAck("chat:join", user1User2chatId);
-      await user2Socket.emitWithAck("chat:join", user1User2chatId);
-
-      user2Socket.emit(
-        "message:send",
-        { chatId: user1User2chatId, text: "Hello User1" },
-        () => []
-      );
+      user2Socket.emit("message:send", { chatId: user1User2chatId, text: "Hello User1" }, () => []);
     });
   });
 });

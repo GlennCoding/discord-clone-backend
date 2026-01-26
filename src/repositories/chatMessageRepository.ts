@@ -1,6 +1,6 @@
 import type { ChatMessageEntity } from "../types/entities";
 
-export interface ChatMessageRepository {
+export type ChatMessageRepository = {
   findById(id: string): Promise<ChatMessageEntity | null>;
   deleteById(id: string): Promise<void>;
   create(newMessage: {

@@ -5,7 +5,7 @@ import type { IServer } from "./Server";
 import type { HydratedDocument, Types } from "mongoose";
 
 // TODO: Look into if I can define the types without extending the Document
-export interface IChannel extends Document {
+export type IChannel = {
   _id: Types.ObjectId;
   server: IServer;
   name: string;
@@ -13,7 +13,7 @@ export interface IChannel extends Document {
   disallowedRoles: IRole[];
   createdAt: Date;
   updatedAt?: Date;
-}
+} & Document
 
 export type ChannelDocument = HydratedDocument<IChannel>;
 

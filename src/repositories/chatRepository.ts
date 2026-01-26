@@ -1,5 +1,5 @@
 import type { ChatEntity } from "../types/entities";
 
-export interface ChatRepository {
+export type ChatRepository = {
   findById(id: string): Promise<ChatEntity | null>;
 }

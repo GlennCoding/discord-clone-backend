@@ -8,7 +8,7 @@ import type { ChatRepository } from "../repositories/chatRepository";
 import type { UserRepository } from "../repositories/userRepository";
 import type { ChatMessageEntity } from "../types/entities";
 
-interface IChatMessageAttachmentService {
+type IChatMessageAttachmentService = {
   saveMessageAttachment: (input: {
     userId: string;
     file: Express.Multer.File;

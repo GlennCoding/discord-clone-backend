@@ -1,19 +1,19 @@
-export interface LoginDTO {
+export type LoginDTO = {
   message: string;
   userData: MeDTO;
 }
 
 export type RegisterDTO = LoginDTO;
 
-export interface RefreshInput {
+export type RefreshInput = {
   issueNewSsrToken?: boolean;
 }
 
-export interface AttachmentDTO {
+export type AttachmentDTO = {
   downloadUrl: string;
 }
 
-export interface MessageDTO {
+export type MessageDTO = {
   id: string;
   text: string;
   chatId: string;
@@ -27,19 +27,19 @@ export interface MessageDTO {
   attachments?: AttachmentDTO[];
 }
 
-export interface MeDTO {
+export type MeDTO = {
   id: string;
   username: string;
   avatarUrl?: string;
 }
 
-export interface ChatDTO {
+export type ChatDTO = {
   chatId: string;
   participant: string;
   participantAvatarUrl?: string;
 }
 
-export interface JoinChatDTO {
+export type JoinChatDTO = {
   participant: {
     username: string;
     avatarUrl?: string;
@@ -47,34 +47,34 @@ export interface JoinChatDTO {
   messages: MessageDTO[];
 }
 
-export interface DeleteMessageAttachmentInput {
+export type DeleteMessageAttachmentInput = {
   messageId: string;
   attachmentPath: string;
 }
 
-export interface SaveMessageAttachmentInput {
+export type SaveMessageAttachmentInput = {
   chatId: string;
   text?: string;
 }
 
-export interface SendMessageInput {
+export type SendMessageInput = {
   chatId: string;
   text: string;
 }
 
-export interface ProfileDTO {
+export type ProfileDTO = {
   userName: string;
   status: string;
   profileImgUrl?: string;
 }
 
-export interface CreateServerInput {
+export type CreateServerInput = {
   name: string;
   description?: string;
   isPublic: boolean;
 }
 
-export interface CreateServerDTO {
+export type CreateServerDTO = {
   shortId: string;
 }
 
@@ -82,19 +82,19 @@ export type UpdateServerInput = CreateServerInput;
 
 export type UpdateServerDTO = UpdateServerInput;
 
-export interface ChannelDTO {
+export type ChannelDTO = {
   id: string;
   order: number;
   name: string;
 }
 
-export interface MemberDTO {
+export type MemberDTO = {
   name: string;
   roles: string[];
   avatarUrl?: string;
 }
 
-export interface ServerDTO {
+export type ServerDTO = {
   id: string;
   name: string;
   description?: string;
@@ -103,29 +103,29 @@ export interface ServerDTO {
   members: MemberDTO[];
 }
 
-export interface JoinServerDTO {
+export type JoinServerDTO = {
   shortId: string;
 }
 
-export interface ServerListItemDTO {
+export type ServerListItemDTO = {
   name: string;
   shortId: string;
   description?: string;
   iconUrl?: string;
 }
 
-export interface ServerListDTO {
+export type ServerListDTO = {
   servers: ServerListItemDTO[];
 }
 
-export interface UpdatedServerDTO {
+export type UpdatedServerDTO = {
   id: string;
   name: string;
   description?: string;
   iconUrl?: string;
 }
 
-export interface ChannelMessageDTO {
+export type ChannelMessageDTO = {
   id: string;
   text: string;
   channelId: string;
@@ -139,13 +139,13 @@ export interface ChannelMessageDTO {
   attachments?: AttachmentDTO[];
 }
 
-export interface ChannelSubscribeDTO {
+export type ChannelSubscribeDTO = {
   serverId: string;
   channel: ChannelDTO;
   messages: ChannelMessageDTO[];
 }
 
-export interface SendChannelMessageInput {
+export type SendChannelMessageInput = {
   channelId: string;
   text: string;
 }

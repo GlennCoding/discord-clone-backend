@@ -14,22 +14,22 @@ import {
 import type { Request, Response, NextFunction } from "express";
 import type { JwtPayload, VerifyErrors } from "jsonwebtoken";
 
-export interface UserRequest<T = any> extends Request {
+export type UserRequest<T = any> = {
   userId?: string;
   requestId?: string;
   body: Partial<T>;
-}
+} & Request
 
-interface AccessTokenBody extends JwtPayload {
+type AccessTokenBody = {
   UserInfo?: {
     userId?: string;
   };
-}
+} & JwtPayload
 
 const verifyJWT = (req: UserRequest, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
   const tokenFromHeader =
-    authHeader && authHeader.startsWith("Bearer ")
+    authHeader?.startsWith("Bearer ")
       ? authHeader.split(" ")[1]
       : undefined;
   const token = req.cookies?.[ACCESS_TOKEN_COOKIE_NAME] ?? tokenFromHeader;
@@ -41,7 +41,7 @@ const verifyJWT = (req: UserRequest, res: Response, next: NextFunction) => {
 
   jwt.verify(
     token,
-    env.ACCESS_TOKEN_SECRET as string,
+    env.ACCESS_TOKEN_SECRET,
     (err: VerifyErrors | null, decoded: string | JwtPayload | undefined) => {
       if (err instanceof jwt.TokenExpiredError) {
         auditHttp(req, "INVALID_TOKEN_USED", { metadata: { reason: err.name } });

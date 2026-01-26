@@ -67,7 +67,7 @@ app.use("/channel", verifyJWT, channelRouter);
 // SSR routes
 app.use("/ssr/server", verifySsrJwt, ssrServerRouter);
 
-app.use((_, res) => {
+app.use((_, _res) => {
   throw new NotFoundError("endpoint");
 });
 

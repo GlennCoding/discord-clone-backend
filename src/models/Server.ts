@@ -3,7 +3,7 @@ import { model, Schema } from "mongoose";
 import type { IUser } from "./User";
 import type { Document, Types } from "mongoose";
 
-export interface IServer extends Document {
+export type IServer = {
   _id: Types.ObjectId;
   name: string;
   shortId: string;
@@ -13,7 +13,7 @@ export interface IServer extends Document {
   isPublic: boolean;
   createdAt: Date;
   updatedAt?: Date;
-}
+} & Document
 
 const serverSchema = new Schema<IServer>(
   {

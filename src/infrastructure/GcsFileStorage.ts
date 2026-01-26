@@ -1,4 +1,3 @@
-
 import { isProdOrProdLocalEnv } from "../utils/helper";
 import { getLocalUrl } from "../utils/storage";
 
@@ -10,11 +9,7 @@ export class GcsFileStorage implements FileStorage {
 
   constructor(private readonly bucket: GcsBucket) {}
 
-  async upload(
-    file: Express.Multer.File,
-    key: string,
-    contentType: string,
-  ): Promise<string> {
+  async upload(file: Express.Multer.File, key: string, contentType: string): Promise<string> {
     const blob = this.bucket.file(key);
     const blobStream = blob.createWriteStream({
       resumable: false,
@@ -26,7 +21,7 @@ export class GcsFileStorage implements FileStorage {
         blobStream.destroy(new Error("Upload timed out"));
       }, this.uploadTimeoutMs);
 
-      blobStream.on("error", async (err: any) => {
+      blobStream.on("error", async (err: unknown) => {
         clearTimeout(timeout);
         try {
           await blob.delete({ ignoreNotFound: true });

@@ -4,14 +4,14 @@ import type { IChatMessage } from "./ChatMessage";
 import type { IUser } from "./User";
 import type { Types, Document} from "mongoose";
 
-export interface IReaction extends Document {
+export type IReaction = {
   _id: Types.ObjectId;
   message: Types.ObjectId | IChatMessage;
   emoji: string;
   sender: Types.ObjectId | IUser;
   createdAt: Date;
   updatedAt?: Date;
-}
+} & Document
 
 const reactionSchema = new Schema<IReaction>(
   {

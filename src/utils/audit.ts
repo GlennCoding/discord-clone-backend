@@ -45,18 +45,14 @@ type AuditData = {
   channelId?: string;
   directChatId?: string;
   messageId?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 };
 
 const logAudit = (ctx: AuditContext, action: AuditAction, data?: AuditData) => {
   logger.info({ type: "audit", action, ...ctx, ...data }, "audit_event");
 };
 
-export const auditHttp = (
-  req: UserRequest,
-  action: AuditAction,
-  data?: AuditData,
-) => {
+export const auditHttp = (req: UserRequest, action: AuditAction, data?: AuditData) => {
   logAudit(
     {
       actorUserId: req.userId,
@@ -69,19 +65,14 @@ export const auditHttp = (
   );
 };
 
-export const auditSocket = (
-  socket: TypedSocket,
-  action: AuditAction,
-  data?: AuditData,
-) =>
+export const auditSocket = (socket: TypedSocket, action: AuditAction, data?: AuditData) =>
   logAudit(
     {
       actorUserId: socket.data.userId,
       ip:
-        (socket.handshake.headers["x-forwarded-for"] as string)
-          ?.split(",")[0]
-          ?.trim() ?? socket.handshake.address,
-      requestId: (socket.handshake.headers["x-request-id"] as string) ?? socket.id,
+        (socket.handshake.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() ??
+        socket.handshake.address,
+      requestId: socket.handshake.headers["x-request-id"] as string,
       userAgent: socket.handshake.headers["user-agent"] as string,
     },
     action,

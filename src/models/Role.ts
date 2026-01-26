@@ -9,14 +9,14 @@ export enum RolePermission {
   ServerAdmin = "SERVER_ADMIN",
 }
 
-export interface IRole extends Document {
+export type IRole = {
   _id: Types.ObjectId;
   server: IServer;
   name: string;
   permissions: RolePermission[];
   createdAt: Date;
   updatedAt?: Date;
-}
+} & Document
 
 const roleSchema = new Schema<IRole>(
   {

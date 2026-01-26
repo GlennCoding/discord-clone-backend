@@ -18,7 +18,7 @@ describe("errorMiddleware logging", () => {
     const res = createMockRes();
 
     const err = new CustomError(418, "custom failure");
-    errorMiddleware(err, req as any, res as any, vi.fn());
+    errorMiddleware(err, req, res, vi.fn());
 
     expect(log.error).toHaveBeenCalledWith(
       {
@@ -41,7 +41,7 @@ describe("errorMiddleware logging", () => {
     const res = createMockRes();
 
     const err = new multer.MulterError("LIMIT_FILE_SIZE");
-    errorMiddleware(err, req as any, res as any, vi.fn());
+    errorMiddleware(err, req, res, vi.fn());
 
     expect(log.error).toHaveBeenCalledWith(
       {
@@ -64,7 +64,7 @@ describe("errorMiddleware logging", () => {
     const res = createMockRes();
 
     const err = new Error("unexpected");
-    errorMiddleware(err, req as any, res as any, vi.fn());
+    errorMiddleware(err, req, res, vi.fn());
 
     expect(log.error).toHaveBeenCalledWith(
       {

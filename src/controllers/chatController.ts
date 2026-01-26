@@ -50,7 +50,7 @@ export const createChat = async (req: UserRequest, res: Response) => {
     return;
   }
 
-  const newChat = await createChatService(req.userId as string, otherUser.id!);
+  const newChat = await createChatService(req.userId as string, otherUser.id);
 
   res.status(201).json({ chatId: newChat.id });
 };

@@ -32,7 +32,7 @@ const verifySocketJWT = (socket: Socket, next: (err?: ExtendedError) => void) =>
 
   jwt.verify(
     token,
-    env.ACCESS_TOKEN_SECRET as string,
+    env.ACCESS_TOKEN_SECRET,
     (err: VerifyErrors | null, decoded: string | JwtPayload | undefined) => {
       if (err && err instanceof jwt.TokenExpiredError)
         return next(new Error("EXPIRED_TOKEN"));

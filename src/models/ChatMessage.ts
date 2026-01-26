@@ -4,12 +4,12 @@ import type { IChat } from "./Chat";
 import type { IUser } from "./User";
 import type { Types } from "mongoose";
 
-interface IAttachment extends Document {
+type IAttachment = {
   path: string;
   downloadUrl: string;
-}
+} & Document
 
-export interface IChatMessage extends Document {
+export type IChatMessage = {
   _id: Types.ObjectId;
   chat: IChat;
   sender: IUser;
@@ -17,7 +17,7 @@ export interface IChatMessage extends Document {
   updatedAt?: Date;
   text: string;
   attachments?: IAttachment[];
-}
+} & Document
 
 const attachmentSchema = new Schema<IAttachment>(
   {

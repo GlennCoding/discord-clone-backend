@@ -2,7 +2,7 @@ import { model, Schema } from "mongoose";
 
 import type { Document, Types } from "mongoose";
 
-export interface IUser extends Document {
+export type IUser = {
   _id: Types.ObjectId;
   userName: string;
   password: string;
@@ -12,7 +12,7 @@ export interface IUser extends Document {
     url: string;
   };
   refreshTokens?: string[];
-}
+} & Document
 
 const avatarSchema = new Schema(
   {

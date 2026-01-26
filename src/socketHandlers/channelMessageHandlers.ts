@@ -35,7 +35,7 @@ const handleAckError = (ack: ChannelAck, error: unknown) => {
 };
 
 const ensureAuthenticatedSocket = (socket: TypedSocket) => {
-  if (!socket.data.userId) throw new CustomError(401, "Missing user context");
+  if (socket.data.userId == null) throw new CustomError(401, "Missing user context");
   return socket.data.userId;
 };
 
@@ -83,7 +83,7 @@ export const handleIncomingChannelMessage: EventControllerWithAck<"channelMessag
 ) => {
   try {
     const userId = ensureAuthenticatedSocket(socket);
-    const text = payload.text?.trim();
+    const text = payload.text.trim();
     if (!text) {
       sendAckError(ack, ERROR_STATUS.BAD_REQUEST, "Message text is required");
       return;

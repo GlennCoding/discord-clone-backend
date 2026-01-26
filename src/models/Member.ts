@@ -5,7 +5,7 @@ import type { IServer } from "./Server";
 import type { IUser } from "./User";
 import type { HydratedDocument} from "mongoose";
 
-export interface IMember {
+export type IMember = {
   user: IUser;
   nickname?: string;
   server: IServer;

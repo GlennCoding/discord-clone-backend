@@ -23,7 +23,7 @@ export const formatUserChats = (chats: IChat[], userId: string): ChatDTO[] => {
       throw Error(`Chat ${chat._id} doesn't contain other partipants`);
     }
 
-    const avatarUrl = (other as IUser).avatar && (other as IUser).avatar!.url;
+    const avatarUrl = (other as IUser).avatar?.url;
 
     return {
       chatId: chat.id,

@@ -10,11 +10,9 @@ let mongoReplSet: MongoMemoryReplSet | null = null;
 export const setupMongoDB = async () => {
   if (mongoose.connection.readyState === 1) return;
 
-  if (!mongoReplSet) {
-    mongoReplSet = await MongoMemoryReplSet.create({
-      replSet: { count: 1, storageEngine: "wiredTiger" },
-    });
-  }
+  mongoReplSet ??= await MongoMemoryReplSet.create({
+    replSet: { count: 1, storageEngine: "wiredTiger" },
+  });
   await mongoose.connect(mongoReplSet.getUri());
 };
 

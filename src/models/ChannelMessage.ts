@@ -4,12 +4,12 @@ import type { IChannel } from "./Channel";
 import type { IMember } from "./Member";
 import type { Document, Types } from "mongoose";
 
-interface IAttachment extends Document {
+type IAttachment = {
   path: string;
   downloadUrl: string;
-}
+} & Document
 
-export interface IChannelMessage extends Document {
+export type IChannelMessage = {
   _id: Types.ObjectId;
   channel: IChannel;
   sender: IMember;
@@ -17,7 +17,7 @@ export interface IChannelMessage extends Document {
   attachments?: IAttachment[];
   createdAt: Date;
   updatedAt?: Date;
-}
+} & Document
 
 const attachmentSchema = new Schema<IAttachment>(
   {
