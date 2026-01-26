@@ -10,7 +10,7 @@ import { auditHttp } from "../utils/audit";
 import { toMessageDTO } from "../utils/dtos/messageDTO";
 import { InputMissingError } from "../utils/errors";
 import { validateUploadedFile } from "../utils/fileValidation";
-import { parseWithSchema } from "../utils/validators";
+import { parseUserId, parseWithSchema } from "../utils/validators";
 
 import type { UserRequest } from "../middleware/verifyJWT";
 import type { DeleteMessageAttachmentInput, SaveMessageAttachmentInput } from "../types/dto";
@@ -26,6 +26,7 @@ export const saveMessageAttachment = async (
   res: Response,
 ) => {
   const { chatId, text } = parseWithSchema(saveMessageAttachmentPayloadSchema, req.body);
+  const userId = parseUserId(req.userId);
 
   if (!req.file) throw new InputMissingError("File");
   await validateUploadedFile(req.file, {
@@ -34,7 +35,7 @@ export const saveMessageAttachment = async (
   });
 
   const message = await chatMessageAttachmentService.saveMessageAttachment({
-    userId: req.userId as string,
+    userId,
     file: req.file,
     chatId,
     text,
@@ -64,9 +65,10 @@ export const deleteMessageAttachment = async (
     deleteMessageAttachmentPayloadSchema,
     req.body,
   );
+  const userId = parseUserId(req.userId);
 
   await chatMessageAttachmentService.deleteChatMessageAttachment({
-    userId: req.userId as string,
+    userId,
     messageId,
     attachmentPath,
   });
