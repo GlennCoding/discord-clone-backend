@@ -34,6 +34,14 @@ src/
   config/             // Env, logging, external clients
 ```
 
+### Data Shapes
+
+* **Models** — persistence layer shapes (Mongoose schemas/documents) that mirror the database.
+* **Entities** — in-app domain types used inside services/logic; keep them persistence-agnostic.
+* **DTOs** — boundary contracts for HTTP/Socket: what we accept and return via the API.
+
+Keep conversions explicit (e.g., model ⇄ entity ⇄ DTO) using dedicated mappers/helpers.
+
 ### Placement rules
 
 * If it touches **Express req/res** → `controller` or `middleware`
