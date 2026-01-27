@@ -3,6 +3,7 @@ import { RedisStore } from "rate-limit-redis";
 
 import { connectRedis, redis } from "../config/redis";
 import { auditHttp } from "../utils/audit";
+import { env } from "../utils/env";
 
 import type { UserRequest } from "./verifyJWT";
 
@@ -14,23 +15,20 @@ type CreateLimiterOptions = {
 };
 
 function getClientIp(req: any): string {
-  // If you're behind a reverse proxy/load balancer, you MUST configure `app.set("trust proxy", ...)`
-  // or req.ip will be wrong.
   return req.ip ?? req.headers["x-forwarded-for"] ?? "unknown";
 }
 
 export function createLimiter(opts: CreateLimiterOptions): RateLimitRequestHandler {
-  const shouldUseRedis = process.env.NODE_ENV !== "test";
+  const shouldUseRedis = env.NODE_ENV !== "test";
 
   return rateLimit({
     windowMs: opts.windowMs,
     max: opts.max,
 
-    // Recommended modern headers (RateLimit-Limit/Remaining/Reset + Retry-After)
     standardHeaders: true,
     legacyHeaders: false,
 
-    // Store counters in Redis (shared across instances). In tests, default MemoryStore is fine.
+    // Stores counters in Redis. In tests, store is MemoryStore.
     store: shouldUseRedis
       ? new RedisStore({
           sendCommand: async (...args: string[]) => {
