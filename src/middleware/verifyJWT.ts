@@ -27,12 +27,7 @@ interface AccessTokenBody extends JwtPayload {
 }
 
 const verifyJWT = (req: UserRequest, res: Response, next: NextFunction) => {
-  const authHeader = req.headers.authorization;
-  const tokenFromHeader =
-    authHeader && authHeader.startsWith("Bearer ")
-      ? authHeader.split(" ")[1]
-      : undefined;
-  const token = req.cookies?.[ACCESS_TOKEN_COOKIE_NAME] ?? tokenFromHeader;
+  const token = req.cookies?.[ACCESS_TOKEN_COOKIE_NAME];
 
   if (!token) {
     auditHttp(req, "TOKEN_MISSING");
