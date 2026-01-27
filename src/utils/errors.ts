@@ -124,3 +124,16 @@ export class MissingUserInfoInToken extends CustomError {
     super(403, `Could not verify token`);
   }
 }
+
+export class CsrfTokenError extends CustomError {
+  constructor() {
+    super(403, "Invalid or missing CSRF token");
+  }
+}
+
+export class SocketRateLimitError extends Error {
+  constructor(message = "Socket rate limit exceeded") {
+    super(message);
+    this.name = "SocketRateLimitError";
+  }
+}

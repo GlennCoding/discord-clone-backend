@@ -43,6 +43,7 @@ export enum ERROR_STATUS {
   UNAUTHORIZED = "Unauthorized",
   BAD_REQUEST = "Bad request",
   INTERNAL_ERROR = "Internal error",
+  RATE_LIMITED = "Rate limited",
 }
 
 export interface EVENT_ERROR {
