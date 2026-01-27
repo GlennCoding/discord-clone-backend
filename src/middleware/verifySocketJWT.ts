@@ -1,6 +1,5 @@
 import jwt from "jsonwebtoken";
 
-
 import { ACCESS_TOKEN_COOKIE_NAME } from "../config/tokenCookies";
 import { env } from "../utils/env";
 
@@ -23,8 +22,7 @@ const getCookieValue = (cookieHeader: string | undefined, name: string) => {
 
 const verifySocketJWT = (socket: Socket, next: (err?: ExtendedError) => void) => {
   const cookieHeader = socket.handshake.headers.cookie;
-  const tokenFromCookies = getCookieValue(cookieHeader, ACCESS_TOKEN_COOKIE_NAME);
-  const token = tokenFromCookies ?? socket.handshake.auth?.token;
+  const token = getCookieValue(cookieHeader, ACCESS_TOKEN_COOKIE_NAME);
 
   if (!token) {
     return next(new Error("NO_TOKEN"));
@@ -34,8 +32,7 @@ const verifySocketJWT = (socket: Socket, next: (err?: ExtendedError) => void) =>
     token,
     env.ACCESS_TOKEN_SECRET as string,
     (err: VerifyErrors | null, decoded: string | JwtPayload | undefined) => {
-      if (err && err instanceof jwt.TokenExpiredError)
-        return next(new Error("EXPIRED_TOKEN"));
+      if (err && err instanceof jwt.TokenExpiredError) return next(new Error("EXPIRED_TOKEN"));
 
       if (err || decoded === undefined) return next(new Error("INVALID_TOKEN"));
 
@@ -45,7 +42,7 @@ const verifySocketJWT = (socket: Socket, next: (err?: ExtendedError) => void) =>
 
       socket.data.userId = payload.UserInfo.userId;
       next();
-    }
+    },
   );
 };
 
