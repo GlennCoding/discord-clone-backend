@@ -9,6 +9,7 @@ const envSchema = z.object({
   ACCESS_TOKEN_SECRET: z.string(),
   SSR_ACCESS_TOKEN_SECRET: z.string(),
   REFRESH_TOKEN_SECRET: z.string(),
+  CSRF_SECRET: z.string(),
   GCS_PUBLIC_URL: z.string(),
   GCS_BUCKET_NAME: z.string(),
   GOOGLE_APPLICATION_CREDENTIALS: z.string(),

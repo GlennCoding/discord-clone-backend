@@ -46,6 +46,18 @@ export const errorMiddleware: ErrorRequestHandler = (
     res.status(status).json({ error: err.message });
     return;
   }
+  if ((err as any)?.status) {
+    const status = (err as any).status;
+    req.log.error(
+      {
+        err: { name: err?.name, message: err?.message, stack: err?.stack },
+        ...requestContext,
+      },
+      "http_error",
+    );
+    res.status(status).json({ error: err.message });
+    return;
+  }
 
   req.log.error(
     {
