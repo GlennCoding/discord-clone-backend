@@ -1,20 +1,11 @@
-
+import { generateCsrfToken } from "../config/csrf";
 import {
   setAccessTokenCookie,
   setRefreshTokenCookie,
   setSsrAccessTokenCookie,
 } from "../config/tokenCookies";
-import {
-  issueAccessToken,
-  issueAuthTokens,
-  issueRefreshToken,
-  issueSsrAccessToken,
-} from "../services/authService";
-import {
-  createUser,
-  findUserWithUserName,
-  saveUserRefreshToken,
-} from "../services/userService";
+import { issueAuthTokens } from "../services/authService";
+import { createUser, findUserWithUserName, saveUserRefreshToken } from "../services/userService";
 import { CustomError, UsernameIsTakenError } from "../utils/errors";
 
 import type { RegisterDTO } from "../types/dto";
@@ -40,6 +31,7 @@ export const handleRegister = async (req: Request, res: Response<RegisterDTO>) =
   setAccessTokenCookie(res, accessToken);
   setSsrAccessTokenCookie(res, ssrAccessToken);
   setRefreshTokenCookie(res, refreshToken);
+  const csrfToken = generateCsrfToken(req, res);
 
   return res.status(201).json({
     message: "Registered successfully",
@@ -48,5 +40,6 @@ export const handleRegister = async (req: Request, res: Response<RegisterDTO>) =
       username: user.userName,
       avatarUrl: user.avatar?.url,
     },
+    csrfToken,
   });
 };
