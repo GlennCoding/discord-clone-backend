@@ -4,6 +4,7 @@ import http from "http";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import express from "express";
+import helmet from "helmet";
 
 import corsOptions from "./config/corsOptions";
 import { doubleCsrfProtection } from "./config/csrf";
@@ -39,6 +40,7 @@ app.set("trust proxy", true);
 
 // Middleware
 app.use(credentials);
+app.use(helmet());
 app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
