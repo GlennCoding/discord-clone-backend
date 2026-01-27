@@ -1,5 +1,5 @@
-
 import User from "../models/User";
+import { parseObjectId } from "../utils/helper";
 
 import type { UserRepository } from "./userRepository";
 import type { IUser } from "../models/User";
@@ -20,7 +20,8 @@ const mapMessageDocToEntity = (doc: FlattenMaps<IUser>): UserEntity => {
 
 class MongooseUserRepository implements UserRepository {
   async findById(id: string) {
-    const doc = await User.findById(id).lean();
+    const _id = parseObjectId(id);
+    const doc = await User.findById(_id).lean();
     return doc ? mapMessageDocToEntity(doc) : null;
   }
 }

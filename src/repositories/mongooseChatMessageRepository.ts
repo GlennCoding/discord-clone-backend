@@ -1,9 +1,9 @@
 import ChatMessage from "../models/ChatMessage";
+import { parseObjectId } from "../utils/helper";
 
 import type { ChatMessageRepository } from "./chatMessageRepository";
 import type { ChatMessageEntity } from "../types/entities";
 import type { PopulatedChatMessage } from "../types/misc";
-
 
 const map = (doc: PopulatedChatMessage): ChatMessageEntity => {
   return {
@@ -27,14 +27,16 @@ const map = (doc: PopulatedChatMessage): ChatMessageEntity => {
 
 class MongooseChatMessageRepository implements ChatMessageRepository {
   async findById(id: string) {
-    const doc = await ChatMessage.findById(id)
+    const _id = parseObjectId(id);
+    const doc = await ChatMessage.findById(_id)
       .populate("sender", "userName avatar")
       .lean<PopulatedChatMessage | null>();
     return doc ? map(doc) : null;
   }
 
   async deleteById(id: string) {
-    await ChatMessage.deleteOne({ _id: id });
+    const _id = parseObjectId(id);
+    await ChatMessage.findByIdAndDelete({ _id });
   }
 
   async create(newMessage: {
@@ -44,9 +46,12 @@ class MongooseChatMessageRepository implements ChatMessageRepository {
     attachments: Array<{ path: string; downloadUrl: string }>;
   }) {
     const { chatId, senderId, text, attachments } = newMessage;
+    const _chatId = parseObjectId(chatId);
+    const _senderId = parseObjectId(senderId);
+
     const saved = await new ChatMessage({
-      chat: chatId,
-      sender: senderId,
+      chat: _chatId,
+      sender: _senderId,
       text: text,
       attachments,
     }).save();
@@ -59,11 +64,9 @@ class MongooseChatMessageRepository implements ChatMessageRepository {
     return map(doc);
   }
 
-  async updateAttachments(
-    id: string,
-    attachments: Array<{ path: string; downloadUrl: string }>,
-  ) {
-    await ChatMessage.updateOne({ _id: id }, { $set: { attachments } });
+  async updateAttachments(id: string, attachments: Array<{ path: string; downloadUrl: string }>) {
+    const _id = parseObjectId(id);
+    await ChatMessage.updateOne({ _id }, { $set: { attachments } }, { runValidators: true });
   }
 }
 

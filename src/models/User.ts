@@ -19,7 +19,7 @@ const avatarSchema = new Schema(
     filePath: { type: String, required: true },
     url: { type: String, required: true },
   },
-  { _id: false }
+  { _id: false },
 );
 
 const userSchema = new Schema<IUser>({

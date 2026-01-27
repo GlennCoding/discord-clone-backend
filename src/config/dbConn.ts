@@ -2,6 +2,10 @@ import mongoose from "mongoose";
 
 import { env } from "../utils/env";
 
+mongoose.set("strict", true);
+mongoose.set("strictQuery", true);
+mongoose.set("sanitizeFilter", true);
+
 const connectDB = async () => {
   try {
     await mongoose.connect(env.DATABASE_URI as string, {

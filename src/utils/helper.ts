@@ -37,3 +37,10 @@ export const ensureParam = (
   if (options?.isObjectId) ensureValidObjectId(trimmed, paramName);
   return trimmed;
 };
+
+export function parseObjectId(id: string): Types.ObjectId {
+  if (!Types.ObjectId.isValid(id)) {
+    throw new Error("Invalid ObjectId");
+  }
+  return new Types.ObjectId(id);
+}
