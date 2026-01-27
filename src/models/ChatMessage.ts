@@ -24,7 +24,7 @@ const attachmentSchema = new Schema<IAttachment>(
     path: { type: String, required: true },
     downloadUrl: { type: String, required: true },
   },
-  { _id: false }
+  { _id: false },
 );
 
 const chatMessageSchema = new Schema<IChatMessage>(
@@ -34,7 +34,7 @@ const chatMessageSchema = new Schema<IChatMessage>(
     text: { type: String, required: false },
     attachments: [{ type: attachmentSchema, required: false }],
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export default model("ChatMessage", chatMessageSchema);
