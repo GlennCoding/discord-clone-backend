@@ -16,10 +16,12 @@ import type { UserRequest } from "../middleware/verifyJWT";
 import type { DeleteMessageAttachmentInput, SaveMessageAttachmentInput } from "../types/dto";
 import type { Response } from "express";
 
-const saveMessageAttachmentPayloadSchema = z.object({
-  chatId: z.string(),
-  text: z.string().optional(),
-});
+const saveMessageAttachmentPayloadSchema = z
+  .object({
+    chatId: z.string(),
+    text: z.string().optional(),
+  })
+  .strict();
 
 export const saveMessageAttachment = async (
   req: UserRequest<SaveMessageAttachmentInput>,
@@ -52,10 +54,12 @@ export const saveMessageAttachment = async (
   res.status(200).json({ message: messageDTO });
 };
 
-const deleteMessageAttachmentPayloadSchema = z.object({
-  messageId: z.string(),
-  attachmentPath: z.string(),
-});
+const deleteMessageAttachmentPayloadSchema = z
+  .object({
+    messageId: z.string(),
+    attachmentPath: z.string(),
+  })
+  .strict();
 
 export const deleteMessageAttachment = async (
   req: UserRequest<DeleteMessageAttachmentInput>,
