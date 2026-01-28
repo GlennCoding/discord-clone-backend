@@ -16,11 +16,12 @@ import {
 import {
   findUserWithRefreshToken,
   removeAllUserRefreshTokens,
-  saveUserRefreshToken,
+  removeAllUserRefreshTokensById,
+  replaceUserRefreshToken,
 } from "../services/userService";
 import { auditHttp } from "../utils/audit";
 import { env } from "../utils/env";
-import { CustomError, RefreshtokenNotFoundError } from "../utils/errors";
+import { RefreshtokenNotFoundError } from "../utils/errors";
 
 import type { UserRequest } from "../middleware/verifyJWT";
 import type { RefreshInput } from "../types/dto";
@@ -43,54 +44,56 @@ export const handleRefreshToken = async (
   const user = await findUserWithRefreshToken(refreshToken);
 
   if (!user) {
+    // Possible token reuse: decode userId (even if expired) and revoke
+    const decoded = jwt.decode(refreshToken) as jwt.JwtPayload | null;
+    const userId = decoded?.userId;
+
+    if (userId) {
+      await removeAllUserRefreshTokensById(userId as string);
+    }
+
     auditHttp(req, "AUTH_REFRESH_FAIL", {
       metadata: { reason: "refresh_token_owner_not_found" },
     });
-    throw new CustomError(404, "Owner of this refreshtoken not found");
+    return res.sendStatus(403);
   }
 
-  jwt.verify(
-    refreshToken,
-    env.REFRESH_TOKEN_SECRET as string,
-    async (
-      err: jwt.VerifyErrors | null,
-      decoded: string | jwt.JwtPayload | undefined,
-    ) => {
-      if (err || decoded === undefined) {
-        auditHttp(req, "AUTH_REFRESH_FAIL", {
-          metadata: {
-            reason: err ? err.name : "jwt_verify_failed",
-          },
-        });
+  try {
+    jwt.verify(refreshToken, env.REFRESH_TOKEN_SECRET as string);
+  } catch (err: unknown) {
+    auditHttp(req, "AUTH_REFRESH_FAIL", {
+      metadata: {
+        reason: err instanceof Error ? err.name : "jwt_verify_failed",
+      },
+    });
 
-        clearAccessTokenCookie(res);
-        clearRefreshTokenCookie(res);
-        await removeAllUserRefreshTokens(user);
-        return res.sendStatus(403);
-      }
-      const newAccessToken = issueAccessToken(user);
-      const newRefreshToken = issueRefreshToken(user);
+    clearAccessTokenCookie(res);
+    clearRefreshTokenCookie(res);
+    await removeAllUserRefreshTokens(user);
+    return res.sendStatus(403);
+  }
 
-      try {
-        await saveUserRefreshToken(user, newRefreshToken);
-      } catch (err) {
-        auditHttp(req, "AUTH_REFRESH_FAIL", {
-          metadata: { reason: "jwt_verify_failed" },
-        });
-        throw err;
-      }
+  const newAccessToken = issueAccessToken(user);
+  const newRefreshToken = issueRefreshToken(user);
 
-      setAccessTokenCookie(res, newAccessToken);
-      setRefreshTokenCookie(res, newRefreshToken);
+  try {
+    await replaceUserRefreshToken(user, refreshToken, newRefreshToken);
+  } catch (err) {
+    auditHttp(req, "AUTH_REFRESH_FAIL", {
+      metadata: { reason: "refresh_token_rotation_failed" },
+    });
+    throw err;
+  }
 
-      if (issueNewSsrToken === true) {
-        const newSsrAccessToken = issueSsrAccessToken(user);
-        setSsrAccessTokenCookie(res, newSsrAccessToken);
-      }
+  setAccessTokenCookie(res, newAccessToken);
+  setRefreshTokenCookie(res, newRefreshToken);
 
-      auditHttp(req, "AUTH_REFRESH_SUCCESS");
+  if (issueNewSsrToken === true) {
+    const newSsrAccessToken = issueSsrAccessToken(user);
+    setSsrAccessTokenCookie(res, newSsrAccessToken);
+  }
 
-      res.status(200).json({ message: "Token refreshed" });
-    },
-  );
+  auditHttp(req, "AUTH_REFRESH_SUCCESS");
+
+  res.status(200).json({ message: "Token refreshed" });
 };
