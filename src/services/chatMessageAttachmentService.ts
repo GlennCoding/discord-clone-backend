@@ -14,6 +14,8 @@ interface IChatMessageAttachmentService {
     file: Express.Multer.File;
     chatId: string;
     text: string | undefined;
+    mimeType: string;
+    extension: string;
   }) => Promise<ChatMessageEntity>;
   deleteChatMessageAttachment: (input: {
     userId: string;
@@ -35,8 +37,10 @@ class ChatMessageAttachmentService implements IChatMessageAttachmentService {
     file: Express.Multer.File;
     chatId: string;
     text: string | undefined;
+    mimeType: string;
+    extension: string;
   }) {
-    const { userId, file, chatId, text } = input;
+    const { userId, file, chatId, text, mimeType, extension } = input;
 
     const user = await this.user.findById(userId);
     if (!user) throw new UserNotFoundError();
@@ -47,8 +51,8 @@ class ChatMessageAttachmentService implements IChatMessageAttachmentService {
     const userIsParticipant = chat.participantIds.some((id) => idsEqual(id, userId));
     if (!userIsParticipant) throw new ForbiddenError("User is not part of this chat");
 
-    const fileKey = buildObjectKey("message-attachment", user.id, file.mimetype);
-    const downloadUrl = await this.fileStorage.upload(file, fileKey, file.mimetype);
+    const fileKey = buildObjectKey("message-attachment", user.id, extension);
+    const downloadUrl = await this.fileStorage.upload(file, fileKey, mimeType);
 
     let newMessage: ChatMessageEntity;
 

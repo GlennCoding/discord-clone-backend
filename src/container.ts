@@ -16,3 +16,5 @@ export const chatMessageAttachmentService = new ChatMessageAttachmentService(
   chatMessageRepo,
   fileStorage,
 );
+
+export { fileStorage };
