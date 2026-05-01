@@ -29,8 +29,10 @@ const ensureBucket = async (bucketName: string) => {
   console.log(`Bucket connection successful`);
 };
 
-ensureBucket(env.GCS_BUCKET_NAME).catch((err) => {
-  console.error("Error ensuring bucket:", err);
-});
+if (process.env.NODE_ENV !== "test") {
+  ensureBucket(env.GCS_BUCKET_NAME).catch((err) => {
+    console.error("Error ensuring bucket:", err);
+  });
+}
 
-export { storage, bucket };
+export { storage, bucket, ensureBucket };
