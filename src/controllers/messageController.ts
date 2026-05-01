@@ -7,7 +7,7 @@ import {
 } from "../config/upload";
 import { chatMessageAttachmentService } from "../container";
 import { auditHttp } from "../utils/audit";
-import { toMessageDTO } from "../utils/dtos/messageDTO";
+import { toMessageDTOWithSignedUrls } from "../utils/dtos/messageDTO";
 import { InputMissingError } from "../utils/errors";
 import { validateUploadedFile } from "../utils/fileValidation";
 import { parseUserId, parseWithSchema } from "../utils/validators";
@@ -15,6 +15,7 @@ import { parseUserId, parseWithSchema } from "../utils/validators";
 import type { UserRequest } from "../middleware/verifyJWT";
 import type { DeleteMessageAttachmentInput, SaveMessageAttachmentInput } from "../types/dto";
 import type { Response } from "express";
+import { fileStorage } from "../container";
 
 const saveMessageAttachmentPayloadSchema = z
   .object({
@@ -31,7 +32,7 @@ export const saveMessageAttachment = async (
   const userId = parseUserId(req.userId);
 
   if (!req.file) throw new InputMissingError("File");
-  await validateUploadedFile(req.file, {
+  const validatedFile = await validateUploadedFile(req.file, {
     allowedMimeTypes: ALLOWED_MESSAGE_ATTACHMENT_MIME_TYPES,
     maxFileSizeBytes: MAX_MESSAGE_ATTACHMENT_FILE_SIZE_BYTES,
   });
@@ -41,11 +42,13 @@ export const saveMessageAttachment = async (
     file: req.file,
     chatId,
     text,
+    mimeType: validatedFile.mime,
+    extension: validatedFile.ext,
   });
 
   auditHttp(req, "MESSAGE_ATTACHMENT_UPLOADED", { messageId: message.id });
 
-  const messageDTO = toMessageDTO(message);
+  const messageDTO = await toMessageDTOWithSignedUrls(message, fileStorage);
 
   io.to(chatId).emit("message:new", {
     message: messageDTO,

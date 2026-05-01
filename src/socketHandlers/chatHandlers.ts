@@ -1,7 +1,8 @@
 import Chat from "../models/Chat";
 import Message from "../models/ChatMessage";
 import { ERROR_STATUS, EVENT_ERROR } from "../types/sockets";
-import { toMessageDTO } from "../utils/dtos/messageDTO";
+import { toMessageDTOWithSignedUrls } from "../utils/dtos/messageDTO";
+import { fileStorage } from "../container";
 
 import type { IUser } from "../models/User";
 import type { EventControllerWithAck, EventControllerWithoutAck } from "../types/sockets";
@@ -55,7 +56,7 @@ export const handleIncomingNewMessage: EventControllerWithAck<"message:send"> = 
       },
     ]);
 
-    const messageDTO = toMessageDTO(populatedMessage);
+    const messageDTO = await toMessageDTOWithSignedUrls(populatedMessage, fileStorage);
 
     socket.to(chatId).emit("message:new", {
       message: messageDTO,
@@ -115,13 +116,17 @@ export const handleJoinChat: EventControllerWithAck<"chat:join"> = async (socket
       .populate<{ sender: IUser }>("sender", "userName avatar")
       .sort({ createdAt: 1 });
 
+    const messagesDTO = await Promise.all(
+      messages.map((m) => toMessageDTOWithSignedUrls(m, fileStorage)),
+    );
+
     ack({
       data: {
         participant: {
           username: otherParticipant.userName,
           avatarUrl: otherParticipant.avatar?.url,
         },
-        messages: messages.map((m) => toMessageDTO(m)),
+        messages: messagesDTO,
       },
       status: "OK",
     });

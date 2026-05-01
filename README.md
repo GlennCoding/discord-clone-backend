@@ -46,7 +46,7 @@ Users can:
 
 ## Cyber Security
 
-Threat modeling and security considerations live in [`threat-model.md`](./threat-model.md).
+Threat modeling and security considerations live in [`threat-model.md`](./docs/THREAT_MODEL.md).
 
 ## Run Project Locally
 
