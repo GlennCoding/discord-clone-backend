@@ -21,7 +21,7 @@ export const errorMiddleware: ErrorRequestHandler = (
   const requestContext = getRequestContext(req);
 
   if (err instanceof CustomError) {
-    req.log.error(
+    req.log?.error(
       {
         err: { name: err?.name, message: err?.message, stack: err?.stack },
         ...requestContext,
@@ -48,7 +48,7 @@ export const errorMiddleware: ErrorRequestHandler = (
   }
   if ((err as any)?.status) {
     const status = (err as any).status;
-    req.log.error(
+    req.log?.error(
       {
         err: { name: err?.name, message: err?.message, stack: err?.stack },
         ...requestContext,
@@ -59,7 +59,7 @@ export const errorMiddleware: ErrorRequestHandler = (
     return;
   }
 
-  req.log.error(
+  req.log?.error(
     {
       err: { name: err?.name, message: err?.message, stack: err?.stack },
       ...requestContext,

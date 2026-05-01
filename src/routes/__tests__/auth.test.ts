@@ -9,15 +9,43 @@ describe("/register", () => {
     await User.deleteMany({});
   });
 
+  const getAuthAgent = async () => {
+    const agent = request.agent(app);
+    const csrfRes = await agent.get("/csrf-token");
+    return { agent, csrfToken: csrfRes.body.csrfToken };
+  };
+
   it("should return 400 when username or password is missing", async () => {
-    await request(app).post("/login").expect(400);
-    await request(app).post("/login").send({ userName: "user" }).expect(400);
-    await request(app).post("/login").send({ password: "password" }).expect(400);
+    const { agent, csrfToken } = await getAuthAgent();
+    const res = await agent.post("/login").set("x-csrf-token", csrfToken);
+    expect(res.status).toBe(400);
+  });
+
+  it("should return 400 when missing username", async () => {
+    const { agent, csrfToken } = await getAuthAgent();
+    const res = await agent
+      .post("/login")
+      .set("x-csrf-token", csrfToken)
+      .send({ password: "password" });
+    expect(res.status).toBe(400);
+  });
+
+  it("should return 400 when missing password", async () => {
+    const { agent, csrfToken } = await getAuthAgent();
+    const res = await agent
+      .post("/login")
+      .set("x-csrf-token", csrfToken)
+      .send({ userName: "user" });
+    expect(res.status).toBe(400);
   });
 
   it("should return 404 when username doesn't exist", async () => {
+    const { agent, csrfToken } = await getAuthAgent();
     const payload = { userName: "bob", password: "test" };
-    const res = await request(app).post("/login").send(payload);
+    const res = await agent
+      .post("/login")
+      .set("x-csrf-token", csrfToken)
+      .send(payload);
 
     expect(res.status).toBe(404);
     expect(res.body).toEqual({
@@ -29,12 +57,18 @@ describe("/register", () => {
     const user = { userName: "john", password: "password123" };
 
     beforeEach(async () => {
-      await request(app).post("/register").send(user);
+      const { agent, csrfToken } = await getAuthAgent();
+      await agent
+        .post("/register")
+        .set("x-csrf-token", csrfToken)
+        .send(user);
     });
 
     it("should return 401 when password is incorrect", async () => {
-      const res = await request(app)
+      const { agent, csrfToken } = await getAuthAgent();
+      const res = await agent
         .post("/login")
+        .set("x-csrf-token", csrfToken)
         .send({ userName: user.userName, password: "wrong_password" });
 
       expect(res.status).toBe(401);
@@ -44,8 +78,10 @@ describe("/register", () => {
     });
 
     it("should login with correct password and set access/refresh token cookies", async () => {
-      const res = await request(app)
+      const { agent, csrfToken } = await getAuthAgent();
+      const res = await agent
         .post("/login")
+        .set("x-csrf-token", csrfToken)
         .send({ userName: user.userName, password: user.password });
 
       expect(res.status).toBe(200);
@@ -69,9 +105,7 @@ describe("/register", () => {
         ]),
       );
 
-      const accessTokenCookie = cookies?.find((cookie) =>
-        cookie.startsWith("access_token="),
-      );
+      const accessTokenCookie = cookies?.find((cookie) => cookie.startsWith("access_token="));
       expect(accessTokenCookie).toBeDefined();
 
       const accessToken = accessTokenCookie?.split(";")[0].split("=")[1];
