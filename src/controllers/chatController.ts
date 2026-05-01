@@ -8,7 +8,7 @@ import {
   checkIfUserIdPartOfChat,
   deleteChat as deleteChatService,
 } from "../services/chatService";
-import { findUserWithUserName } from "../services/userService";
+import { userService } from '../container';
 import { auditHttp } from "../utils/audit";
 import {
   CantStartChatWithOneselfError,
@@ -37,7 +37,7 @@ export const createChat = async (req: UserRequest, res: Response) => {
 
   if (!participant) throw new InputMissingError("Participant");
 
-  const otherUser = await findUserWithUserName(participant);
+  const otherUser = await userService.findUserWithUserName(participant);
 
   if (!otherUser) throw new UserNotFoundError(participant);
 

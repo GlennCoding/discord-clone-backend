@@ -1,26 +1,24 @@
-
 import {
   ALLOWED_IMAGE_MIME_TYPES,
   MAX_PROFILE_IMAGE_FILE_SIZE_BYTES,
-} from "../config/upload";
-import User from "../models/User";
+} from '../config/upload';
 import {
   deleteProfileImgFromBucket,
   uploadProfileImgToBucket,
-} from "../services/profileService";
-import { findUserWithUserId } from "../services/userService";
-import { auditHttp } from "../utils/audit";
-import { UserNotFoundError, CustomError, InputMissingError } from "../utils/errors";
-import { validateUploadedFile } from "../utils/fileValidation";
-import { buildObjectKey } from "../utils/storage";
-import { validateStatus } from "../utils/validators";
+} from '../services/profileService';
+import { userService } from '../container';
+import { auditHttp } from '../utils/audit';
+import { UserNotFoundError, CustomError, InputMissingError } from '../utils/errors';
+import { validateUploadedFile } from '../utils/fileValidation';
+import { buildObjectKey } from '../utils/storage';
+import { validateStatus } from '../utils/validators';
 
-import type { UserRequest } from "../middleware/verifyJWT";
-import type { ProfileDTO } from "../types/dto";
-import type { NextFunction, Response } from "express";
+import type { UserRequest } from '../middleware/verifyJWT';
+import type { ProfileDTO } from '../types/dto';
+import type { NextFunction, Response } from 'express';
 
 export const getProfile = async (req: UserRequest, res: Response) => {
-  const user = await findUserWithUserId(req.userId as string);
+  const user = await userService.findUserWithUserId(req.userId as string);
   if (!user) throw new UserNotFoundError();
 
   res.status(200).json({
@@ -32,23 +30,23 @@ export const getProfile = async (req: UserRequest, res: Response) => {
 
 export const updateProfile = async (req: UserRequest, res: Response) => {
   const { status } = req.body;
-  const user = await findUserWithUserId(req.userId as string);
+  const user = await userService.findUserWithUserId(req.userId as string);
   if (!user) throw new UserNotFoundError();
 
-  if (status === undefined) throw new CustomError(400, "Status is missing");
+  if (status === undefined) throw new CustomError(400, 'Status is missing');
 
   validateStatus(status);
-  user.status = status;
-  await user.save();
 
-  auditHttp(req, "PROFILE_UPDATED");
+  const updated = await userService.updateStatus(user.id, status);
+  if (!updated) throw new UserNotFoundError();
+
+  auditHttp(req, 'PROFILE_UPDATED');
 
   res.status(200).json({
-    userName: user.userName,
-    status: user.status,
-    profileImgUrl: user.avatar?.url,
+    userName: updated.userName,
+    status: updated.status,
+    profileImgUrl: updated.avatar?.url,
   } as ProfileDTO);
-  return;
 };
 
 export const updateProfileImg = async (
@@ -63,57 +61,53 @@ export const updateProfileImg = async (
     maxFileSizeBytes: MAX_PROFILE_IMAGE_FILE_SIZE_BYTES,
   });
 
-  const user = await findUserWithUserId(req.userId as string);
+  const user = await userService.findUserWithUserId(req.userId as string);
   if (!user) throw new UserNotFoundError();
 
+  if (!file) throw new InputMissingError('File');
+
   const previousAvatarFilePath = user.avatar?.filePath;
-  const fileName = buildObjectKey("avatars", user.userName, validatedFile.ext);
+  const fileName = buildObjectKey('avatars', user.userName, validatedFile.ext);
 
-  if (!file) throw new InputMissingError("File");
+  const publicUrl = await uploadProfileImgToBucket(file, fileName, validatedFile.mime);
 
-  const publicUrl = await uploadProfileImgToBucket(
-    file,
-    fileName,
-    validatedFile.mime,
-  );
-
-  user.avatar = { filePath: fileName, url: publicUrl };
-
+  let updated;
   try {
-    await user.save();
+    updated = await userService.updateAvatar(user.id, { filePath: fileName, url: publicUrl });
   } catch (err) {
     await deleteProfileImgFromBucket(fileName);
     return next(err);
   }
 
+  if (!updated) throw new UserNotFoundError();
+
   if (previousAvatarFilePath) {
     try {
       await deleteProfileImgFromBucket(previousAvatarFilePath);
     } catch (err) {
-      console.warn("Failed to delete old profile image:", err);
+      console.warn('Failed to delete old profile image:', err);
     }
   }
 
-  auditHttp(req, "PROFILE_IMGAGE_UPLOADED");
+  auditHttp(req, 'PROFILE_IMGAGE_UPLOADED');
 
   res.status(200).json({
-    userName: user.userName,
-    status: user.status,
-    profileImgUrl: user.avatar.url,
+    userName: updated.userName,
+    status: updated.status,
+    profileImgUrl: updated.avatar?.url,
   } as ProfileDTO);
 };
 
 export const deleteProfileImg = async (req: UserRequest, res: Response) => {
-  const user = await User.findById(req.userId as string);
+  const user = await userService.findUserWithUserId(req.userId as string);
   if (!user) throw new UserNotFoundError();
 
   if (user.avatar) {
     await deleteProfileImgFromBucket(user.avatar.filePath);
-    user.avatar = undefined;
-    await user.save();
+    await userService.updateAvatar(user.id, undefined);
   }
 
-  auditHttp(req, "PROFILE_IMGAGE_DELETED");
+  auditHttp(req, 'PROFILE_IMGAGE_DELETED');
 
   res.sendStatus(204);
 };

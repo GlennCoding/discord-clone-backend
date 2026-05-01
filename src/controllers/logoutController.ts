@@ -1,17 +1,13 @@
-
 import {
   REFRESH_TOKEN_COOKIE_NAME,
   clearAccessTokenCookie,
   clearRefreshTokenCookie,
   clearSsrAccessTokenCookie,
-} from "../config/tokenCookies";
-import {
-  findUserWithRefreshToken,
-  removeUserRefreshToken,
-} from "../services/userService";
-import { auditHttp } from "../utils/audit";
+} from '../config/tokenCookies';
+import { userService } from '../container';
+import { auditHttp } from '../utils/audit';
 
-import type { Request, Response } from "express";
+import type { Request, Response } from 'express';
 
 export const handleLogout = async (req: Request, res: Response) => {
   const refreshToken = req.cookies?.[REFRESH_TOKEN_COOKIE_NAME];
@@ -24,13 +20,13 @@ export const handleLogout = async (req: Request, res: Response) => {
     return res.sendStatus(204);
   }
 
-  const user = await findUserWithRefreshToken(refreshToken);
+  const user = await userService.findUserWithRefreshToken(refreshToken);
 
   if (user) {
-    await removeUserRefreshToken(user, refreshToken);
+    await userService.removeUserRefreshToken(user.id, refreshToken);
   }
 
-  auditHttp(req, "AUTH_LOGOUT");
+  auditHttp(req, 'AUTH_LOGOUT');
 
   return res.sendStatus(204);
 };

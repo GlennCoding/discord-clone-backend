@@ -4,11 +4,14 @@ import MongooseChatMessageRepository from "./repositories/mongooseChatMessageRep
 import MongooseChatRepository from "./repositories/mongooseChatRepository";
 import MongooseUserRepository from "./repositories/mongooseUserRepository";
 import ChatMessageAttachmentService from "./services/chatMessageAttachmentService";
+import { UserService } from "./services/userService";
 
 const userRepo = new MongooseUserRepository();
 const chatRepo = new MongooseChatRepository();
 const chatMessageRepo = new MongooseChatMessageRepository();
 const fileStorage = new GcsFileStorage(bucket);
+
+export const userService = new UserService(userRepo);
 
 export const chatMessageAttachmentService = new ChatMessageAttachmentService(
   userRepo,

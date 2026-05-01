@@ -4,8 +4,33 @@ import { ERROR_STATUS, EVENT_ERROR } from "../types/sockets";
 import { toMessageDTOWithSignedUrls } from "../utils/dtos/messageDTO";
 import { fileStorage } from "../container";
 
+import type { IChat } from "../models/Chat";
+import type { IChatMessage } from "../models/ChatMessage";
 import type { IUser } from "../models/User";
+import type { ChatMessageEntity } from "../types/entities";
 import type { EventControllerWithAck, EventControllerWithoutAck } from "../types/sockets";
+
+type PopulatedMessage = Omit<IChatMessage, "chat" | "sender"> & {
+  _id: { toString(): string };
+  chat: IChat & { _id: { toString(): string } };
+  sender: IUser & { _id: { toString(): string } };
+  createdAt: Date;
+  updatedAt?: Date;
+};
+
+const toEntity = (m: PopulatedMessage): ChatMessageEntity => ({
+  id: m._id.toString(),
+  chatId: m.chat._id.toString(),
+  sender: {
+    id: m.sender._id.toString(),
+    username: m.sender.userName,
+    avatarUrl: m.sender.avatar?.url,
+  },
+  text: m.text,
+  attachments: m.attachments?.map((a) => ({ path: a.path, downloadUrl: a.downloadUrl })) ?? [],
+  createdAt: m.createdAt,
+  updatedAt: m.updatedAt,
+});
 
 export const handleIncomingNewMessage: EventControllerWithAck<"message:send"> = async (
   socket,
@@ -56,7 +81,7 @@ export const handleIncomingNewMessage: EventControllerWithAck<"message:send"> = 
       },
     ]);
 
-    const messageDTO = await toMessageDTOWithSignedUrls(populatedMessage, fileStorage);
+    const messageDTO = toMessageDTO(toEntity(populatedMessage as unknown as PopulatedMessage));
 
     socket.to(chatId).emit("message:new", {
       message: messageDTO,
@@ -126,7 +151,7 @@ export const handleJoinChat: EventControllerWithAck<"chat:join"> = async (socket
           username: otherParticipant.userName,
           avatarUrl: otherParticipant.avatar?.url,
         },
-        messages: messagesDTO,
+        messages: messages.map((m) => toMessageDTO(toEntity(m as unknown as PopulatedMessage))),
       },
       status: "OK",
     });

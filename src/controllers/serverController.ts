@@ -58,7 +58,7 @@ export const createServer = async (
   const shortId = await generateUniqueShortId();
 
   const server = await Server.create({ ...payload, owner, shortId });
-  await Member.create({ user: owner._id, server: server._id });
+  await Member.create({ user: owner.id, server: server._id });
 
   auditHttp(req, "SERVER_CREATED", { serverId: server.id });
 
