@@ -2,11 +2,7 @@ import {
   ALLOWED_IMAGE_MIME_TYPES,
   MAX_PROFILE_IMAGE_FILE_SIZE_BYTES,
 } from '../config/upload';
-import {
-  deleteProfileImgFromBucket,
-  uploadProfileImgToBucket,
-} from '../services/profileService';
-import { userService } from '../container';
+import { profileService, userService } from '../container';
 import { auditHttp } from '../utils/audit';
 import { UserNotFoundError, CustomError, InputMissingError } from '../utils/errors';
 import { validateUploadedFile } from '../utils/fileValidation';
@@ -69,13 +65,13 @@ export const updateProfileImg = async (
   const previousAvatarFilePath = user.avatar?.filePath;
   const fileName = buildObjectKey('avatars', user.userName, validatedFile.ext);
 
-  const publicUrl = await uploadProfileImgToBucket(file, fileName, validatedFile.mime);
+  const publicUrl = await profileService.uploadProfileImg(file, fileName, validatedFile.mime);
 
   let updated;
   try {
     updated = await userService.updateAvatar(user.id, { filePath: fileName, url: publicUrl });
   } catch (err) {
-    await deleteProfileImgFromBucket(fileName);
+    await profileService.deleteProfileImg(fileName);
     return next(err);
   }
 
@@ -83,7 +79,7 @@ export const updateProfileImg = async (
 
   if (previousAvatarFilePath) {
     try {
-      await deleteProfileImgFromBucket(previousAvatarFilePath);
+      await profileService.deleteProfileImg(previousAvatarFilePath);
     } catch (err) {
       console.warn('Failed to delete old profile image:', err);
     }
@@ -103,7 +99,7 @@ export const deleteProfileImg = async (req: UserRequest, res: Response) => {
   if (!user) throw new UserNotFoundError();
 
   if (user.avatar) {
-    await deleteProfileImgFromBucket(user.avatar.filePath);
+    await profileService.deleteProfileImg(user.avatar.filePath);
     await userService.updateAvatar(user.id, undefined);
   }
 
