@@ -14,7 +14,7 @@ const createMockRes = () => {
 describe("errorMiddleware logging", () => {
   it("logs and responds for CustomError", () => {
     const log = { error: vi.fn() };
-    const req: any = { log, user: { id: "user-123" } };
+    const req: any = { log, userId: "user-123", requestId: "req-abc" };
     const res = createMockRes();
 
     const err = new CustomError(418, "custom failure");
@@ -28,6 +28,7 @@ describe("errorMiddleware logging", () => {
           stack: err.stack,
         },
         userId: "user-123",
+        requestId: "req-abc",
       },
       "custom_error"
     );
@@ -37,7 +38,7 @@ describe("errorMiddleware logging", () => {
 
   it("logs multer errors and sets status based on code", () => {
     const log = { error: vi.fn() };
-    const req: any = { log, user: { id: "user-456" } };
+    const req: any = { log, userId: "user-456", requestId: "req-def" };
     const res = createMockRes();
 
     const err = new multer.MulterError("LIMIT_FILE_SIZE");
@@ -51,6 +52,7 @@ describe("errorMiddleware logging", () => {
           stack: err.stack,
         },
         userId: "user-456",
+        requestId: "req-def",
       },
       "multer_error"
     );
@@ -74,6 +76,7 @@ describe("errorMiddleware logging", () => {
           stack: err.stack,
         },
         userId: undefined,
+        requestId: undefined,
       },
       "unhandled_error"
     );
