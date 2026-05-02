@@ -1,112 +1,77 @@
-import Channel from "../models/Channel";
-import ChannelMessage from "../models/ChannelMessage";
-import Member from "../models/Member";
-import { toChannelMessageDTO } from "../utils/dtos/channelMessageDTO";
-import { CustomError, NotFoundError } from "../utils/errors";
-import { ensureParam, ensureUser } from "../utils/helper";
+import { CustomError, NotFoundError } from '../utils/errors';
+import { ensureParam } from '../utils/helper';
 
-import { toChannelDTO } from "./serverService";
-
-import type { ChannelDocument } from "../models/Channel";
-import type { MemberDocument } from "../models/Member";
-import type { ChannelMessageDTO, ChannelSubscribeDTO } from "../types/dto";
-import type { PopulatedChannelMessage } from "../types/misc";
+import type { ChannelMessageRepository } from '../repositories/channelMessageRepository';
+import type { ChannelRepository } from '../repositories/channelRepository';
+import type { ServerRepository } from '../repositories/serverRepository';
+import type { ChannelMessageDTO, ChannelSubscribeDTO } from '../types/dto';
+import type { ChannelEntity, ChannelMessageEntity, PopulatedMemberEntity } from '../types/entities';
 
 const CHANNEL_MESSAGE_HISTORY_LIMIT = 50;
 
-const channelMessagePopulateOptions = [
-  {
-    path: "sender",
-    populate: {
-      path: "user",
-      select: "userName avatar",
-    },
+const toChannelMessageDTO = (msg: ChannelMessageEntity): ChannelMessageDTO => ({
+  id: msg.id,
+  channelId: msg.channelId,
+  text: msg.text ?? '',
+  sender: {
+    id: msg.senderId,
+    username: msg.senderDisplayName,
+    avatarUrl: msg.senderAvatarUrl,
   },
-  {
-    path: "channel",
-    select: "_id",
-  },
-];
+  createdAt: msg.createdAt.toISOString(),
+  updatedAt: msg.updatedAt?.toISOString(),
+  attachments: msg.attachments?.map((a) => ({ downloadUrl: a.downloadUrl })) ?? [],
+});
 
-type PopulatedMember = MemberDocument & {
-  user: MemberDocument["user"];
-};
+export class ChannelMessageService {
+  constructor(
+    private channelMessage: ChannelMessageRepository,
+    private channel: ChannelRepository,
+    private server: ServerRepository,
+  ) {}
 
-export const ensureChannelAccess = async (
-  channelIdParam: string,
-  userId: string
-): Promise<{
-  channel: ChannelDocument;
-  member: PopulatedMember;
-}> => {
-  const channelId = ensureParam("channelId", channelIdParam, { isObjectId: true });
-  const user = await ensureUser(userId);
+  async ensureChannelAccess(
+    channelIdParam: string,
+    userId: string,
+  ): Promise<{ channel: ChannelEntity; member: PopulatedMemberEntity }> {
+    const channelId = ensureParam('channelId', channelIdParam, { isObjectId: true });
 
-  const channel = await Channel.findById(channelId)
-    .populate("server")
-    .populate("disallowedRoles", "_id")
-    .exec();
+    const channel = await this.channel.findById(channelId);
+    if (!channel) throw new NotFoundError('Channel');
 
-  if (!channel) throw new NotFoundError("Channel");
+    const member = await this.server.findPopulatedMember(channel.serverId, userId);
+    if (!member) throw new CustomError(403, 'You are no member of this server');
 
-  const member = await Member.findOne({ server: channel.server, user })
-    .populate("roles", "_id name")
-    .populate("user")
-    .exec();
+    const hasRestrictedRole = channel.disallowedRoleIds.some((roleId) =>
+      member.roleIds.includes(roleId),
+    );
+    if (hasRestrictedRole) throw new CustomError(403, 'You cannot access this channel');
 
-  if (!member) throw new CustomError(403, "You are no member of this server");
-
-  const disallowedRoles = channel.disallowedRoles ?? [];
-  const memberRoles = member.roles ?? [];
-
-  const hasRestrictedRole = disallowedRoles.some((role) =>
-    memberRoles.some((memberRole) => memberRole.id === role.id)
-  );
-
-  if (hasRestrictedRole) {
-    throw new CustomError(403, "You cannot access this channel");
+    return { channel, member };
   }
 
-  return { channel, member: member as PopulatedMember };
-};
+  async fetchRecentMessages(channelId: string): Promise<ChannelMessageDTO[]> {
+    const messages = await this.channelMessage.findRecentByChannelId(
+      channelId,
+      CHANNEL_MESSAGE_HISTORY_LIMIT,
+    );
+    return messages.map(toChannelMessageDTO);
+  }
 
-export const fetchRecentChannelMessages = async (
-  channelId: string
-): Promise<ChannelMessageDTO[]> => {
-  const messages = (await ChannelMessage.find({ channel: channelId })
-    .sort({ createdAt: -1 })
-    .limit(CHANNEL_MESSAGE_HISTORY_LIMIT)
-    .populate(channelMessagePopulateOptions)) as PopulatedChannelMessage[];
+  async createMessage(
+    channelId: string,
+    memberId: string,
+    text: string,
+  ): Promise<ChannelMessageDTO> {
+    const msg = await this.channelMessage.create({ channelId, senderId: memberId, text });
+    return toChannelMessageDTO(msg);
+  }
 
-  return messages.reverse().map((message) => toChannelMessageDTO(message));
-};
-
-export const createChannelMessage = async (
-  channelId: string,
-  member: MemberDocument,
-  text: string
-): Promise<ChannelMessageDTO> => {
-  const created = await ChannelMessage.create({
-    channel: channelId,
-    sender: member._id,
-    text,
-  });
-
-  const populated = (await created.populate(
-    channelMessagePopulateOptions
-  )) as PopulatedChannelMessage;
-
-  return toChannelMessageDTO(populated);
-};
-
-export const buildChannelSubscribePayload = (
-  channel: ChannelDocument,
-  messages: ChannelMessageDTO[]
-): ChannelSubscribeDTO => ({
-  serverId:
-    typeof channel.server === "object" && "id" in channel.server
-      ? (channel.server as { id: string }).id
-      : channel.server.toString(),
-  channel: toChannelDTO(channel),
-  messages,
-});
+  buildSubscribePayload(channel: ChannelEntity, messages: ChannelMessageDTO[]): ChannelSubscribeDTO {
+    return {
+      serverId: channel.serverId,
+      channel: { id: channel.id, name: channel.name, order: channel.order },
+      messages,
+    };
+  }
+}

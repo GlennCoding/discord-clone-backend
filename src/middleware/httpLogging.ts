@@ -48,6 +48,9 @@ export const attachUserIdToHttpLogger: RequestHandler = (
   _: Response,
   next: NextFunction,
 ) => {
+  if (!req.log) {
+    (req as any).log = logger.child({ id: randomUUID() });
+  }
   if ((req as any).user?.id) {
     (req as any).log = (req as any).log.child({ userId: (req as any).user.id });
   }

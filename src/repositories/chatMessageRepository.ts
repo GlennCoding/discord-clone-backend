@@ -2,6 +2,7 @@ import type { ChatMessageEntity } from "../types/entities";
 
 export interface ChatMessageRepository {
   findById(id: string): Promise<ChatMessageEntity | null>;
+  findByChatId(chatId: string): Promise<ChatMessageEntity[]>;
   deleteById(id: string): Promise<void>;
   create(newMessage: {
     chatId: string;

@@ -34,6 +34,16 @@ class MongooseChatMessageRepository implements ChatMessageRepository {
     return doc ? map(doc) : null;
   }
 
+  async findByChatId(chatId: string) {
+    const _chatId = parseObjectId(chatId);
+    const docs = await ChatMessage.find({ chat: _chatId })
+      .populate("sender", "userName avatar")
+      .populate("chat", "_id")
+      .sort({ createdAt: 1 })
+      .lean<PopulatedChatMessage[]>();
+    return docs.map(map);
+  }
+
   async deleteById(id: string) {
     const _id = parseObjectId(id);
     await ChatMessage.findByIdAndDelete({ _id });

@@ -1,11 +1,10 @@
-import { generateCsrfToken } from "../config/csrf";
 import {
   setAccessTokenCookie,
   setRefreshTokenCookie,
   setSsrAccessTokenCookie,
 } from "../config/tokenCookies";
 import { issueAuthTokens } from "../services/authService";
-import { createUser, findUserWithUserName, saveUserRefreshToken } from "../services/userService";
+import { userService } from "../container";
 import { CustomError, UsernameIsTakenError } from "../utils/errors";
 
 import type { RegisterDTO } from "../types/dto";
@@ -18,20 +17,18 @@ export const handleRegister = async (req: Request, res: Response<RegisterDTO>) =
     throw new CustomError(400, "Username and password are required.");
   }
 
-  const usernameExistsAlready = await findUserWithUserName(userName);
-
+  const usernameExistsAlready = await userService.findUserWithUserName(userName);
   if (usernameExistsAlready) throw new UsernameIsTakenError();
 
-  const user = await createUser(userName, password);
+  const user = await userService.createUser(userName, password);
 
-  const { accessToken, ssrAccessToken, refreshToken } = await issueAuthTokens(user);
+  const { accessToken, ssrAccessToken, refreshToken } = issueAuthTokens(user);
 
-  await saveUserRefreshToken(user, refreshToken);
+  await userService.saveUserRefreshToken(user.id, refreshToken);
 
   setAccessTokenCookie(res, accessToken);
   setSsrAccessTokenCookie(res, ssrAccessToken);
   setRefreshTokenCookie(res, refreshToken);
-  const csrfToken = generateCsrfToken(req, res);
 
   return res.status(201).json({
     message: "Registered successfully",
@@ -40,6 +37,5 @@ export const handleRegister = async (req: Request, res: Response<RegisterDTO>) =
       username: user.userName,
       avatarUrl: user.avatar?.url,
     },
-    csrfToken,
   });
 };

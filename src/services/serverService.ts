@@ -1,110 +1,130 @@
-import mongoose from "mongoose";
+import { RolePermission } from '../models/Role';
+import { CustomError } from '../utils/errors';
+import { ensureParam } from '../utils/helper';
+import { randomShortId } from '../utils/ids';
 
-import Channel from "../models/Channel";
-import ChannelMessage from "../models/ChannelMessage";
-import Member from "../models/Member";
-import Role from "../models/Role";
-import Server from "../models/Server";
-import { CustomError } from "../utils/errors";
-import { ensureParam } from "../utils/helper";
-import { randomShortId } from "../utils/ids";
+import type { ServerRepository } from '../repositories/serverRepository';
+import type { ChannelDTO, MemberDTO, ServerListItemDTO } from '../types/dto';
+import type { ChannelEntity, PopulatedMemberEntity, RoleEntity, ServerEntity } from '../types/entities';
 
-import type { IChannel } from "../models/Channel";
-import type { IMember } from "../models/Member";
-import type { IRole, RolePermission } from "../models/Role";
-import type { IServer } from "../models/Server";
-import type { ServerListItemDTO, ChannelDTO, MemberDTO } from "../types/dto";
-import type { Types } from "mongoose";
+export { RolePermission };
 
 export const ensureShortId = (shortIdParam: string | undefined) => {
-  const shortId = ensureParam("shortId", shortIdParam).toUpperCase();
+  const shortId = ensureParam('shortId', shortIdParam).toUpperCase();
   if (shortId.length !== 6 || !/^[A-Z0-9]+$/.test(shortId)) {
-    throw new CustomError(400, "shortId is invalid");
+    throw new CustomError(400, 'shortId is invalid');
   }
   return shortId;
 };
 
+export const toChannelDTO = (channel: ChannelEntity): ChannelDTO => ({
+  id: channel.id,
+  name: channel.name,
+  order: channel.order,
+});
+
+export const toMemberDTO = (member: PopulatedMemberEntity): MemberDTO => ({
+  name: member.nickname || member.user.userName,
+  roles: member.roles.map((r) => r.name),
+  avatarUrl: member.user.avatar?.url,
+});
+
+export const toServerListItemDTO = (servers: ServerEntity[]): ServerListItemDTO[] =>
+  servers.map((s) => ({
+    name: s.name,
+    shortId: s.shortId,
+    description: s.description,
+    iconUrl: s.iconUrl,
+  }));
+
+export const checkPermissionInRoles = (
+  roles: Pick<RoleEntity, 'permissions'>[],
+  permission: string,
+): boolean => roles.some((r) => r.permissions.includes(permission));
+
+export const filterDisallowedChannels = (
+  channels: ChannelEntity[],
+  memberRoleIds: string[],
+): ChannelEntity[] =>
+  channels.filter(
+    (c) => !c.disallowedRoleIds.some((roleId) => memberRoleIds.includes(roleId)),
+  );
+
 export const generateUniqueShortId = async (): Promise<string> => {
   let shortId = randomShortId();
-
+  const { default: Server } = await import('../models/Server');
   while (await Server.exists({ shortId })) {
     shortId = randomShortId();
   }
   return shortId;
 };
 
-export const checkPermissionInRoles = (roles: IRole[], permission: RolePermission) => {
-  for (const role of roles) {
-    const hasPermission = role.permissions.some((p) => p === permission);
-    if (hasPermission) return true;
+export class ServerService {
+  constructor(private server: ServerRepository) {}
+
+  async generateUniqueShortId(): Promise<string> {
+    let shortId = randomShortId();
+    while (await this.server.shortIdExists(shortId)) {
+      shortId = randomShortId();
+    }
+    return shortId;
   }
-  return false;
-};
 
-export const toServerListItemDTO = (servers: IServer[]): ServerListItemDTO[] => {
-  return servers.map((s) => ({
-    name: s.name,
-    shortId: s.shortId,
-    description: s.description,
-    iconUrl: s.iconUrl,
-  }));
-};
-
-const checkIfMemberRolesIncludedInDisallowedRoles = (
-  disAllowedRoles: IRole[],
-  memberRoles: IRole[],
-) => {
-  for (const disallowedRole of disAllowedRoles) {
-    if (memberRoles.some((memberRole) => memberRole.id === disallowedRole.id)) return true;
+  findById(id: string) {
+    return this.server.findById(id);
   }
-  return false;
-};
 
-export const filterDisallowedRolesOfChannels = (channels: IChannel[], memberRoles: IRole[]) => {
-  const allowedChannels: IChannel[] = [];
-  for (const c of channels) {
-    const memberHasNoAccessToChannel = checkIfMemberRolesIncludedInDisallowedRoles(
-      c.disallowedRoles,
-      memberRoles,
-    );
-    if (memberHasNoAccessToChannel) continue;
-
-    allowedChannels.push(c);
+  findByShortId(shortId: string) {
+    return this.server.findByShortId(shortId);
   }
-  return allowedChannels;
-};
 
-export const toChannelDTO = ({ _id, name, order }: IChannel): ChannelDTO => ({
-  id: _id.toString(),
-  name,
-  order,
-});
-
-export const toMemberDTO = ({ roles, user, nickname }: IMember): MemberDTO => ({
-  name: nickname || user.userName,
-  roles: roles.map((r) => r.name),
-  avatarUrl: user.avatar?.url,
-});
-
-export const getAllChannelIdsOfServer = async (serverId: string) =>
-  await Channel.find({ server: serverId }).distinct("_id");
-
-export const deleteServerInDB = async (serverId: string, channelIds: Types.ObjectId[]) => {
-  const session = await mongoose.startSession();
-  try {
-    await session.withTransaction(async () => {
-      await Promise.all([
-        ChannelMessage.deleteMany({ channel: { $in: channelIds } }),
-        Channel.deleteMany({ server: serverId }),
-        Role.deleteMany({ server: serverId }),
-        Member.deleteMany({ server: serverId }),
-        Server.deleteOne(),
-      ]);
-    });
-  } catch (err) {
-    console.error("Transaction failed:", err);
-    throw err;
-  } finally {
-    await session.endSession();
+  findAllPublic() {
+    return this.server.findAllPublic();
   }
-};
+
+  async createServer(data: {
+    name: string;
+    description?: string;
+    isPublic: boolean;
+    ownerId: string;
+  }) {
+    const shortId = await this.generateUniqueShortId();
+    return this.server.create({ ...data, shortId });
+  }
+
+  updateServer(id: string, data: { name: string; description?: string; isPublic: boolean }) {
+    return this.server.update(id, data);
+  }
+
+  deleteWithRelated(serverId: string) {
+    return this.server.deleteWithRelated(serverId);
+  }
+
+  getChannels(serverId: string) {
+    return this.server.getChannels(serverId);
+  }
+
+  getChannelsSorted(serverId: string) {
+    return this.server.getChannelsSorted(serverId);
+  }
+
+  getMembers(serverId: string) {
+    return this.server.getMembers(serverId);
+  }
+
+  findMember(serverId: string, userId: string) {
+    return this.server.findMember(serverId, userId);
+  }
+
+  findPopulatedMember(serverId: string, userId: string) {
+    return this.server.findPopulatedMember(serverId, userId);
+  }
+
+  createMember(serverId: string, userId: string) {
+    return this.server.createMember(serverId, userId);
+  }
+
+  findJoinedByUserId(userId: string) {
+    return this.server.findJoinedByUserId(userId);
+  }
+}

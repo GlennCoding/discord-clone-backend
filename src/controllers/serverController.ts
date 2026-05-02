@@ -3,20 +3,15 @@ import { isDeepStrictEqual } from "util";
 import z from "zod";
 
 import { io } from "../app";
-import Channel from "../models/Channel";
-import Member from "../models/Member";
-import { RolePermission } from "../models/Role";
-import Server from "../models/Server";
+import { serverService } from "../container";
 import {
-  generateUniqueShortId,
   checkPermissionInRoles,
-  toServerListItemDTO,
   ensureShortId,
-  filterDisallowedRolesOfChannels,
+  filterDisallowedChannels,
+  RolePermission,
   toChannelDTO,
   toMemberDTO,
-  getAllChannelIdsOfServer,
-  deleteServerInDB,
+  toServerListItemDTO,
 } from "../services/serverService";
 import { auditHttp } from "../utils/audit";
 import { CustomError, NoPermissionError, NotFoundError } from "../utils/errors";
@@ -25,7 +20,6 @@ import { serverRoom } from "../utils/socketRooms";
 import { parseWithSchema } from "../utils/validators";
 
 import type { UserRequest } from "../middleware/verifyJWT";
-import type { IServer } from "../models/Server";
 import type {
   CreateServerDTO,
   CreateServerInput,
@@ -53,16 +47,15 @@ export const createServer = async (
   res: Response<CreateServerDTO>,
 ) => {
   const payload = parseWithSchema(createServerSchema, req.body);
-  const owner = await ensureUser(req.userId);
+  const user = await ensureUser(req.userId);
 
-  const shortId = await generateUniqueShortId();
+  const server = await serverService.createServer({ ...payload, ownerId: user.id });
 
-  const server = await Server.create({ ...payload, owner, shortId });
-  await Member.create({ user: owner._id, server: server._id });
+  await serverService.createMember(server.id, user.id);
 
   auditHttp(req, "SERVER_CREATED", { serverId: server.id });
 
-  res.status(201).json({ shortId } satisfies CreateServerDTO);
+  res.status(201).json({ shortId: server.shortId } satisfies CreateServerDTO);
 };
 
 export const updateServer = async (
@@ -73,19 +66,13 @@ export const updateServer = async (
   const payload = parseWithSchema(updateServerSchema, req.body);
   const user = await ensureUser(req.userId);
 
-  // check if server exists
-  const foundServer = await Server.findById(serverId).populate("owner");
+  const foundServer = await serverService.findById(serverId);
   if (!foundServer) throw new NotFoundError("Server");
 
-  // check if user has permission
-  const foundMember = await Member.findOne({ user, server: foundServer }).populate(
-    "roles",
-    "permissions",
-  );
+  const foundMember = await serverService.findPopulatedMember(serverId, user.id);
   if (!foundMember) throw new CustomError(403, "You are no member of this server");
 
-  const isOwner = foundServer.owner.id === user.id;
-
+  const isOwner = foundServer.ownerId === user.id;
   const hasServerAdminPermission = checkPermissionInRoles(
     foundMember.roles,
     RolePermission.ServerAdmin,
@@ -93,7 +80,6 @@ export const updateServer = async (
 
   if (!isOwner && !hasServerAdminPermission) throw new NoPermissionError();
 
-  // upate server document
   const serverContents = {
     name: foundServer.name,
     isPublic: foundServer.isPublic,
@@ -105,45 +91,39 @@ export const updateServer = async (
     return;
   }
 
-  foundServer.name = payload.name;
-  foundServer.description = payload.description;
-  foundServer.isPublic = payload.isPublic;
-  const updatedServer = await foundServer.save();
+  const updated = await serverService.updateServer(serverId, payload);
+  if (!updated) throw new NotFoundError("Server");
 
   const responseBody = {
-    name: updatedServer.name,
-    isPublic: updatedServer.isPublic,
-    description: updatedServer.description,
+    name: updated.name,
+    isPublic: updated.isPublic,
+    description: updated.description,
   };
 
-  auditHttp(req, "SERVER_UPDATED", { serverId: foundServer.id });
+  auditHttp(req, "SERVER_UPDATED", { serverId });
 
   res.status(200).json(responseBody);
 
-  const updatedServerDTO: UpdatedServerDTO = {
-    id: updatedServer.id,
-    name: updatedServer.name,
-    description: updatedServer.description,
-    iconUrl: updatedServer.iconUrl,
-  };
-
-  io.to(serverRoom(updatedServer.id)).emit("server:updated", updatedServerDTO);
+  io.to(serverRoom(updated.id)).emit("server:updated", {
+    id: updated.id,
+    name: updated.name,
+    description: updated.description,
+    iconUrl: updated.iconUrl,
+  } satisfies UpdatedServerDTO);
 };
 
 export const deleteServer = async (req: UserRequest, res: Response) => {
   const serverId = ensureParam("id", req.params.id, { isObjectId: true });
   const user = await ensureUser(req.userId);
 
-  const server = await Server.findById(serverId).populate("owner");
+  const server = await serverService.findById(serverId);
   if (!server) throw new NotFoundError("Server");
 
-  if (server.owner.id !== user.id) throw new NoPermissionError();
+  if (server.ownerId !== user.id) throw new NoPermissionError();
 
-  const channelIds = await getAllChannelIdsOfServer(server.id);
+  await serverService.deleteWithRelated(serverId);
 
-  await deleteServerInDB(server.id, channelIds);
-
-  auditHttp(req, "SERVER_DELETED", { serverId: server.id });
+  auditHttp(req, "SERVER_DELETED", { serverId });
 
   res.sendStatus(204);
 
@@ -151,7 +131,7 @@ export const deleteServer = async (req: UserRequest, res: Response) => {
 };
 
 export const getAllPublicServers = async (_: UserRequest, res: Response<ServerListDTO>) => {
-  const servers = await Server.find({ isPublic: true });
+  const servers = await serverService.findAllPublic();
   const serverDTOs: ServerListItemDTO[] = toServerListItemDTO(servers);
 
   res.status(200).json({ servers: serverDTOs });
@@ -159,56 +139,48 @@ export const getAllPublicServers = async (_: UserRequest, res: Response<ServerLi
 
 export const getAllJoinedServers = async (req: UserRequest, res: Response<ServerListDTO>) => {
   const user = await ensureUser(req.userId);
-  const members = await Member.find({ user }).populate("server");
-
-  const servers: IServer[] = members.map((m) => m.server);
-  const serverDTOs: ServerListItemDTO[] = toServerListItemDTO(servers);
-
-  res.status(200).json({ servers: serverDTOs });
+  const servers = await serverService.findJoinedByUserId(user.id);
+  res.status(200).json({ servers: toServerListItemDTO(servers) });
 };
 
 export const getServer = async (req: UserRequest, res: Response<ServerDTO>) => {
   const shortId = ensureShortId(req.params.shortId);
   const user = await ensureUser(req.userId);
 
-  const server = await Server.findOne({ shortId });
+  const server = await serverService.findByShortId(shortId);
   if (!server) throw new NotFoundError("Server");
 
-  const allChannelMembers = await Member.find({ server })
-    .populate("user")
-    .populate("roles", "_id name permissions");
-  const currentMember = allChannelMembers.find((m) => m.user.id === user.id);
-
+  const allMembers = await serverService.getMembers(server.id);
+  const currentMember = allMembers.find((m) => m.userId === user.id);
   if (!currentMember) throw new CustomError(403, "You are no member of this server");
 
-  const channels = await Channel.find({ server }).populate("disallowedRoles", "_id");
-
-  const allowedChannels = filterDisallowedRolesOfChannels(channels, currentMember.roles);
+  const channels = await serverService.getChannels(server.id);
+  const allowedChannels = filterDisallowedChannels(channels, currentMember.roleIds);
 
   res.status(200).json({
     id: server.id,
     name: server.name,
-    channels: allowedChannels.map((c) => toChannelDTO(c)),
+    channels: allowedChannels.map(toChannelDTO),
     description: server.description,
     iconUrl: server.iconUrl,
-    members: allChannelMembers.map((m) => toMemberDTO(m)),
-  });
+    members: allMembers.map(toMemberDTO),
+  } satisfies ServerDTO);
 };
 
 export const joinServer = async (req: UserRequest, res: Response<JoinServerDTO>) => {
   const shortId = ensureShortId(req.params.shortId);
   const user = await ensureUser(req.userId);
 
-  const server = await Server.findOne({ shortId });
+  const server = await serverService.findByShortId(shortId);
   if (!server) throw new NotFoundError("Server");
 
-  const member = await Member.findOne({ server, user });
+  const member = await serverService.findMember(server.id, user.id);
 
   if (!server.isPublic && !member) {
     throw new CustomError(403, "This server is private");
   } else if (!member) {
-    await Member.create({ server, user });
+    await serverService.createMember(server.id, user.id);
   }
 
-  res.status(200).json({ shortId: shortId });
+  res.status(200).json({ shortId });
 };

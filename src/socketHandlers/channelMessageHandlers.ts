@@ -1,9 +1,4 @@
-import {
-  buildChannelSubscribePayload,
-  createChannelMessage,
-  ensureChannelAccess,
-  fetchRecentChannelMessages,
-} from "../services/channelMessageService";
+import { channelMessageService } from "../container";
 import { ERROR_STATUS, EVENT_ERROR } from "../types/sockets";
 import { CustomError } from "../utils/errors";
 import { ensureParam } from "../utils/helper";
@@ -44,15 +39,11 @@ export const handleChannelMessagesSubscribe: EventControllerWithAck<
 > = async (socket, channelId, ack) => {
   try {
     const userId = ensureAuthenticatedSocket(socket);
-    const { channel } = await ensureChannelAccess(channelId, userId);
-    const messages = await fetchRecentChannelMessages(channel.id);
+    const { channel } = await channelMessageService.ensureChannelAccess(channelId, userId);
+    const messages = await channelMessageService.fetchRecentMessages(channel.id);
     await socket.join(channelMessagesRoom(channel.id));
 
-    const payload = buildChannelSubscribePayload(channel, messages);
-    ack({
-      status: "OK",
-      data: payload,
-    });
+    ack({ status: "OK", data: channelMessageService.buildSubscribePayload(channel, messages) });
   } catch (error) {
     handleAckError(ack, error);
   }
@@ -63,14 +54,9 @@ export const handleChannelMessagesUnsubscribe: EventControllerWithAck<
 > = async (socket, channelId, ack) => {
   try {
     ensureAuthenticatedSocket(socket);
-    const sanitizedChannelId = ensureParam("channelId", channelId, {
-      isObjectId: true,
-    });
+    const sanitizedChannelId = ensureParam("channelId", channelId, { isObjectId: true });
     await socket.leave(channelMessagesRoom(sanitizedChannelId));
-    ack({
-      status: "OK",
-      data: { success: true },
-    });
+    ack({ status: "OK", data: { success: true } });
   } catch (error) {
     handleAckError(ack, error);
   }
@@ -89,16 +75,14 @@ export const handleIncomingChannelMessage: EventControllerWithAck<"channelMessag
       return;
     }
 
-    const { channel, member } = await ensureChannelAccess(payload.channelId, userId);
-    const channelId = channel.id;
-    const message = await createChannelMessage(channelId, member, text);
+    const { channel, member } = await channelMessageService.ensureChannelAccess(
+      payload.channelId,
+      userId,
+    );
+    const message = await channelMessageService.createMessage(channel.id, member.id, text);
 
-    socket.nsp.to(channelMessagesRoom(channelId)).emit("channelMessage:new", message);
-
-    ack({
-      status: "OK",
-      data: { message },
-    });
+    socket.nsp.to(channelMessagesRoom(channel.id)).emit("channelMessage:new", message);
+    ack({ status: "OK", data: { message } });
   } catch (error) {
     handleAckError(ack, error);
   }

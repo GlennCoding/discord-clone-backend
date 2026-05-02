@@ -10,6 +10,7 @@ import {
 
 export const logger = pino({
   level: process.env.LOG_LEVEL ?? (isProdOrProdLocalEnv ? "info" : "debug"),
+  enabled: isProdOrProdLocalEnv,
   redact: {
     paths: [
       "req.headers.authorization",

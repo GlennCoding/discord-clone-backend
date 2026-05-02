@@ -7,7 +7,6 @@ import express from "express";
 import helmet from "helmet";
 
 import corsOptions from "./config/corsOptions";
-import { doubleCsrfProtection } from "./config/csrf";
 import credentials from "./middleware/credentials";
 import { errorMiddleware } from "./middleware/errorMiddleware";
 import { attachUserIdToHttpLogger, httpLogger } from "./middleware/httpLogging";
@@ -21,7 +20,6 @@ import messagesRouter from "./routes/api/messages";
 import profileRouter from "./routes/api/profile";
 import serverRouter from "./routes/api/servers";
 import authRouter from "./routes/auth";
-import csrfRouter from "./routes/csrf";
 import logoutRouter from "./routes/logout";
 import refreshRouter from "./routes/refresh";
 import registerRouter from "./routes/register";
@@ -44,7 +42,6 @@ app.use(helmet());
 app.use(cors(corsOptions));
 app.use(express.json({ limit: "500kb" }));
 app.use(cookieParser());
-app.use(doubleCsrfProtection);
 
 // Rate Limiting
 app.use(globalLimiter);
@@ -54,7 +51,6 @@ app.use(httpLogger);
 app.use(attachUserIdToHttpLogger);
 
 app.use("/", rootRouter);
-app.use("/csrf-token", csrfRouter);
 
 // Auth routes
 app.use("/register", registerRouter);

@@ -1,7 +1,6 @@
 export interface LoginDTO {
   message: string;
   userData: MeDTO;
-  csrfToken: string;
 }
 
 export type RegisterDTO = LoginDTO;

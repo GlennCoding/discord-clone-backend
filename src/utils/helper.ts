@@ -1,7 +1,5 @@
 import { Types } from "mongoose";
 
-import { findUserWithUserId } from "../services/userService";
-
 import { env } from "./env";
 import { CustomError, ParamsMissingError, UserNotFoundError } from "./errors";
 
@@ -22,7 +20,8 @@ export const ensureValidObjectId = (value: string, field = "id") => {
 
 export const ensureUser = async (userId: string | undefined) => {
   if (!userId) throw new CustomError(500, "userId missing");
-  const user = await findUserWithUserId(userId);
+  const { userService } = await import("../container");
+  const user = await userService.findUserWithUserId(userId);
   if (!user) throw new UserNotFoundError();
   return user;
 };

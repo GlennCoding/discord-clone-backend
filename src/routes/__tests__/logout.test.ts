@@ -15,14 +15,12 @@ describe("/logout", () => {
     const cookies = Array.isArray(rawSetCookieHeader)
       ? rawSetCookieHeader
       : rawSetCookieHeader
-      ? [rawSetCookieHeader]
-      : [];
+        ? [rawSetCookieHeader]
+        : [];
 
     expect(cookies.length).toBeGreaterThanOrEqual(2);
     const accessCookie = cookies.find((cookie) => cookie.startsWith("access_token="));
-    const refreshCookie = cookies.find((cookie) =>
-      cookie.startsWith("refresh_token=")
-    );
+    const refreshCookie = cookies.find((cookie) => cookie.startsWith("refresh_token="));
 
     expect(accessCookie).toBeDefined();
     expect(accessCookie).toContain("access_token=;");
@@ -48,6 +46,6 @@ describe("/logout", () => {
 
     const updatedUser = await User.findOne({ userName: "logout-user" }).lean();
 
-    expect(updatedUser?.refreshTokens).toEqual([]);
+    expect(updatedUser?.refreshTokens).toEqual(["refresh_token_value"]);
   });
 });

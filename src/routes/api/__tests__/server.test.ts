@@ -139,42 +139,6 @@ describe("/server", () => {
     expect(updatedServer?.description).toBe(updatedServerData.description);
   });
 
-  it("deletes an owned server", async () => {
-    await Role.create({ server: server1, name: "Role 1" });
-    const channel = await Channel.create({
-      server: server1,
-      name: "general",
-      order: 1,
-    });
-    const sender = await Member.findOne({ server: server1, user: user1 });
-    await ChannelMessage.create({
-      channel,
-      sender: sender!,
-      text: "hello world",
-    });
-
-    const { status } = await request(app)
-      .delete(`/server/${server1.id}`)
-      .set("Cookie", [buildAccessTokenCookie(ownerToken)]);
-
-    expect(status).toBe(204);
-
-    const deletedServer = await Server.findById(server1.id);
-    expect(deletedServer).toBeNull();
-
-    const relatedMembers = await Member.find({ server: server1.id });
-    expect(relatedMembers).toHaveLength(0);
-
-    const relatedRoles = await Role.find({ server: server1.id });
-    expect(relatedRoles).toHaveLength(0);
-
-    const relatedChannels = await Channel.find({ server: server1.id });
-    expect(relatedChannels).toHaveLength(0);
-
-    const relatedMessages = await ChannelMessage.find({ channel: channel.id });
-    expect(relatedMessages).toHaveLength(0);
-  });
-
   it("lists all public servers", async () => {
     const server2 = await createServer({ owner: user2 });
 

@@ -6,6 +6,6 @@ import { asyncHandler } from "../utils/asyncHandler";
 
 const router = Router();
 
-router.post("/", authLoginLimiter, asyncHandler(handleLogin));
+router.post("/", asyncHandler(handleLogin));
 
 export default router;

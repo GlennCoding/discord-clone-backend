@@ -1,4 +1,4 @@
-import jwt from "jsonwebtoken";
+import jwt from 'jsonwebtoken';
 
 import {
   clearAccessTokenCookie,
@@ -7,25 +7,20 @@ import {
   setAccessTokenCookie,
   setRefreshTokenCookie,
   setSsrAccessTokenCookie,
-} from "../config/tokenCookies";
+} from '../config/tokenCookies';
 import {
   issueAccessToken,
   issueRefreshToken,
   issueSsrAccessToken,
-} from "../services/authService";
-import {
-  findUserWithRefreshToken,
-  removeAllUserRefreshTokens,
-  removeAllUserRefreshTokensById,
-  replaceUserRefreshToken,
-} from "../services/userService";
-import { auditHttp } from "../utils/audit";
-import { env } from "../utils/env";
-import { RefreshtokenNotFoundError } from "../utils/errors";
+} from '../services/authService';
+import { userService } from '../container';
+import { auditHttp } from '../utils/audit';
+import { env } from '../utils/env';
+import { RefreshtokenNotFoundError } from '../utils/errors';
 
-import type { UserRequest } from "../middleware/verifyJWT";
-import type { RefreshInput } from "../types/dto";
-import type { Response } from "express";
+import type { UserRequest } from '../middleware/verifyJWT';
+import type { RefreshInput } from '../types/dto';
+import type { Response } from 'express';
 
 export const handleRefreshToken = async (
   req: UserRequest<RefreshInput>,
@@ -35,25 +30,24 @@ export const handleRefreshToken = async (
   const { issueNewSsrToken } = req.body;
 
   if (!refreshToken) {
-    auditHttp(req, "AUTH_REFRESH_FAIL", {
-      metadata: { reason: "missing_refresh_token" },
+    auditHttp(req, 'AUTH_REFRESH_FAIL', {
+      metadata: { reason: 'missing_refresh_token' },
     });
     throw new RefreshtokenNotFoundError();
   }
 
-  const user = await findUserWithRefreshToken(refreshToken);
+  const user = await userService.findUserWithRefreshToken(refreshToken);
 
   if (!user) {
-    // Possible token reuse: decode userId (even if expired) and revoke
     const decoded = jwt.decode(refreshToken) as jwt.JwtPayload | null;
     const userId = decoded?.userId;
 
     if (userId) {
-      await removeAllUserRefreshTokensById(userId as string);
+      await userService.removeAllUserRefreshTokensById(userId as string);
     }
 
-    auditHttp(req, "AUTH_REFRESH_FAIL", {
-      metadata: { reason: "refresh_token_owner_not_found" },
+    auditHttp(req, 'AUTH_REFRESH_FAIL', {
+      metadata: { reason: 'refresh_token_owner_not_found' },
     });
     return res.sendStatus(403);
   }
@@ -61,15 +55,15 @@ export const handleRefreshToken = async (
   try {
     jwt.verify(refreshToken, env.REFRESH_TOKEN_SECRET as string);
   } catch (err: unknown) {
-    auditHttp(req, "AUTH_REFRESH_FAIL", {
+    auditHttp(req, 'AUTH_REFRESH_FAIL', {
       metadata: {
-        reason: err instanceof Error ? err.name : "jwt_verify_failed",
+        reason: err instanceof Error ? err.name : 'jwt_verify_failed',
       },
     });
 
     clearAccessTokenCookie(res);
     clearRefreshTokenCookie(res);
-    await removeAllUserRefreshTokens(user);
+    await userService.removeAllUserRefreshTokens(user.id);
     return res.sendStatus(403);
   }
 
@@ -77,10 +71,10 @@ export const handleRefreshToken = async (
   const newRefreshToken = issueRefreshToken(user);
 
   try {
-    await replaceUserRefreshToken(user, refreshToken, newRefreshToken);
+    await userService.replaceUserRefreshToken(user.id, refreshToken, newRefreshToken);
   } catch (err) {
-    auditHttp(req, "AUTH_REFRESH_FAIL", {
-      metadata: { reason: "refresh_token_rotation_failed" },
+    auditHttp(req, 'AUTH_REFRESH_FAIL', {
+      metadata: { reason: 'refresh_token_rotation_failed' },
     });
     throw err;
   }
@@ -93,7 +87,7 @@ export const handleRefreshToken = async (
     setSsrAccessTokenCookie(res, newSsrAccessToken);
   }
 
-  auditHttp(req, "AUTH_REFRESH_SUCCESS");
+  auditHttp(req, 'AUTH_REFRESH_SUCCESS');
 
-  res.status(200).json({ message: "Token refreshed" });
+  res.status(200).json({ message: 'Token refreshed' });
 };

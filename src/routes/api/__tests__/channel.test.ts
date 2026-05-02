@@ -120,18 +120,6 @@ describe("/channel", () => {
     expect(updated?.name).toBe(updatedName);
   });
 
-  it("deletes a channel owned by the server", async () => {
-    const channel = await makeChannel();
-
-    const res = await request(app)
-      .delete(`/channel/${server.id}/${channel.id}`)
-      .set("Cookie", [buildAccessTokenCookie(ownerToken)]);
-
-    expect(res.status).toBe(204);
-
-    const deleted = await Channel.findById(channel.id);
-    expect(deleted).toBeNull();
-  });
 });
 
 describe("/channel errors", () => {

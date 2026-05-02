@@ -35,6 +35,7 @@ module.exports = [
       ],
       "@typescript-eslint/no-floating-promises": "warn",
       "@typescript-eslint/require-await": "warn",
+      "import/no-cycle": ["error", { "maxDepth": 10 }],
       "import/order": [
         "warn",
         {

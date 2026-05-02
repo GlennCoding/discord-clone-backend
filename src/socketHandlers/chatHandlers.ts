@@ -1,10 +1,8 @@
-import Chat from "../models/Chat";
-import Message from "../models/ChatMessage";
-import { ERROR_STATUS, EVENT_ERROR } from "../types/sockets";
-import { toMessageDTOWithSignedUrls } from "../utils/dtos/messageDTO";
+import { chatMessageRepo, chatService } from "../container";
 import { fileStorage } from "../container";
+import { ERROR_STATUS, EVENT_ERROR } from "../types/sockets";
+import { toMessageDTO, toMessageDTOWithSignedUrls } from "../utils/dtos/messageDTO";
 
-import type { IUser } from "../models/User";
 import type { EventControllerWithAck, EventControllerWithoutAck } from "../types/sockets";
 
 export const handleIncomingNewMessage: EventControllerWithAck<"message:send"> = async (
@@ -13,25 +11,19 @@ export const handleIncomingNewMessage: EventControllerWithAck<"message:send"> = 
   ack,
 ) => {
   const currentUserId = socket.data.userId as string;
-
   const { chatId, text } = payload;
+
   try {
     if (!text) {
       ack(
-        new EVENT_ERROR({
-          error: ERROR_STATUS["BAD_REQUEST"],
-          message: "Text input is missing",
-        }),
+        new EVENT_ERROR({ error: ERROR_STATUS["BAD_REQUEST"], message: "Text input is missing" }),
       );
       return;
     }
 
-    const chat = await Chat.findOne({ _id: chatId }).populate<{
-      participants: IUser[];
-    }>("participants", "userName");
-    const participant = chat?.participants.find((p) => p.id.toString() !== socket.data.userId);
+    const chat = await chatService.findChatWithChatId(chatId);
 
-    if (!participant) {
+    if (!chat || !chatService.checkIfUserIdPartOfChat(chat, currentUserId)) {
       ack({
         error: ERROR_STATUS["BAD_REQUEST"],
         message: "You're not part of this chat",
@@ -39,49 +31,30 @@ export const handleIncomingNewMessage: EventControllerWithAck<"message:send"> = 
       return;
     }
 
-    const newMessage = await Message.create({
-      chat: chatId,
-      sender: currentUserId,
+    const newMessage = await chatMessageRepo.create({
+      chatId,
+      senderId: currentUserId,
       text,
+      attachments: [],
     });
 
-    const populatedMessage = await newMessage.populate([
-      {
-        path: "sender",
-        select: "userName avatar",
-      },
-      {
-        path: "chat",
-        select: "_id",
-      },
-    ]);
+    const messageDTO = toMessageDTO(newMessage);
 
-    const messageDTO = await toMessageDTOWithSignedUrls(populatedMessage, fileStorage);
-
-    socket.to(chatId).emit("message:new", {
-      message: messageDTO,
-    });
-
-    ack({
-      status: "OK",
-      data: {
-        message: messageDTO,
-      },
-    });
+    socket.to(chatId).emit("message:new", { message: messageDTO });
+    ack({ status: "OK", data: { message: messageDTO } });
   } catch (error) {
-    console.error("Error fetching messages:", error);
-    socket.emit("chat:error", "Failed to fetch chat messages");
+    console.error("Error handling new message:", error);
+    socket.emit("chat:error", "Failed to process message");
   }
 };
 
 export const handleJoinChat: EventControllerWithAck<"chat:join"> = async (socket, chatId, ack) => {
   const currentUserId = socket.data.userId as string;
-  try {
-    const chat = await Chat.findOne({ _id: chatId }).populate<{
-      participants: IUser[];
-    }>("participants", "userName avatar");
 
-    if (chat === null) {
+  try {
+    const chat = await chatService.findChatWithChatId(chatId);
+
+    if (!chat) {
       ack({
         error: ERROR_STATUS["BAD_REQUEST"],
         message: "This chat doesn't exist",
@@ -89,10 +62,7 @@ export const handleJoinChat: EventControllerWithAck<"chat:join"> = async (socket
       return;
     }
 
-    const currentUser = chat.participants.find((p) => p.id === currentUserId);
-    const userIsPartOfChat = currentUser !== undefined;
-
-    if (!userIsPartOfChat) {
+    if (!chatService.checkIfUserIdPartOfChat(chat, currentUserId)) {
       ack({
         error: ERROR_STATUS["UNAUTHORIZED"],
         message: "You're not part of this chat",
@@ -100,9 +70,9 @@ export const handleJoinChat: EventControllerWithAck<"chat:join"> = async (socket
       return;
     }
 
-    const otherParticipant = chat.participants.find((p) => p.id !== currentUserId);
+    const otherParticipantId = chat.participantIds.find((id) => id !== currentUserId);
 
-    if (otherParticipant === undefined) {
+    if (!otherParticipantId) {
       ack({
         error: ERROR_STATUS["INTERNAL_ERROR"],
         message: "Other chat participant not found",
@@ -112,9 +82,10 @@ export const handleJoinChat: EventControllerWithAck<"chat:join"> = async (socket
 
     void socket.join(chatId);
 
-    const messages = await Message.find({ chat: chatId })
-      .populate<{ sender: IUser }>("sender", "userName avatar")
-      .sort({ createdAt: 1 });
+    const [messages, otherUser] = await Promise.all([
+      chatMessageRepo.findByChatId(chatId),
+      chatService.findParticipant(otherParticipantId),
+    ]);
 
     const messagesDTO = await Promise.all(
       messages.map((m) => toMessageDTOWithSignedUrls(m, fileStorage)),
@@ -123,8 +94,8 @@ export const handleJoinChat: EventControllerWithAck<"chat:join"> = async (socket
     ack({
       data: {
         participant: {
-          username: otherParticipant.userName,
-          avatarUrl: otherParticipant.avatar?.url,
+          username: otherUser?.userName ?? "",
+          avatarUrl: otherUser?.avatar?.url,
         },
         messages: messagesDTO,
       },
@@ -132,10 +103,7 @@ export const handleJoinChat: EventControllerWithAck<"chat:join"> = async (socket
     });
   } catch (error) {
     console.error("Something went wrong", { error });
-    ack({
-      error: ERROR_STATUS["INTERNAL_ERROR"],
-      message: "Something went wrong",
-    } as EVENT_ERROR);
+    ack({ error: ERROR_STATUS["INTERNAL_ERROR"], message: "Something went wrong" } as EVENT_ERROR);
   }
 };
 
