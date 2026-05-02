@@ -202,12 +202,12 @@ export const joinServer = async (req: UserRequest, res: Response<JoinServerDTO>)
   const server = await Server.findOne({ shortId });
   if (!server) throw new NotFoundError("Server");
 
-  const member = await Member.findOne({ server, user });
+  const member = await Member.findOne({ server: server.id, user: user.id });
 
   if (!server.isPublic && !member) {
     throw new CustomError(403, "This server is private");
   } else if (!member) {
-    await Member.create({ server, user });
+    await Member.create({ server: server.id, user: user.id });
   }
 
   res.status(200).json({ shortId: shortId });
