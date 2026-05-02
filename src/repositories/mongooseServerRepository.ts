@@ -73,7 +73,14 @@ const mapMember = (doc: LeanMember): MemberEntity => ({
 });
 
 const mapPopulatedMember = (doc: PopulatedLeanMember): PopulatedMemberEntity => ({
-  ...mapMember(doc as unknown as LeanMember),
+  id: doc._id.toString(),
+  serverId: doc.server.toString(),
+  userId: doc.user._id.toString(),
+  nickname: doc.nickname,
+  roleIds: (doc.roles as unknown as Types.ObjectId[]).map((r) => r._id.toString()),
+  joinedDate: doc.joinedDate,
+  createdAt: doc.createdAt,
+  updatedAt: doc.updatedAt ?? undefined,
   user: {
     id: doc.user._id.toString(),
     userName: doc.user.userName,

@@ -1,13 +1,13 @@
 import { RolePermission } from '../models/Role';
 import { CustomError } from '../utils/errors';
-
-export { RolePermission };
 import { ensureParam } from '../utils/helper';
 import { randomShortId } from '../utils/ids';
 
 import type { ServerRepository } from '../repositories/serverRepository';
 import type { ChannelDTO, MemberDTO, ServerListItemDTO } from '../types/dto';
 import type { ChannelEntity, PopulatedMemberEntity, RoleEntity, ServerEntity } from '../types/entities';
+
+export { RolePermission };
 
 export const ensureShortId = (shortIdParam: string | undefined) => {
   const shortId = ensureParam('shortId', shortIdParam).toUpperCase();

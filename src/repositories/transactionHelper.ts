@@ -7,7 +7,19 @@ export async function withTransaction<T>(
 ): Promise<T> {
   const session = await mongoose.startSession();
   try {
-    return await session.withTransaction(() => work(session));
+    try {
+      return await session.withTransaction(() => work(session));
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        (error.message.includes('Transaction numbers are only allowed') ||
+          error.message.includes('Replica set required'))
+      ) {
+        // Fallback for environments without replica set support
+        return await work(session);
+      }
+      throw error;
+    }
   } finally {
     await session.endSession();
   }
