@@ -30,7 +30,7 @@ const ensureServerOwner = async (req: UserRequest) => {
 
   if (!server) throw new NotFoundError("Server");
 
-  const member = await Member.findOne({ server, user });
+  const member = await Member.findOne({ server: server.id, user: user.id });
   if (!member) {
     auditHttp(req, "ACCESS_DENIED");
     throw new NoAccessError(`server: ${server.name}`);

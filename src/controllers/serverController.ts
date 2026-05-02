@@ -78,7 +78,7 @@ export const updateServer = async (
   if (!foundServer) throw new NotFoundError("Server");
 
   // check if user has permission
-  const foundMember = await Member.findOne({ user, server: foundServer }).populate(
+  const foundMember = await Member.findOne({ user: user.id, server: foundServer.id }).populate(
     "roles",
     "permissions",
   );
@@ -159,7 +159,7 @@ export const getAllPublicServers = async (_: UserRequest, res: Response<ServerLi
 
 export const getAllJoinedServers = async (req: UserRequest, res: Response<ServerListDTO>) => {
   const user = await ensureUser(req.userId);
-  const members = await Member.find({ user }).populate("server");
+  const members = await Member.find({ user: user.id }).populate("server");
 
   const servers: IServer[] = members.map((m) => m.server);
   const serverDTOs: ServerListItemDTO[] = toServerListItemDTO(servers);
