@@ -3,7 +3,7 @@ import ChannelMessage from "../models/ChannelMessage";
 import Member from "../models/Member";
 import { toChannelMessageDTO } from "../utils/dtos/channelMessageDTO";
 import { CustomError, NotFoundError } from "../utils/errors";
-import { ensureParam, ensureUser } from "../utils/helper";
+import { ensureParam } from "../utils/helper";
 
 import { toChannelDTO } from "./serverService";
 
@@ -40,7 +40,6 @@ export const ensureChannelAccess = async (
   member: PopulatedMember;
 }> => {
   const channelId = ensureParam("channelId", channelIdParam, { isObjectId: true });
-  const user = await ensureUser(userId);
 
   const channel = await Channel.findById(channelId)
     .populate("server")
@@ -49,7 +48,7 @@ export const ensureChannelAccess = async (
 
   if (!channel) throw new NotFoundError("Channel");
 
-  const member = await Member.findOne({ server: channel.server, user })
+  const member = await Member.findOne({ server: channel.server, user: userId })
     .populate("roles", "_id name")
     .populate("user")
     .exec();
