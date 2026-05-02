@@ -1,10 +1,8 @@
 import z from "zod";
 
 import { io } from "../app";
-import Channel from "../models/Channel";
-import Member from "../models/Member";
-import Server from "../models/Server";
-import { toChannelDTO } from "../services/serverService";
+import { channelService } from "../container";
+import { toChannelDTO } from "../services/channelService";
 import { auditHttp } from "../utils/audit";
 import { NoAccessError, NoPermissionError, NotFoundError } from "../utils/errors";
 import { ensureParam, ensureUser } from "../utils/helper";
@@ -20,24 +18,9 @@ const channelPayloadSchema = z.object({
 });
 
 const ensureServerOwner = async (req: UserRequest) => {
-  const { params, userId } = req;
-  ensureParam("serverId", params.serverId, { isObjectId: true });
-
-  const [user, server] = await Promise.all([
-    ensureUser(userId),
-    Server.findById(params.serverId).populate("owner"),
-  ]);
-
-  if (!server) throw new NotFoundError("Server");
-
-  const member = await Member.findOne({ server: server.id, user: user.id });
-  if (!member) {
-    auditHttp(req, "ACCESS_DENIED");
-    throw new NoAccessError(`server: ${server.name}`);
-  }
-
-  if (server.owner.id !== user.id) throw new NoPermissionError();
-
+  ensureParam("serverId", req.params.serverId, { isObjectId: true });
+  const user = await ensureUser(req.userId);
+  const server = await channelService.ensureServerOwner(req.params.serverId, user.id);
   return { server, user };
 };
 
@@ -48,15 +31,7 @@ export const createChannel = async (
   const { server } = await ensureServerOwner(req);
   const payload = parseWithSchema(channelPayloadSchema, req.body);
 
-  const lastChannel = await Channel.findOne({ server }).sort("-order");
-  const nextOrder = lastChannel ? lastChannel.order + 1 : 1;
-
-  const channel = await Channel.create({
-    server,
-    name: payload.name,
-    order: nextOrder,
-  });
-
+  const channel = await channelService.createChannel(server.id, payload.name);
   const channelDTO = toChannelDTO(channel);
 
   auditHttp(req, "CHANNEL_CREATED", { channelId: channel.id });
@@ -69,17 +44,11 @@ export const updateChannel = async (
   res: Response<ChannelDTO>,
 ) => {
   const { server } = await ensureServerOwner(req);
-  const channelId = ensureParam("channelId", req.params.channelId, {
-    isObjectId: true,
-  });
+  const channelId = ensureParam("channelId", req.params.channelId, { isObjectId: true });
   const payload = parseWithSchema(channelPayloadSchema, req.body);
 
-  const channel = await Channel.findOne({ _id: channelId, server });
-  if (!channel) throw new NotFoundError("Channel");
-
-  channel.name = payload.name;
-  const updatedChannel = await channel.save();
-  const updatedDTO = toChannelDTO(updatedChannel);
+  const updated = await channelService.updateChannel(channelId, server.id, payload.name);
+  const updatedDTO = toChannelDTO(updated);
 
   auditHttp(req, "CHANNEL_UPDATED", { channelId });
   res.status(200).json(updatedDTO);
@@ -88,14 +57,11 @@ export const updateChannel = async (
 
 export const deleteChannel = async (req: UserRequest, res: Response) => {
   const { server } = await ensureServerOwner(req);
-  const channelId = ensureParam("channelId", req.params.channelId, {
-    isObjectId: true,
-  });
+  const channelId = ensureParam("channelId", req.params.channelId, { isObjectId: true });
 
-  const deleted = await Channel.findOneAndDelete({ _id: channelId, server });
-  if (!deleted) throw new NotFoundError("Channel");
+  await channelService.deleteChannel(channelId, server.id);
 
   auditHttp(req, "CHANNEL_DELETED", { channelId });
-  io.to(serverRoom(server.id)).emit("channel:deleted", deleted.id);
+  io.to(serverRoom(server.id)).emit("channel:deleted", channelId);
   res.sendStatus(204);
 };

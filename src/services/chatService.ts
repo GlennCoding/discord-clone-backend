@@ -52,4 +52,8 @@ export class ChatService {
   deleteChat(chatId: string): Promise<void> {
     return this.chat.deleteWithMessages(chatId);
   }
+
+  findParticipant(userId: string) {
+    return this.user.findById(userId);
+  }
 }

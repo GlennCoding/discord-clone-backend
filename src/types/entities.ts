@@ -57,6 +57,8 @@ export type ChannelMessageEntity = {
   id: string;
   channelId: string;
   senderId: string;
+  senderDisplayName: string;
+  senderAvatarUrl?: string;
   text?: string;
   attachments?: { path: string; downloadUrl: string }[];
   createdAt: Date;
@@ -70,4 +72,20 @@ export type RoleEntity = {
   permissions: string[];
   createdAt: Date;
   updatedAt?: Date;
+};
+
+export type MemberEntity = {
+  id: string;
+  serverId: string;
+  userId: string;
+  nickname?: string;
+  roleIds: string[];
+  joinedDate?: Date;
+  createdAt: Date;
+  updatedAt?: Date;
+};
+
+export type PopulatedMemberEntity = MemberEntity & {
+  user: Pick<UserEntity, 'id' | 'userName' | 'avatar'>;
+  roles: Pick<RoleEntity, 'id' | 'name' | 'permissions'>[];
 };

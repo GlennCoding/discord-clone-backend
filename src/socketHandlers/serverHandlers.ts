@@ -1,8 +1,7 @@
-import Channel from "../models/Channel";
-import Member from "../models/Member";
-import Server from "../models/Server";
+import { serverService } from "../container";
 import {
-  filterDisallowedRolesOfChannels,
+  ensureShortId as _ensureShortId,
+  filterDisallowedChannels,
   toChannelDTO,
   toMemberDTO,
 } from "../services/serverService";
@@ -59,30 +58,25 @@ const buildServerPayload = async (
   serverId: string,
   userId: string,
 ): Promise<{ serverDTO: ServerDTO; serverDbId: string }> => {
-  const [user, server] = await Promise.all([ensureUser(userId), Server.findById(serverId)]);
+  const user = await ensureUser(userId);
 
+  const server = await serverService.findById(serverId);
   if (!server) throw new NotFoundError("Server");
 
-  const members = await Member.find({ server })
-    .populate("user")
-    .populate("roles", "_id name permissions");
-  const currentMember = members.find((m) => m.user.id === user.id);
-
+  const allMembers = await serverService.getMembers(server.id);
+  const currentMember = allMembers.find((m) => m.userId === user.id);
   if (!currentMember) throw new CustomError(403, "You are no member of this server");
 
-  const channels = await Channel.find({ server })
-    .populate("disallowedRoles", "_id")
-    .sort({ order: 1 });
-
-  const allowedChannels = filterDisallowedRolesOfChannels(channels, currentMember.roles);
+  const channels = await serverService.getChannelsSorted(server.id);
+  const allowedChannels = filterDisallowedChannels(channels, currentMember.roleIds);
 
   const serverDTO: ServerDTO = {
     id: server.id,
     name: server.name,
     description: server.description,
     iconUrl: server.iconUrl,
-    channels: allowedChannels.map((c) => toChannelDTO(c)),
-    members: members.map((m) => toMemberDTO(m)),
+    channels: allowedChannels.map(toChannelDTO),
+    members: allMembers.map(toMemberDTO),
   };
 
   return { serverDTO, serverDbId: server.id };
@@ -94,9 +88,7 @@ export const handleServerSubscribe: EventControllerWithAck<"server:subscribe"> =
   ack,
 ) => {
   try {
-    const sanitizedServerId = ensureParam("serverId", serverId, {
-      isObjectId: true,
-    });
+    const sanitizedServerId = ensureParam("serverId", serverId, { isObjectId: true });
     const userId = socket.data.userId as string;
     if (!userId) throw new CustomError(401, "Missing user context");
 
@@ -105,10 +97,7 @@ export const handleServerSubscribe: EventControllerWithAck<"server:subscribe"> =
     await socket.join(serverRoom(serverDbId));
     getSubscribedServers(socket as SocketWithServerData).add(serverDbId);
 
-    ack({
-      status: "OK",
-      data: serverDTO,
-    });
+    ack({ status: "OK", data: serverDTO });
   } catch (error) {
     handleAckError(ack, error);
   }
@@ -119,9 +108,7 @@ export const handleServerUnsubscribe: EventControllerWithoutAck<"server:unsubscr
   serverId,
 ) => {
   try {
-    const sanitizedServerId = ensureParam("serverId", serverId, {
-      isObjectId: true,
-    });
+    const sanitizedServerId = ensureParam("serverId", serverId, { isObjectId: true });
     await socket.leave(serverRoom(sanitizedServerId));
     getSubscribedServers(socket as SocketWithServerData).delete(sanitizedServerId);
   } catch (error) {
