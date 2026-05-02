@@ -443,7 +443,7 @@ describe("/server errors", () => {
     expectNotFound(res);
   });
 
-  it.only("returns 403 when trying to join a private server without permission", async () => {
+  it("returns 403 when trying to join a private server without permission", async () => {
     const server2 = await createServer({ owner: user2, isPublic: false });
 
     const res = await request(app)

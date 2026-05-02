@@ -53,12 +53,12 @@ export const createServer = async (
   res: Response<CreateServerDTO>,
 ) => {
   const payload = parseWithSchema(createServerSchema, req.body);
-  const owner = await ensureUser(req.userId);
+  const user = await ensureUser(req.userId);
 
   const shortId = await generateUniqueShortId();
 
-  const server = await Server.create({ ...payload, owner, shortId });
-  await Member.create({ user: owner.id, server: server._id });
+  const server = await Server.create({ ...payload, owner: user.id, shortId });
+  await Member.create({ user: user.id, server: server._id });
 
   auditHttp(req, "SERVER_CREATED", { serverId: server.id });
 
