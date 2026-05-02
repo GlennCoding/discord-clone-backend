@@ -1,4 +1,3 @@
-import { generateCsrfToken } from "../config/csrf";
 import {
   setAccessTokenCookie,
   setRefreshTokenCookie,
@@ -28,7 +27,6 @@ export const handleLogin = async (req: UserRequest, res: Response<LoginDTO>) => 
     setAccessTokenCookie(res, accessToken);
     setSsrAccessTokenCookie(res, ssrAccessToken);
     setRefreshTokenCookie(res, refreshToken);
-    const csrfToken = generateCsrfToken(req, res);
 
     auditHttp(req, "AUTH_LOGIN_SUCCESS");
 
@@ -39,7 +37,6 @@ export const handleLogin = async (req: UserRequest, res: Response<LoginDTO>) => 
         username: user.userName,
         avatarUrl: user.avatar?.url,
       },
-      csrfToken,
     });
   } catch (err) {
     auditHttp(req, "AUTH_LOGIN_FAIL", {

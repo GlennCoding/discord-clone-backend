@@ -1,21 +1,20 @@
-import { generateCsrfToken } from '../config/csrf';
 import {
   setAccessTokenCookie,
   setRefreshTokenCookie,
   setSsrAccessTokenCookie,
-} from '../config/tokenCookies';
-import { issueAuthTokens } from '../services/authService';
-import { userService } from '../container';
-import { CustomError, UsernameIsTakenError } from '../utils/errors';
+} from "../config/tokenCookies";
+import { issueAuthTokens } from "../services/authService";
+import { userService } from "../container";
+import { CustomError, UsernameIsTakenError } from "../utils/errors";
 
-import type { RegisterDTO } from '../types/dto';
-import type { Request, Response } from 'express';
+import type { RegisterDTO } from "../types/dto";
+import type { Request, Response } from "express";
 
 export const handleRegister = async (req: Request, res: Response<RegisterDTO>) => {
   const { userName, password } = req.body;
 
   if (userName === undefined || password === undefined) {
-    throw new CustomError(400, 'Username and password are required.');
+    throw new CustomError(400, "Username and password are required.");
   }
 
   const usernameExistsAlready = await userService.findUserWithUserName(userName);
@@ -30,15 +29,13 @@ export const handleRegister = async (req: Request, res: Response<RegisterDTO>) =
   setAccessTokenCookie(res, accessToken);
   setSsrAccessTokenCookie(res, ssrAccessToken);
   setRefreshTokenCookie(res, refreshToken);
-  const csrfToken = generateCsrfToken(req, res);
 
   return res.status(201).json({
-    message: 'Registered successfully',
+    message: "Registered successfully",
     userData: {
       id: user.id,
       username: user.userName,
       avatarUrl: user.avatar?.url,
     },
-    csrfToken,
   });
 };
