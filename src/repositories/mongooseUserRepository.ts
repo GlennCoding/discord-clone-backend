@@ -85,9 +85,10 @@ class MongooseUserRepository implements UserRepository {
 
   async updateAvatar(userId: string, avatar: { filePath: string; url: string } | undefined) {
     const _id = parseObjectId(userId);
+    const update = avatar ? { $set: { avatar } } : { $unset: { avatar: 1 } };
     const doc = await User.findByIdAndUpdate(
       _id,
-      { $set: { avatar } },
+      update,
       { new: true, runValidators: true },
     ).lean();
     return doc ? mapToEntity(doc) : null;
