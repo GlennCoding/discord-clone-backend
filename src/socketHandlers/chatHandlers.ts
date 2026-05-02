@@ -1,7 +1,7 @@
 import { chatMessageRepo, chatService } from "../container";
-import { ERROR_STATUS, EVENT_ERROR } from "../types/sockets";
-import { toMessageDTOWithSignedUrls } from "../utils/dtos/messageDTO";
 import { fileStorage } from "../container";
+import { ERROR_STATUS, EVENT_ERROR } from "../types/sockets";
+import { toMessageDTO, toMessageDTOWithSignedUrls } from "../utils/dtos/messageDTO";
 
 import type { EventControllerWithAck, EventControllerWithoutAck } from "../types/sockets";
 
@@ -15,14 +15,19 @@ export const handleIncomingNewMessage: EventControllerWithAck<"message:send"> = 
 
   try {
     if (!text) {
-      ack(new EVENT_ERROR({ error: ERROR_STATUS["BAD_REQUEST"], message: "Text input is missing" }));
+      ack(
+        new EVENT_ERROR({ error: ERROR_STATUS["BAD_REQUEST"], message: "Text input is missing" }),
+      );
       return;
     }
 
     const chat = await chatService.findChatWithChatId(chatId);
 
     if (!chat || !chatService.checkIfUserIdPartOfChat(chat, currentUserId)) {
-      ack({ error: ERROR_STATUS["BAD_REQUEST"], message: "You're not part of this chat" } as EVENT_ERROR);
+      ack({
+        error: ERROR_STATUS["BAD_REQUEST"],
+        message: "You're not part of this chat",
+      } as EVENT_ERROR);
       return;
     }
 
@@ -50,19 +55,28 @@ export const handleJoinChat: EventControllerWithAck<"chat:join"> = async (socket
     const chat = await chatService.findChatWithChatId(chatId);
 
     if (!chat) {
-      ack({ error: ERROR_STATUS["BAD_REQUEST"], message: "This chat doesn't exist" } as EVENT_ERROR);
+      ack({
+        error: ERROR_STATUS["BAD_REQUEST"],
+        message: "This chat doesn't exist",
+      } as EVENT_ERROR);
       return;
     }
 
     if (!chatService.checkIfUserIdPartOfChat(chat, currentUserId)) {
-      ack({ error: ERROR_STATUS["UNAUTHORIZED"], message: "You're not part of this chat" } as EVENT_ERROR);
+      ack({
+        error: ERROR_STATUS["UNAUTHORIZED"],
+        message: "You're not part of this chat",
+      } as EVENT_ERROR);
       return;
     }
 
     const otherParticipantId = chat.participantIds.find((id) => id !== currentUserId);
 
     if (!otherParticipantId) {
-      ack({ error: ERROR_STATUS["INTERNAL_ERROR"], message: "Other chat participant not found" } as EVENT_ERROR);
+      ack({
+        error: ERROR_STATUS["INTERNAL_ERROR"],
+        message: "Other chat participant not found",
+      } as EVENT_ERROR);
       return;
     }
 
@@ -83,7 +97,7 @@ export const handleJoinChat: EventControllerWithAck<"chat:join"> = async (socket
           username: otherUser?.userName ?? "",
           avatarUrl: otherUser?.avatar?.url,
         },
-        messages: messages.map(toMessageDTO),
+        messages: messagesDTO,
       },
       status: "OK",
     });
