@@ -39,14 +39,14 @@ interface QueryConfig {
 let pickedIds: {
   userEmail: string;
   userName: string;
-  channelId: string;
-  chatId: string;
-  serverId: string;
-  serverIdForMembership: string;
-  memberId: string;
-  userId: string;
+  channelId: mongoose.Types.ObjectId | undefined;
+  chatId: mongoose.Types.ObjectId | undefined;
+  serverId: mongoose.Types.ObjectId | undefined;
+  serverIdForMembership: mongoose.Types.ObjectId | undefined;
+  memberId: mongoose.Types.ObjectId | undefined;
+  userId: mongoose.Types.ObjectId | undefined;
   shortId: string;
-  participantId: string;
+  participantId: mongoose.Types.ObjectId | undefined;
 } | null = null;
 
 async function connectBenchmarkDB() {
@@ -148,9 +148,7 @@ async function pickIds(): Promise<void> {
   console.log('\nPicked sample IDs for queries');
 }
 
-async function benchmarkQueries(
-  phase: 'BEFORE' | 'AFTER',
-): Promise<BenchmarkResult[]> {
+async function benchmarkQueries(): Promise<BenchmarkResult[]> {
   const db = mongoose.connection.db;
   if (!db) {
     throw new Error('Database connection not established');
@@ -221,7 +219,8 @@ async function benchmarkQueries(
       const cursor = db.collection(queryConfig.collection).find(queryConfig.filter);
 
       if (queryConfig.sort) {
-        cursor.sort(queryConfig.sort);
+        const sortEntries = Object.entries(queryConfig.sort) as Array<[string, 1 | -1]>;
+        cursor.sort(sortEntries);
       }
       if (queryConfig.limit) {
         cursor.limit(queryConfig.limit);
@@ -239,7 +238,8 @@ async function benchmarkQueries(
 
     const cursor = db.collection(queryConfig.collection).find(queryConfig.filter);
     if (queryConfig.sort) {
-      cursor.sort(queryConfig.sort);
+      const sortEntries = Object.entries(queryConfig.sort) as Array<[string, 1 | -1]>;
+      cursor.sort(sortEntries);
     }
     if (queryConfig.limit) {
       cursor.limit(queryConfig.limit);
@@ -287,7 +287,11 @@ async function createIndexes(): Promise<void> {
     throw new Error('Database connection not established');
   }
 
-  const indexConfigs = [
+  const indexConfigs: Array<{
+    collection: string;
+    index: Record<string, 1 | -1>;
+    options?: Record<string, unknown>;
+  }> = [
     // User
     { collection: 'users', index: { userName: 1 }, options: { unique: true } },
     { collection: 'users', index: { refreshTokens: 1 }, options: { sparse: true } },
@@ -451,7 +455,7 @@ async function main() {
 
     // Phase 3: Benchmark WITHOUT indexes
     console.log('\n=== PHASE 3: Benchmarking WITHOUT Indexes ===');
-    const beforeResults = await benchmarkQueries('BEFORE');
+    const beforeResults = await benchmarkQueries();
     console.log(formatTable(beforeResults, 'BEFORE'));
 
     // Phase 4: Create indexes
@@ -460,7 +464,7 @@ async function main() {
 
     // Phase 5: Benchmark WITH indexes
     console.log('\n=== PHASE 5: Benchmarking WITH Indexes ===');
-    const afterResults = await benchmarkQueries('AFTER');
+    const afterResults = await benchmarkQueries();
     console.log(formatTable(afterResults, 'AFTER'));
 
     // Phase 6: Comparison report

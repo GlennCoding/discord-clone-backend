@@ -1,16 +1,16 @@
-import mongoose from 'mongoose';
-import { randomUUID } from 'crypto';
+import mongoose from "mongoose";
+import { randomUUID } from "crypto";
 
-import User from '../models/User';
-import Server from '../models/Server';
-import Channel from '../models/Channel';
-import ChannelMessage from '../models/ChannelMessage';
-import Chat from '../models/Chat';
-import ChatMessage from '../models/ChatMessage';
-import Member from '../models/Member';
-import Role from '../models/Role';
+import User from "../models/User";
+import Server from "../models/Server";
+import Channel from "../models/Channel";
+import ChannelMessage from "../models/ChannelMessage";
+import Chat from "../models/Chat";
+import ChatMessage from "../models/ChatMessage";
+import Member from "../models/Member";
+import Role from "../models/Role";
 
-const BENCHMARK_DB = 'discord_clone_benchmark';
+const BENCHMARK_DB = "discord_clone_benchmark";
 const BATCH_SIZE = 5000;
 
 interface SeedConfig {
@@ -25,18 +25,18 @@ interface SeedConfig {
 }
 
 const config: SeedConfig = {
-  users: 200,
+  users: 100000,
   servers: 20,
   channelsPerServer: 4,
-  channelMessages: 100000,
-  chatMessages: 20000,
-  chatsCount: 100,
-  membersPerServer: 20,
-  rolesPerServer: 3,
+  channelMessages: 500000,
+  chatMessages: 2000000,
+  chatsCount: 100000,
+  membersPerServer: 20000,
+  rolesPerServer: 30,
 };
 
 async function connectBenchmarkDB() {
-  const uri = process.env.DATABASE_URI || 'mongodb://localhost:27017';
+  const uri = process.env.DATABASE_URI || "mongodb://localhost:27017";
   await mongoose.connect(uri, {
     dbName: BENCHMARK_DB,
   });
@@ -51,16 +51,16 @@ async function dropBenchmarkDB() {
   }
 }
 
-function generateRandomEmail(): string {
-  return `user_${randomUUID().substring(0, 8)}@example.com`;
+function generateRandomEmail(index: number): string {
+  return `user_${index}@example.com`;
 }
 
-function generateUsername(): string {
-  return `user_${randomUUID().substring(0, 8)}`;
+function generateUsername(index: number): string {
+  return `user_${index}`;
 }
 
-function generateShortId(): string {
-  return randomUUID().substring(0, 8);
+function generateShortId(index: number): string {
+  return `server_${index}`;
 }
 
 async function seedUsers(): Promise<mongoose.Types.ObjectId[]> {
@@ -69,9 +69,9 @@ async function seedUsers(): Promise<mongoose.Types.ObjectId[]> {
 
   for (let i = 0; i < config.users; i++) {
     users.push({
-      userName: generateUsername(),
-      password: 'hashed_password_' + randomUUID().substring(0, 8),
-      status: 'online',
+      userName: generateUsername(i),
+      password: "hashed_password_" + i,
+      status: "online",
     });
   }
 
@@ -80,9 +80,7 @@ async function seedUsers(): Promise<mongoose.Types.ObjectId[]> {
   return created.map((u) => u._id as mongoose.Types.ObjectId);
 }
 
-async function seedServers(
-  userIds: mongoose.Types.ObjectId[],
-): Promise<mongoose.Types.ObjectId[]> {
+async function seedServers(userIds: mongoose.Types.ObjectId[]): Promise<mongoose.Types.ObjectId[]> {
   console.log(`Seeding servers (${config.servers})...`);
   const servers = [];
 
@@ -90,7 +88,7 @@ async function seedServers(
     const isPublic = i % 2 === 0;
     servers.push({
       name: `Server ${i + 1}`,
-      shortId: generateShortId(),
+      shortId: generateShortId(i),
       owner: userIds[Math.floor(Math.random() * userIds.length)],
       description: `Description for server ${i + 1}`,
       isPublic,
@@ -158,9 +156,7 @@ async function seedChannelMessages(
   console.log(`✓ Seeded ${config.channelMessages} channel messages`);
 }
 
-async function seedChats(
-  userIds: mongoose.Types.ObjectId[],
-): Promise<mongoose.Types.ObjectId[]> {
+async function seedChats(userIds: mongoose.Types.ObjectId[]): Promise<mongoose.Types.ObjectId[]> {
   console.log(`Seeding chats (${config.chatsCount})...`);
   const chats = [];
   const usedPairs = new Set<string>();
@@ -173,7 +169,7 @@ async function seedChats(
       user2 = userIds[Math.floor(Math.random() * userIds.length)];
     }
 
-    const pairKey = [user1.toString(), user2.toString()].sort().join('|');
+    const pairKey = [user1.toString(), user2.toString()].sort().join("|");
     if (!usedPairs.has(pairKey)) {
       usedPairs.add(pairKey);
       chats.push({
@@ -224,17 +220,12 @@ async function seedMembers(
   serverIds: mongoose.Types.ObjectId[],
   userIds: mongoose.Types.ObjectId[],
 ): Promise<mongoose.Types.ObjectId[]> {
-  console.log(
-    `Seeding members (${serverIds.length * config.membersPerServer})...`,
-  );
+  console.log(`Seeding members (${serverIds.length * config.membersPerServer})...`);
   const members = [];
   const usedPairs = new Set<string>();
 
   for (const serverId of serverIds) {
-    const membersForServer = Math.min(
-      config.membersPerServer,
-      userIds.length,
-    );
+    const membersForServer = Math.min(config.membersPerServer, userIds.length);
 
     for (let i = 0; i < membersForServer; i++) {
       let userId = userIds[Math.floor(Math.random() * userIds.length)];
@@ -263,9 +254,7 @@ async function seedMembers(
   return created.map((m) => m._id as mongoose.Types.ObjectId);
 }
 
-async function seedRoles(
-  serverIds: mongoose.Types.ObjectId[],
-): Promise<mongoose.Types.ObjectId[]> {
+async function seedRoles(serverIds: mongoose.Types.ObjectId[]): Promise<mongoose.Types.ObjectId[]> {
   console.log(`Seeding roles (${serverIds.length * config.rolesPerServer})...`);
   const roles = [];
 
@@ -274,7 +263,7 @@ async function seedRoles(
       roles.push({
         server: serverId,
         name: `Role ${i + 1}`,
-        permissions: ['ROLE_ADMIN'],
+        permissions: ["ROLE_ADMIN"],
       });
     }
   }
@@ -287,22 +276,22 @@ async function seedRoles(
 async function printStats(): Promise<void> {
   const db = mongoose.connection.db;
   if (!db) {
-    console.error('Database connection not established');
+    console.error("Database connection not established");
     return;
   }
 
-  console.log('\n=== Seeding Complete ===\n');
-  console.log('Collection Document Counts:');
+  console.log("\n=== Seeding Complete ===\n");
+  console.log("Collection Document Counts:");
 
   const collections = [
-    'users',
-    'servers',
-    'channels',
-    'channelmessages',
-    'chats',
-    'chatmessages',
-    'members',
-    'roles',
+    "users",
+    "servers",
+    "channels",
+    "channelmessages",
+    "chats",
+    "chatmessages",
+    "members",
+    "roles",
   ];
 
   for (const name of collections) {
@@ -314,14 +303,14 @@ async function printStats(): Promise<void> {
     }
   }
 
-  console.log('\nTotal seeded approximately 121,320 documents');
+  console.log("\nTotal seeded approximately 121,320 documents");
 }
 
 async function main() {
   try {
     console.log(`Connecting to MongoDB (${BENCHMARK_DB})...`);
     await connectBenchmarkDB();
-    console.log('✓ Connected');
+    console.log("✓ Connected");
 
     await dropBenchmarkDB();
 
@@ -336,9 +325,9 @@ async function main() {
 
     await printStats();
 
-    console.log('\n✓ Benchmark database seeded successfully!');
+    console.log("\n✓ Benchmark database seeded successfully!");
   } catch (error) {
-    console.error('Seeding failed:', error);
+    console.error("Seeding failed:", error);
     process.exit(1);
   } finally {
     await mongoose.disconnect();
