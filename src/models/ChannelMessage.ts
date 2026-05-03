@@ -37,4 +37,9 @@ const channelMessageSchema = new Schema<IChannelMessage>(
   { timestamps: true }
 );
 
+// Supports: paginating channel messages sorted by creation time (most critical query)
+channelMessageSchema.index({ channel: 1, createdAt: -1 });
+// Supports: finding messages by sender
+channelMessageSchema.index({ sender: 1, createdAt: -1 });
+
 export default model("ChannelMessage", channelMessageSchema);

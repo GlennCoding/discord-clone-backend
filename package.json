@@ -14,7 +14,9 @@
     "lint": "eslint \"src/**/*.{ts,tsx}\"",
     "lint:fix": "pnpm lint -- --fix",
     "format": "prettier --check \"**/*.{ts,tsx,js,json,md}\"",
-    "format:fix": "prettier --write \"**/*.{ts,tsx,js,json,md}\""
+    "format:fix": "prettier --write \"**/*.{ts,tsx,js,json,md}\"",
+    "seed:benchmark": "npx tsx src/scripts/seed-benchmark.ts",
+    "benchmark:indexes": "npx tsx src/scripts/benchmark-indexes.ts"
   },
   "repository": {
     "type": "git",

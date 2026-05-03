@@ -30,4 +30,9 @@ const memberSchema = new Schema<IMember>(
   }
 );
 
+// Supports: membership check (does user belong to server) with unique constraint
+memberSchema.index({ server: 1, user: 1 }, { unique: true });
+// Supports: listing all servers a user belongs to
+memberSchema.index({ user: 1 });
+
 export default model("Member", memberSchema);

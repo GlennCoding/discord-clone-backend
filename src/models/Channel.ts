@@ -29,4 +29,7 @@ const channelSchema = new Schema<IChannel>(
   }
 );
 
+// Supports: fetching channels for a server sorted by order
+channelSchema.index({ server: 1, order: 1 });
+
 export default model("Channel", channelSchema);
