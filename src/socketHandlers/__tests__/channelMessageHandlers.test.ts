@@ -97,6 +97,7 @@ describe("channel message socket handlers", () => {
     expect(ack.data.serverId).toBe(server.id);
     expect(ack.data.messages).toHaveLength(1);
     expect(ack.data.messages[0].text).toBe("Existing");
+    expect(ack.data.nextCursor).toBeNull();
   });
 
   it("rejects channel subscriptions for non members", async () => {
@@ -183,5 +184,46 @@ describe("channel message socket handlers", () => {
     });
 
     await silentPromise;
+  });
+
+  it("loads older messages with cursor-based pagination", async () => {
+    const { ownerToken, channel, member } = await createServerWithChannel();
+
+    const socket = await connectTrackedSocket(ownerToken);
+
+    const messageTexts = Array.from({ length: 55 }, (_, i) =>
+      `Message ${i + 1}`
+    );
+    await Promise.all(
+      messageTexts.map((text) =>
+        ChannelMessage.create({ channel, sender: member._id, text })
+      )
+    );
+
+    const subscribeAck = await socket.emitWithAck(
+      "channelMessages:subscribe",
+      channel.id
+    );
+    if (subscribeAck instanceof EVENT_ERROR) throw new Error(subscribeAck.message);
+
+    expect(subscribeAck.data.messages).toHaveLength(50);
+    expect(subscribeAck.data.nextCursor).not.toBeNull();
+
+    const firstPageFirstMessage = subscribeAck.data.messages[0];
+    const firstPageLastMessage = subscribeAck.data.messages[49];
+    expect(firstPageFirstMessage.text).toBe("Message 6");
+    expect(firstPageLastMessage.text).toBe("Message 55");
+
+    const loadMoreAck = await socket.emitWithAck("channelMessages:loadMore", {
+      channelId: channel.id,
+      before: subscribeAck.data.nextCursor!,
+    });
+
+    if (loadMoreAck instanceof EVENT_ERROR) throw new Error(loadMoreAck.message);
+
+    expect(loadMoreAck.data.messages).toHaveLength(5);
+    expect(loadMoreAck.data.nextCursor).toBeNull();
+    expect(loadMoreAck.data.messages[0].text).toBe("Message 1");
+    expect(loadMoreAck.data.messages[4].text).toBe("Message 5");
   });
 });

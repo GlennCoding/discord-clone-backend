@@ -1,4 +1,5 @@
 import ChannelMessage from '../models/ChannelMessage';
+import { decodeCursor } from '../utils/cursors';
 import { parseObjectId } from '../utils/helper';
 
 import type {
@@ -60,6 +61,33 @@ class MongooseChannelMessageRepository implements ChannelMessageRepository {
       .populate(populateOptions)
       .lean<PopulatedLeanMessage[]>();
     return docs.reverse().map(mapMessage);
+  }
+
+  async findPageByChannelId(
+    channelId: string,
+    limit: number,
+    beforeCursor?: string,
+  ) {
+    const channelOid = parseObjectId(channelId);
+
+    const filter: Record<string, any> = { channel: channelOid };
+    if (beforeCursor) {
+      filter._id = { $lt: decodeCursor(beforeCursor) };
+    }
+
+    const docs = await ChannelMessage.find(filter)
+      .sort({ _id: -1 })
+      .limit(limit + 1)
+      .populate(populateOptions)
+      .lean<PopulatedLeanMessage[]>();
+
+    const hasMore = docs.length > limit;
+    const pageDocs = hasMore ? docs.slice(0, limit) : docs;
+
+    return {
+      messages: pageDocs.reverse().map(mapMessage),
+      hasMore,
+    };
   }
 
   async create(data: CreateChannelMessageData) {

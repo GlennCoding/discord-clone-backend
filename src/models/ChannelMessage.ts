@@ -39,6 +39,8 @@ const channelMessageSchema = new Schema<IChannelMessage>(
 
 // Supports: paginating channel messages sorted by creation time (most critical query)
 channelMessageSchema.index({ channel: 1, createdAt: -1 });
+// Supports: cursor-based pagination for load-more queries
+channelMessageSchema.index({ channel: 1, _id: -1 });
 // Supports: finding messages by sender
 channelMessageSchema.index({ sender: 1, createdAt: -1 });
 

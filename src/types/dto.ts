@@ -143,6 +143,12 @@ export interface ChannelSubscribeDTO {
   serverId: string;
   channel: ChannelDTO;
   messages: ChannelMessageDTO[];
+  nextCursor: string | null;
+}
+
+export interface ChannelMessagesPageDTO {
+  messages: ChannelMessageDTO[];
+  nextCursor: string | null;
 }
 
 export interface SendChannelMessageInput {
