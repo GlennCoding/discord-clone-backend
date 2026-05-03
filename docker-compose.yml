@@ -27,6 +27,7 @@ services:
       - "4443:4443"
     volumes:
       - gcs_data:/data
+      - ./docker/gcs/seed:/data/buckets
   redis:
     image: redis:7
     ports:
@@ -34,6 +35,24 @@ services:
     command: ["redis-server", "--appendonly", "yes"]
     volumes:
       - redis_data:/data
+
+  backup:
+    build:
+      context: .
+      dockerfile: docker/backup/Dockerfile
+    depends_on:
+      - mongodb
+      - gcs-emulator
+    entrypoint: >
+      sh -c "env >> /etc/environment && cron -f"
+    environment:
+      MONGO_HOST: mongodb
+      MONGO_PORT: "27017"
+      MONGO_DB: discord-clone
+      GCS_ENDPOINT: http://gcs-emulator:4443
+      GCS_BUCKET: backups
+      RETENTION_DAYS: "7"
+    restart: unless-stopped
 
 volumes:
   mongo-data:
