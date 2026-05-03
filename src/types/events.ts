@@ -8,6 +8,7 @@ import type {
   ChannelSubscribeDTO,
   ChannelMessageDTO,
   SendChannelMessageInput,
+  ChannelMessagesPageDTO,
 } from "./dto";
 import type { Ack } from "./sockets";
 
@@ -31,6 +32,10 @@ export interface ClientToServerEvents {
   "channelMessage:new": (
     payload: SendChannelMessageInput,
     ack: Ack<{ message: ChannelMessageDTO }>
+  ) => void;
+  "channelMessages:loadMore": (
+    payload: { channelId: string; before: string },
+    ack: Ack<ChannelMessagesPageDTO>
   ) => void;
 }
 

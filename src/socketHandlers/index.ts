@@ -4,6 +4,7 @@ import {
   handleChannelMessagesSubscribe,
   handleChannelMessagesUnsubscribe,
   handleIncomingChannelMessage,
+  handleChannelMessagesLoadMore,
 } from "./channelMessageHandlers";
 import { handleJoinChat, handleLeaveChat, handleIncomingNewMessage } from "./chatHandlers";
 import { handleServerSubscribe, handleServerUnsubscribe } from "./serverHandlers";
@@ -43,6 +44,10 @@ const onConnection = (_: TypedServer, socket: TypedSocket) => {
 
   limit("channelMessage:new")((payload: any, ack: any) =>
     handleIncomingChannelMessage(socket, payload, ack),
+  );
+
+  limit("channelMessages:loadMore")((payload: any, ack: any) =>
+    handleChannelMessagesLoadMore(socket, payload, ack),
   );
 };
 

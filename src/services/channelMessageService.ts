@@ -1,3 +1,4 @@
+import { encodeCursor } from '../utils/cursors';
 import { CustomError, NotFoundError } from '../utils/errors';
 import { ensureParam } from '../utils/helper';
 
@@ -50,12 +51,28 @@ export class ChannelMessageService {
     return { channel, member };
   }
 
-  async fetchRecentMessages(channelId: string): Promise<ChannelMessageDTO[]> {
-    const messages = await this.channelMessage.findRecentByChannelId(
+  async fetchRecentMessages(
+    channelId: string,
+  ): Promise<{ messages: ChannelMessageDTO[]; nextCursor: string | null }> {
+    const { messages, hasMore } = await this.channelMessage.findPageByChannelId(
       channelId,
       CHANNEL_MESSAGE_HISTORY_LIMIT,
     );
-    return messages.map(toChannelMessageDTO);
+    const nextCursor = hasMore ? encodeCursor(messages[0].id) : null;
+    return { messages: messages.map(toChannelMessageDTO), nextCursor };
+  }
+
+  async fetchMessagePage(
+    channelId: string,
+    beforeCursor: string,
+  ): Promise<{ messages: ChannelMessageDTO[]; nextCursor: string | null }> {
+    const { messages, hasMore } = await this.channelMessage.findPageByChannelId(
+      channelId,
+      CHANNEL_MESSAGE_HISTORY_LIMIT,
+      beforeCursor,
+    );
+    const nextCursor = hasMore ? encodeCursor(messages[0].id) : null;
+    return { messages: messages.map(toChannelMessageDTO), nextCursor };
   }
 
   async createMessage(
@@ -67,11 +84,16 @@ export class ChannelMessageService {
     return toChannelMessageDTO(msg);
   }
 
-  buildSubscribePayload(channel: ChannelEntity, messages: ChannelMessageDTO[]): ChannelSubscribeDTO {
+  buildSubscribePayload(
+    channel: ChannelEntity,
+    messages: ChannelMessageDTO[],
+    nextCursor: string | null,
+  ): ChannelSubscribeDTO {
     return {
       serverId: channel.serverId,
       channel: { id: channel.id, name: channel.name, order: channel.order },
       messages,
+      nextCursor,
     };
   }
 }
