@@ -1,0 +1,188 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id             String   @id @default(uuid())
+  userName       String   @unique
+  password       String
+  status         String?
+  avatarFilePath String?
+  avatarUrl      String?
+  refreshTokens  String[]
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  ownedServers   Server[]
+  members        Member[]
+  chatsAsUser1   Chat[]        @relation("ChatUser1")
+  chatsAsUser2   Chat[]        @relation("ChatUser2")
+  chatMessages   ChatMessage[]
+  reactions      Reaction[]
+
+  @@index([userName])
+}
+
+model Server {
+  id          String   @id @default(uuid())
+  name        String
+  shortId     String   @unique
+  iconUrl     String?
+  ownerId     String
+  owner       User     @relation(fields: [ownerId], references: [id])
+  description String?
+  isPublic    Boolean
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  channels Channel[]
+  members  Member[]
+  roles    Role[]
+
+  @@index([ownerId])
+  @@index([isPublic, name])
+}
+
+model Channel {
+  id        String   @id @default(uuid())
+  serverId  String
+  server    Server   @relation(fields: [serverId], references: [id])
+  name      String
+  order     Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  disallowedRoles ChannelDisallowedRole[]
+  messages        ChannelMessage[]
+
+  @@index([serverId, order])
+}
+
+model Role {
+  id          String   @id @default(uuid())
+  serverId    String
+  server      Server   @relation(fields: [serverId], references: [id])
+  name        String
+  permissions String[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  memberRoles        MemberRole[]
+  disallowedChannels ChannelDisallowedRole[]
+
+  @@index([serverId])
+}
+
+model Member {
+  id         String    @id @default(uuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id])
+  serverId   String
+  server     Server    @relation(fields: [serverId], references: [id])
+  nickname   String?
+  joinedDate DateTime  @default(now())
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  roles           MemberRole[]
+  channelMessages ChannelMessage[]
+
+  @@unique([serverId, userId])
+  @@index([userId])
+}
+
+model MemberRole {
+  memberId String
+  member   Member @relation(fields: [memberId], references: [id])
+  roleId   String
+  role     Role   @relation(fields: [roleId], references: [id])
+
+  @@id([memberId, roleId])
+}
+
+model ChannelDisallowedRole {
+  channelId String
+  channel   Channel @relation(fields: [channelId], references: [id])
+  roleId    String
+  role      Role    @relation(fields: [roleId], references: [id])
+
+  @@id([channelId, roleId])
+}
+
+model ChannelMessage {
+  id        String   @id @default(uuid())
+  channelId String
+  channel   Channel  @relation(fields: [channelId], references: [id])
+  senderId  String
+  sender    Member   @relation(fields: [senderId], references: [id])
+  text      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  attachments ChannelMessageAttachment[]
+
+  @@index([channelId, createdAt(sort: Desc)])
+}
+
+model ChannelMessageAttachment {
+  id          String         @id @default(uuid())
+  messageId   String
+  message     ChannelMessage @relation(fields: [messageId], references: [id])
+  path        String
+  downloadUrl String
+}
+
+model Chat {
+  id        String   @id @default(uuid())
+  user1Id   String
+  user1     User     @relation("ChatUser1", fields: [user1Id], references: [id])
+  user2Id   String
+  user2     User     @relation("ChatUser2", fields: [user2Id], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  messages ChatMessage[]
+
+  @@index([user1Id])
+  @@index([user2Id])
+}
+
+model ChatMessage {
+  id        String   @id @default(uuid())
+  chatId    String
+  chat      Chat     @relation(fields: [chatId], references: [id])
+  senderId  String
+  sender    User     @relation(fields: [senderId], references: [id])
+  text      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  attachments ChatMessageAttachment[]
+  reactions   Reaction[]
+
+  @@index([chatId, createdAt])
+}
+
+model ChatMessageAttachment {
+  id          String      @id @default(uuid())
+  messageId   String
+  message     ChatMessage @relation(fields: [messageId], references: [id])
+  path        String
+  downloadUrl String
+}
+
+model Reaction {
+  id        String      @id @default(uuid())
+  messageId String
+  message   ChatMessage @relation(fields: [messageId], references: [id])
+  senderId  String
+  sender    User        @relation(fields: [senderId], references: [id])
+  emoji     String
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}

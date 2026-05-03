@@ -143,3 +143,4 @@ dist
 # Various
 
 *.temp.md
+/src/generated/prisma

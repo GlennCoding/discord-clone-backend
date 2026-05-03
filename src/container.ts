@@ -1,11 +1,22 @@
 import { bucket } from "./config/storage";
 import { GcsFileStorage } from "./infrastructure/GcsFileStorage";
+
+// Mongoose (MongoDB) repositories
 import MongooseChatMessageRepository from "./repositories/mongooseChatMessageRepository";
 import MongooseChatRepository from "./repositories/mongooseChatRepository";
 import MongooseChannelMessageRepository from "./repositories/mongooseChannelMessageRepository";
 import MongooseChannelRepository from "./repositories/mongooseChannelRepository";
 import MongooseServerRepository from "./repositories/mongooseServerRepository";
 import MongooseUserRepository from "./repositories/mongooseUserRepository";
+
+// Prisma (PostgreSQL) repositories
+import PrismaChatMessageRepository from "./repositories/prismaChatMessageRepository";
+import PrismaChatRepository from "./repositories/prismaChatRepository";
+import PrismaChannelMessageRepository from "./repositories/prismaChannelMessageRepository";
+import PrismaChannelRepository from "./repositories/prismaChannelRepository";
+import PrismaServerRepository from "./repositories/prismaServerRepository";
+import PrismaUserRepository from "./repositories/prismaUserRepository";
+
 import ChatMessageAttachmentService from "./services/chatMessageAttachmentService";
 import { ChannelMessageService } from "./services/channelMessageService";
 import { ChannelService } from "./services/channelService";
@@ -14,12 +25,18 @@ import { ProfileService } from "./services/profileService";
 import { ServerService } from "./services/serverService";
 import { UserService } from "./services/userService";
 
-const userRepo = new MongooseUserRepository();
-const chatRepo = new MongooseChatRepository();
-export const chatMessageRepo = new MongooseChatMessageRepository();
-const serverRepo = new MongooseServerRepository();
-const channelRepo = new MongooseChannelRepository();
-const channelMessageRepo = new MongooseChannelMessageRepository();
+const usePostgres = process.env.DB_DRIVER === 'postgres';
+
+const userRepo = usePostgres ? new PrismaUserRepository() : new MongooseUserRepository();
+const chatRepo = usePostgres ? new PrismaChatRepository() : new MongooseChatRepository();
+export const chatMessageRepo = usePostgres
+  ? new PrismaChatMessageRepository()
+  : new MongooseChatMessageRepository();
+const serverRepo = usePostgres ? new PrismaServerRepository() : new MongooseServerRepository();
+const channelRepo = usePostgres ? new PrismaChannelRepository() : new MongooseChannelRepository();
+const channelMessageRepo = usePostgres
+  ? new PrismaChannelMessageRepository()
+  : new MongooseChannelMessageRepository();
 const fileStorage = new GcsFileStorage(bucket);
 
 export const userService = new UserService(userRepo);
