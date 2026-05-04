@@ -41,10 +41,9 @@ const chatSchema = new Schema<IChat>(
     },
     lastMessage: { type: lastMessageSchema, required: false },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
-// Supports: finding chats by participant
 chatSchema.index({ participants: 1 });
 
 export default model("Chat", chatSchema);

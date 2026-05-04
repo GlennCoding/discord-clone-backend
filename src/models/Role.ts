@@ -26,10 +26,9 @@ const roleSchema = new Schema<IRole>(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
-// Supports: fetching roles for a server
 roleSchema.index({ server: 1 });
 
 export default model("Role", roleSchema);

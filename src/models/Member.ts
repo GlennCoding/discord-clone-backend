@@ -3,7 +3,7 @@ import { model, Schema } from "mongoose";
 import type { IRole } from "./Role";
 import type { IServer } from "./Server";
 import type { IUser } from "./User";
-import type { HydratedDocument} from "mongoose";
+import type { HydratedDocument } from "mongoose";
 
 export interface IMember {
   user: IUser;
@@ -27,14 +27,11 @@ const memberSchema = new Schema<IMember>(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
-// Supports: membership check (does user belong to server) with unique constraint
 memberSchema.index({ server: 1, user: 1 }, { unique: true });
-// Supports: listing all servers a user belongs to
 memberSchema.index({ user: 1 });
-// Supports: filtering active vs former members per server
 memberSchema.index({ server: 1, leftAt: 1 });
 
 export default model("Member", memberSchema);

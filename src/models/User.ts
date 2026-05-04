@@ -35,9 +35,7 @@ const userSchema = new Schema<IUser>(
   { timestamps: true },
 );
 
-// Supports: login and authentication lookups
 userSchema.index({ userName: 1 }, { unique: true });
-// Supports: refresh token validation
 userSchema.index({ refreshTokens: 1 }, { sparse: true });
 
 export default model("User", userSchema);
