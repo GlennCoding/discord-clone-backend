@@ -7,7 +7,6 @@ export type UserEntity = {
     filePath: string;
     url: string;
   };
-  refreshTokens?: string[];
 };
 
 export type ChatEntity = {

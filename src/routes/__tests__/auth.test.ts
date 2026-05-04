@@ -2,11 +2,13 @@ import jwt from "jsonwebtoken";
 import request from "supertest";
 
 import { app } from "../../app";
+import RefreshToken from "../../models/RefreshToken";
 import User from "../../models/User";
 
 describe("/register", () => {
   beforeEach(async () => {
     await User.deleteMany({});
+    await RefreshToken.deleteMany({});
   });
 
   const getAuthAgent = async () => {
