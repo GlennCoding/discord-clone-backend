@@ -127,15 +127,18 @@ discord-clone-backend/
 │   ├── sockets.ts                # Socket.IO initialization
 │   ├── config/                   # env loading, database, storage, upload config
 │   ├── controllers/              # Route handlers (auth, chats, servers, etc.)
+│   ├── infratstructure/          # Infrastructure models (file storage, GCS)
 │   ├── services/                 # Domain logic (auth, chat, server, storage)
 │   ├── middleware/               # Express middlewares (JWT, errors, credentials)
 │   ├── models/                   # Mongoose schemas
+│   ├── repositories/             # Repositories and DB specific implementation
 │   ├── routes/                   # Express routers + tests
 │   ├── socketHandlers/           # Namespaced socket event controllers
 │   ├── utils/                    # Cross-cutting helpers, DTO builders, validators
 │   ├── types/                    # Shared TypeScript interfaces and socket types
 │   └── __tests__/                # Vitest suites (mirrors runtime structure)
 ├── public/                       # Static assets served alongside the API
+├── scripts/                      # Bash scripts (backups)
 ├── assets/                       # Documentation diagrams & images
 ├── docker-compose.yml            # Local MongoDB + fake GCS setup
 └── etc / implementation-plans    # Threat models, design docs, planning notes
