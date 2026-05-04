@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 
 import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 
 import { InvalidCredentialsError, UserNotFoundError } from '../utils/errors';
 
@@ -8,9 +9,17 @@ import type { UserRepository } from '../repositories/userRepository';
 import type { UserEntity } from '../types/entities';
 
 const SALT_ROUNDS = 10;
+const REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 const hashRefreshToken = (token: string): string =>
   crypto.createHash('sha256').update(token).digest('hex');
+
+const getTokenExpiry = (rawToken: string): Date => {
+  const decoded = jwt.decode(rawToken) as jwt.JwtPayload | null;
+  return decoded?.exp
+    ? new Date(decoded.exp * 1000)
+    : new Date(Date.now() + REFRESH_TOKEN_TTL_MS);
+};
 
 export class UserService {
   constructor(private user: UserRepository) {}
@@ -32,7 +41,8 @@ export class UserService {
 
   async saveUserRefreshToken(userId: string, refreshToken: string): Promise<void> {
     const hashedToken = hashRefreshToken(refreshToken);
-    await this.user.saveRefreshToken(userId, hashedToken);
+    const expiresAt = getTokenExpiry(refreshToken);
+    await this.user.saveRefreshToken(userId, hashedToken, expiresAt);
   }
 
   async removeAllUserRefreshTokens(userId: string): Promise<void> {
@@ -54,7 +64,7 @@ export class UserService {
 
   async removeUserRefreshToken(userId: string, refreshToken: string): Promise<void> {
     const hashedToken = hashRefreshToken(refreshToken);
-    await this.user.removeRefreshToken(userId, hashedToken, refreshToken);
+    await this.user.removeRefreshToken(userId, hashedToken);
   }
 
   async replaceUserRefreshToken(
@@ -64,12 +74,11 @@ export class UserService {
   ): Promise<void> {
     const oldHashedToken = hashRefreshToken(oldToken);
     const newHashedToken = hashRefreshToken(newToken);
-    await this.user.replaceRefreshToken(userId, oldHashedToken, newHashedToken);
+    const expiresAt = getTokenExpiry(newToken);
+    await this.user.replaceRefreshToken(userId, oldHashedToken, newHashedToken, expiresAt);
   }
 
   async removeAllUserRefreshTokensById(userId: string): Promise<void> {
-    const user = await this.user.findById(userId);
-    if (!user) return;
     await this.user.removeAllRefreshTokens(userId);
   }
 

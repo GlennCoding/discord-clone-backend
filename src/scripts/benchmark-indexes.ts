@@ -294,7 +294,10 @@ async function createIndexes(): Promise<void> {
   }> = [
     // User
     { collection: 'users', index: { userName: 1 }, options: { unique: true } },
-    { collection: 'users', index: { refreshTokens: 1 }, options: { sparse: true } },
+    // RefreshToken
+    { collection: 'refreshtokens', index: { token: 1 }, options: { unique: true } },
+    { collection: 'refreshtokens', index: { userId: 1 } },
+    { collection: 'refreshtokens', index: { expiresAt: 1 }, options: { expireAfterSeconds: 0 } },
 
     // Server
     { collection: 'servers', index: { shortId: 1 }, options: { unique: true } },
