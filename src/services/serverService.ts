@@ -42,12 +42,12 @@ export const checkPermissionInRoles = (
   permission: string,
 ): boolean => roles.some((r) => r.permissions.includes(permission));
 
-export const filterDisallowedChannels = (
+export const filterAllowedChannels = (
   channels: ChannelEntity[],
   memberRoleIds: string[],
 ): ChannelEntity[] =>
   channels.filter(
-    (c) => !c.disallowedRoleIds.some((roleId) => memberRoleIds.includes(roleId)),
+    (c) => c.allowedRoleIds.length === 0 || c.allowedRoleIds.some((roleId) => memberRoleIds.includes(roleId)),
   );
 
 export const generateUniqueShortId = async (): Promise<string> => {

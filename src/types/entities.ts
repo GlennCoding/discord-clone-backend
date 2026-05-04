@@ -13,6 +13,11 @@ export type UserEntity = {
 export type ChatEntity = {
   id: string;
   participantIds: string[];
+  lastMessage?: {
+    text?: string;
+    senderName: string;
+    sentAt: Date;
+  };
   createdAt: Date;
   updatedAt?: Date;
 };
@@ -48,7 +53,7 @@ export type ChannelEntity = {
   serverId: string;
   name: string;
   order: number;
-  disallowedRoleIds: string[];
+  allowedRoleIds: string[];
   createdAt: Date;
   updatedAt?: Date;
 };
@@ -80,7 +85,7 @@ export type MemberEntity = {
   userId: string;
   nickname?: string;
   roleIds: string[];
-  joinedDate?: Date;
+  leftAt?: Date;
   createdAt: Date;
   updatedAt?: Date;
 };

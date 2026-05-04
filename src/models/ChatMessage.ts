@@ -37,7 +37,9 @@ const chatMessageSchema = new Schema<IChatMessage>(
   { timestamps: true },
 );
 
-// Supports: paginating direct messages sorted by creation time
+// Supports: paginating direct messages sorted by creation time (descending)
 chatMessageSchema.index({ chat: 1, createdAt: -1 });
+// Supports: cursor-based pagination
+chatMessageSchema.index({ chat: 1, _id: -1 });
 
 export default model("ChatMessage", chatMessageSchema);

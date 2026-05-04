@@ -10,7 +10,7 @@ export interface IChannel extends Document {
   server: IServer;
   name: string;
   order: number;
-  disallowedRoles: IRole[];
+  allowedRoles: IRole[];
   createdAt: Date;
   updatedAt?: Date;
 }
@@ -22,7 +22,7 @@ const channelSchema = new Schema<IChannel>(
     server: { type: Schema.Types.ObjectId, ref: "Server", required: true },
     name: { type: String, required: true },
     order: { type: Number, required: true },
-    disallowedRoles: [{ type: Schema.Types.ObjectId, ref: "Role" }],
+    allowedRoles: [{ type: Schema.Types.ObjectId, ref: "Role" }],
   },
   {
     timestamps: true,

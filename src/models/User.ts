@@ -12,6 +12,8 @@ export interface IUser extends Document {
     url: string;
   };
   refreshTokens?: string[];
+  createdAt: Date;
+  updatedAt?: Date;
 }
 
 const avatarSchema = new Schema(
@@ -22,13 +24,16 @@ const avatarSchema = new Schema(
   { _id: false },
 );
 
-const userSchema = new Schema<IUser>({
-  userName: { type: String, required: true },
-  password: { type: String, required: true },
-  status: { type: String },
-  avatar: { type: avatarSchema, required: false },
-  refreshTokens: { type: [String] },
-});
+const userSchema = new Schema<IUser>(
+  {
+    userName: { type: String, required: true },
+    password: { type: String, required: true },
+    status: { type: String },
+    avatar: { type: avatarSchema, required: false },
+    refreshTokens: { type: [String] },
+  },
+  { timestamps: true },
+);
 
 // Supports: login and authentication lookups
 userSchema.index({ userName: 1 }, { unique: true });

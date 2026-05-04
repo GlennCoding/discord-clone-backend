@@ -7,7 +7,7 @@ import { serverService } from "../container";
 import {
   checkPermissionInRoles,
   ensureShortId,
-  filterDisallowedChannels,
+  filterAllowedChannels,
   RolePermission,
   toChannelDTO,
   toMemberDTO,
@@ -155,7 +155,7 @@ export const getServer = async (req: UserRequest, res: Response<ServerDTO>) => {
   if (!currentMember) throw new CustomError(403, "You are no member of this server");
 
   const channels = await serverService.getChannels(server.id);
-  const allowedChannels = filterDisallowedChannels(channels, currentMember.roleIds);
+  const allowedChannels = filterAllowedChannels(channels, currentMember.roleIds);
 
   res.status(200).json({
     id: server.id,

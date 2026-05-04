@@ -10,7 +10,7 @@ export interface IMember {
   nickname?: string;
   server: IServer;
   roles: IRole[];
-  joinedDate?: Date;
+  leftAt?: Date;
   createdAt: Date;
   updatedAt?: Date;
 }
@@ -23,7 +23,7 @@ const memberSchema = new Schema<IMember>(
     nickname: { type: String },
     server: { type: Schema.Types.ObjectId, ref: "Server", required: true },
     roles: [{ type: Schema.Types.ObjectId, ref: "Role" }],
-    joinedDate: { type: Date, default: Date.now() },
+    leftAt: { type: Date, default: null },
   },
   {
     timestamps: true,
@@ -34,5 +34,7 @@ const memberSchema = new Schema<IMember>(
 memberSchema.index({ server: 1, user: 1 }, { unique: true });
 // Supports: listing all servers a user belongs to
 memberSchema.index({ user: 1 });
+// Supports: filtering active vs former members per server
+memberSchema.index({ server: 1, leftAt: 1 });
 
 export default model("Member", memberSchema);

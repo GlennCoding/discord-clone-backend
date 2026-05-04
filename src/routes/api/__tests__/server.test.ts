@@ -212,7 +212,8 @@ describe("/server", () => {
 
   it("returns only permitted channels of a server the user has joined", async () => {
     const server2 = await createServer({ owner: user2 });
-    const role = await Role.create({ server: server2, name: "Role1" });
+    const memberRole = await Role.create({ server: server2, name: "Role1" });
+    const restrictedRole = await Role.create({ server: server2, name: "Admin" });
     const channel = await Channel.create({
       server: server2,
       name: "General",
@@ -222,9 +223,9 @@ describe("/server", () => {
       server: server2,
       name: "Channel 2",
       order: 2,
-      disallowedRoles: [role],
+      allowedRoles: [restrictedRole], // only Admin role can access; user1 only has Role1
     });
-    await addMemberToServer(server2, user1, [role]);
+    await addMemberToServer(server2, user1, [memberRole]);
 
     const { status, body } = await request(app)
       .get(`/server/${server2.shortId}`)

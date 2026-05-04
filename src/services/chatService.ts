@@ -16,21 +16,32 @@ export class ChatService {
   }
 
   async formatUserChats(chats: ChatEntity[], userId: string): Promise<ChatDTO[]> {
-    return Promise.all(
-      chats.map(async (chat) => {
-        const otherId = chat.participantIds.find((id) => !idsEqual(id, userId));
-        if (!otherId) throw new Error(`Chat ${chat.id} doesn't contain other participants`);
+    const otherIds = chats.map((chat) => {
+      const otherId = chat.participantIds.find((id) => !idsEqual(id, userId));
+      if (!otherId) throw new Error(`Chat ${chat.id} doesn't contain other participants`);
+      return otherId;
+    });
 
-        const other = await this.user.findById(otherId);
-        if (!other) throw new Error(`Participant ${otherId} not found`);
+    const users = await this.user.findManyByIds(otherIds);
+    const userMap = new Map(users.map((u) => [u.id, u]));
 
-        return {
-          chatId: chat.id,
-          participant: other.userName,
-          participantAvatarUrl: other.avatar?.url,
-        } satisfies ChatDTO;
-      }),
-    );
+    return chats.map((chat, i) => {
+      const other = userMap.get(otherIds[i]);
+      if (!other) throw new Error(`Participant ${otherIds[i]} not found`);
+
+      return {
+        chatId: chat.id,
+        participant: other.userName,
+        participantAvatarUrl: other.avatar?.url,
+        lastMessage: chat.lastMessage
+          ? {
+              text: chat.lastMessage.text,
+              senderName: chat.lastMessage.senderName,
+              sentAt: chat.lastMessage.sentAt.toISOString(),
+            }
+          : undefined,
+      } satisfies ChatDTO;
+    });
   }
 
   findChatBetweenTwoUsers(user1Id: string, user2Id: string): Promise<ChatEntity | null> {

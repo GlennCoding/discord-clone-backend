@@ -43,10 +43,10 @@ export class ChannelMessageService {
     const member = await this.server.findPopulatedMember(channel.serverId, userId);
     if (!member) throw new CustomError(403, 'You are no member of this server');
 
-    const hasRestrictedRole = channel.disallowedRoleIds.some((roleId) =>
-      member.roleIds.includes(roleId),
-    );
-    if (hasRestrictedRole) throw new CustomError(403, 'You cannot access this channel');
+    const isRestricted =
+      channel.allowedRoleIds.length > 0 &&
+      !channel.allowedRoleIds.some((roleId) => member.roleIds.includes(roleId));
+    if (isRestricted) throw new CustomError(403, 'You cannot access this channel');
 
     return { channel, member };
   }

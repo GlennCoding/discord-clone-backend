@@ -1,7 +1,7 @@
 import { serverService } from "../container";
 import {
   ensureShortId as _ensureShortId,
-  filterDisallowedChannels,
+  filterAllowedChannels,
   toChannelDTO,
   toMemberDTO,
 } from "../services/serverService";
@@ -68,7 +68,7 @@ const buildServerPayload = async (
   if (!currentMember) throw new CustomError(403, "You are no member of this server");
 
   const channels = await serverService.getChannelsSorted(server.id);
-  const allowedChannels = filterDisallowedChannels(channels, currentMember.roleIds);
+  const allowedChannels = filterAllowedChannels(channels, currentMember.roleIds);
 
   const serverDTO: ServerDTO = {
     id: server.id,

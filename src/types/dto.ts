@@ -37,6 +37,11 @@ export interface ChatDTO {
   chatId: string;
   participant: string;
   participantAvatarUrl?: string;
+  lastMessage?: {
+    text?: string;
+    senderName: string;
+    sentAt: string;
+  };
 }
 
 export interface JoinChatDTO {

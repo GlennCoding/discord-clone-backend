@@ -20,7 +20,7 @@ export interface IRole extends Document {
 
 const roleSchema = new Schema<IRole>(
   {
-    server: { type: Schema.Types.ObjectId, ref: "Server" },
+    server: { type: Schema.Types.ObjectId, ref: "Server", required: true },
     name: { type: String, required: true },
     permissions: [{ type: String }],
   },

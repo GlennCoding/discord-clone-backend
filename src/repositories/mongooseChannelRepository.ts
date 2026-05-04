@@ -15,7 +15,7 @@ const mapChannel = (doc: LeanChannel): ChannelEntity => ({
   serverId: doc.server.toString(),
   name: doc.name,
   order: doc.order,
-  disallowedRoleIds: (doc.disallowedRoles as unknown as Types.ObjectId[]).map((r) => r.toString()),
+  allowedRoleIds: (doc.allowedRoles as unknown as Types.ObjectId[]).map((r) => r.toString()),
   createdAt: doc.createdAt,
   updatedAt: doc.updatedAt ?? undefined,
 });

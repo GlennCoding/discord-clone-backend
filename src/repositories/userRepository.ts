@@ -2,6 +2,7 @@ import type { UserEntity } from '../types/entities';
 
 export interface UserRepository {
   findById(id: string): Promise<UserEntity | null>;
+  findManyByIds(ids: string[]): Promise<UserEntity[]>;
   findByUserName(userName: string): Promise<UserEntity | null>;
   findByRefreshToken(refreshToken: string): Promise<UserEntity | null>;
   create(userName: string, hashedPassword: string): Promise<UserEntity>;

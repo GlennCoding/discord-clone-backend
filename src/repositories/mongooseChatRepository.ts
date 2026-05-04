@@ -6,40 +6,50 @@ import { withTransaction } from './transactionHelper';
 import type { ChatRepository } from './chatRepository';
 import type { IChat } from '../models/Chat';
 import type { ChatEntity } from '../types/entities';
-import type { FlattenMaps } from 'mongoose';
+import type { FlattenMaps, Types } from 'mongoose';
 
-const mapChatDocToEntity = (doc: FlattenMaps<IChat>): ChatEntity => ({
+type LeanChat = FlattenMaps<IChat> & { _id: Types.ObjectId };
+
+const mapChatDocToEntity = (doc: LeanChat): ChatEntity => ({
   id: doc._id.toString(),
-  participantIds: doc.participants.map((p) => p._id.toString()),
+  participantIds: (doc.participants as unknown as Types.ObjectId[]).map((p) => p.toString()),
+  lastMessage: doc.lastMessage
+    ? {
+        text: doc.lastMessage.text,
+        senderName: doc.lastMessage.senderName,
+        sentAt: doc.lastMessage.sentAt,
+      }
+    : undefined,
   createdAt: doc.createdAt,
   updatedAt: doc.updatedAt,
 });
 
+const sortIds = (a: Types.ObjectId, b: Types.ObjectId) =>
+  a.toString() < b.toString() ? -1 : 1;
+
 class MongooseChatRepository implements ChatRepository {
   async findById(id: string) {
     const _id = parseObjectId(id);
-    const doc = await Chat.findById(_id).lean();
+    const doc = await Chat.findById(_id).lean<LeanChat>();
     return doc ? mapChatDocToEntity(doc) : null;
   }
 
   async findByParticipantId(userId: string) {
     const _id = parseObjectId(userId);
-    const docs = await Chat.find({ participants: _id }).lean();
+    const docs = await Chat.find({ participants: _id }).lean<LeanChat[]>();
     return docs.map(mapChatDocToEntity);
   }
 
   async findBetweenUsers(user1Id: string, user2Id: string) {
-    const _id1 = parseObjectId(user1Id);
-    const _id2 = parseObjectId(user2Id);
-    const doc = await Chat.findOne({ participants: [_id1, _id2] }).lean();
+    const ids = [parseObjectId(user1Id), parseObjectId(user2Id)].sort(sortIds);
+    const doc = await Chat.findOne({ participants: ids }).lean<LeanChat>();
     return doc ? mapChatDocToEntity(doc) : null;
   }
 
   async create(user1Id: string, user2Id: string) {
-    const _id1 = parseObjectId(user1Id);
-    const _id2 = parseObjectId(user2Id);
-    const doc = await Chat.create({ participants: [_id1, _id2] });
-    const lean = await Chat.findById(doc._id).lean();
+    const ids = [parseObjectId(user1Id), parseObjectId(user2Id)].sort(sortIds);
+    const doc = await Chat.create({ participants: ids });
+    const lean = await Chat.findById(doc._id).lean<LeanChat>();
     if (!lean) throw new Error('Chat not found after create');
     return mapChatDocToEntity(lean);
   }

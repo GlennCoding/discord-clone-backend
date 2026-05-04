@@ -1,3 +1,4 @@
+import Chat from "../models/Chat";
 import ChatMessage from "../models/ChatMessage";
 import { parseObjectId } from "../utils/helper";
 
@@ -65,13 +66,26 @@ class MongooseChatMessageRepository implements ChatMessageRepository {
       text: text,
       attachments,
     }).save();
+
     const doc = await ChatMessage.findById(saved._id)
       .populate("sender", "userName avatar")
       .lean<PopulatedChatMessage | null>();
 
     if (!doc) throw new Error("Created message not found after save");
 
-    return map(doc);
+    const entity = map(doc);
+
+    await Chat.findByIdAndUpdate(_chatId, {
+      $set: {
+        lastMessage: {
+          text: entity.text,
+          senderName: entity.sender.username,
+          sentAt: entity.createdAt,
+        },
+      },
+    });
+
+    return entity;
   }
 
   async updateAttachments(id: string, attachments: Array<{ path: string; downloadUrl: string }>) {

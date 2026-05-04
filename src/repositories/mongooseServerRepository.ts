@@ -47,7 +47,7 @@ const mapChannel = (doc: LeanChannel): ChannelEntity => ({
   serverId: doc.server.toString(),
   name: doc.name,
   order: doc.order,
-  disallowedRoleIds: (doc.disallowedRoles as unknown as Types.ObjectId[]).map((r) => r.toString()),
+  allowedRoleIds: (doc.allowedRoles as unknown as Types.ObjectId[]).map((r) => r.toString()),
   createdAt: doc.createdAt,
   updatedAt: doc.updatedAt ?? undefined,
 });
@@ -67,7 +67,7 @@ const mapMember = (doc: LeanMember): MemberEntity => ({
   userId: doc.user.toString(),
   nickname: doc.nickname,
   roleIds: (doc.roles as unknown as Types.ObjectId[]).map((r) => r.toString()),
-  joinedDate: doc.joinedDate,
+  leftAt: doc.leftAt ?? undefined,
   createdAt: doc.createdAt,
   updatedAt: doc.updatedAt ?? undefined,
 });
@@ -78,7 +78,7 @@ const mapPopulatedMember = (doc: PopulatedLeanMember): PopulatedMemberEntity => 
   userId: doc.user._id.toString(),
   nickname: doc.nickname,
   roleIds: (doc.roles as unknown as Types.ObjectId[]).map((r) => r._id.toString()),
-  joinedDate: doc.joinedDate,
+  leftAt: doc.leftAt ?? undefined,
   createdAt: doc.createdAt,
   updatedAt: doc.updatedAt ?? undefined,
   user: {
@@ -116,7 +116,7 @@ class MongooseServerRepository implements ServerRepository {
 
   async findJoinedByUserId(userId: string) {
     const _userId = parseObjectId(userId);
-    const members = await Member.find({ user: _userId })
+    const members = await Member.find({ user: _userId, leftAt: null })
       .populate<{ server: IServer }>('server')
       .lean();
     return members
@@ -175,7 +175,7 @@ class MongooseServerRepository implements ServerRepository {
 
   async getMembers(serverId: string) {
     const _id = parseObjectId(serverId);
-    const docs = await Member.find({ server: _id })
+    const docs = await Member.find({ server: _id, leftAt: null })
       .populate<{ user: IUser }>('user', 'userName avatar')
       .populate<{ roles: IRole[] }>('roles', '_id name permissions')
       .lean<PopulatedLeanMember[]>();
@@ -185,14 +185,14 @@ class MongooseServerRepository implements ServerRepository {
   async findMember(serverId: string, userId: string) {
     const _serverId = parseObjectId(serverId);
     const _userId = parseObjectId(userId);
-    const doc = await Member.findOne({ server: _serverId, user: _userId }).lean<LeanMember>();
+    const doc = await Member.findOne({ server: _serverId, user: _userId, leftAt: null }).lean<LeanMember>();
     return doc ? mapMember(doc) : null;
   }
 
   async findPopulatedMember(serverId: string, userId: string) {
     const _serverId = parseObjectId(serverId);
     const _userId = parseObjectId(userId);
-    const doc = await Member.findOne({ server: _serverId, user: _userId })
+    const doc = await Member.findOne({ server: _serverId, user: _userId, leftAt: null })
       .populate<{ user: IUser }>('user', 'userName avatar')
       .populate<{ roles: IRole[] }>('roles', '_id name permissions')
       .lean<PopulatedLeanMember>();

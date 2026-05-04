@@ -24,6 +24,12 @@ class MongooseUserRepository implements UserRepository {
     return doc ? mapToEntity(doc) : null;
   }
 
+  async findManyByIds(ids: string[]) {
+    const _ids = ids.map(parseObjectId);
+    const docs = await User.find({ _id: { $in: _ids } }).lean();
+    return docs.map(mapToEntity);
+  }
+
   async findByUserName(userName: string) {
     const doc = await User.findOne({ userName }).lean();
     return doc ? mapToEntity(doc) : null;
