@@ -16,11 +16,8 @@ const refreshTokenSchema = new Schema<IRefreshToken>({
   expiresAt: { type: Date, required: true },
 });
 
-// TTL index — MongoDB auto-deletes documents after expiresAt
 refreshTokenSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
-// Supports: token lookup during refresh and logout
 refreshTokenSchema.index({ token: 1 }, { unique: true });
-// Supports: removeAllRefreshTokens by userId
 refreshTokenSchema.index({ userId: 1 });
 
 export default model("RefreshToken", refreshTokenSchema);

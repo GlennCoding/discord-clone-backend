@@ -33,7 +33,6 @@ const userSchema = new Schema<IUser>(
   { timestamps: true },
 );
 
-// Supports: login and authentication lookups
 userSchema.index({ userName: 1 }, { unique: true });
 
 export default model("User", userSchema);

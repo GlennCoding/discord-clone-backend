@@ -1,11 +1,11 @@
-import RefreshToken from '../models/RefreshToken';
-import User from '../models/User';
-import { parseObjectId } from '../utils/helper';
+import RefreshToken from "../models/RefreshToken";
+import User from "../models/User";
+import { parseObjectId } from "../utils/helper";
 
-import type { UserRepository } from './userRepository';
-import type { IUser } from '../models/User';
-import type { UserEntity } from '../types/entities';
-import type { FlattenMaps } from 'mongoose';
+import type { UserRepository } from "./userRepository";
+import type { IUser } from "../models/User";
+import type { UserEntity } from "../types/entities";
+import type { FlattenMaps } from "mongoose";
 
 const mapToEntity = (doc: FlattenMaps<IUser>): UserEntity => ({
   id: doc._id.toString(),
@@ -43,7 +43,7 @@ class MongooseUserRepository implements UserRepository {
   async create(userName: string, hashedPassword: string) {
     const saved = await new User({ userName, password: hashedPassword }).save();
     const doc = await User.findById(saved._id).lean();
-    if (!doc) throw new Error('User not found after create');
+    if (!doc) throw new Error("User not found after create");
     return mapToEntity(doc);
   }
 
@@ -76,11 +76,10 @@ class MongooseUserRepository implements UserRepository {
   async updateAvatar(userId: string, avatar: { filePath: string; url: string } | undefined) {
     const _id = parseObjectId(userId);
     const update = avatar ? { $set: { avatar } } : { $unset: { avatar: 1 } };
-    const doc = await User.findByIdAndUpdate(
-      _id,
-      update,
-      { new: true, runValidators: true },
-    ).lean();
+    const doc = await User.findByIdAndUpdate(_id, update, {
+      new: true,
+      runValidators: true,
+    }).lean();
     return doc ? mapToEntity(doc) : null;
   }
 
@@ -89,6 +88,8 @@ class MongooseUserRepository implements UserRepository {
     const doc = await User.findByIdAndUpdate(
       _id,
       { $set: { status } },
+      // "new" to create new document and return it (otherwise returns original doc)
+      // "runValidators" to validates schema rules (UPDATE skips validation if not explicitly set, whereas CREATE runs validators automatically)
       { new: true, runValidators: true },
     ).lean();
     return doc ? mapToEntity(doc) : null;
